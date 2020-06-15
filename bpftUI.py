@@ -1,14 +1,13 @@
-from tkinter import *
+import base64
+import tempfile
 import threading
+import webbrowser
+import zlib
+from tkinter import *
+
 import requests
 import urllib3
-import re
 from retrying import retry
-import base64
-import zlib
-import tempfile
-import webbrowser
-import sys
 
 '''
 软件名: BaiduPanFilesTransfers
