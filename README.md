@@ -13,3 +13,12 @@ BaiduPanFilesTransfers
 ``
 pyinstaller -F -w -i bpftUI.ico bpftUI.py
 ``
+
+#### 更新日志
+- - -
+
+2020.6.16 更新版本 1.0
+
+增加对文件夹和秒传链接的支持
+
+- - -

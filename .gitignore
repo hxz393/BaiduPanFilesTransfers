@@ -1,8 +1,8 @@
 ﻿/bpftUI.spec
-/bpftUI ico.png
-/截图0.2.png
-/bdftUI 0.2.rar
+/*.png
 __pycache__
 build
 dist
 .idea
+test.py
+/test.py
