@@ -11,7 +11,7 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 0.2
+版本: 1.0
 更新时间: 2020.6.16
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
@@ -27,10 +27,10 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 0.2 by Alice & Asu")
+root.wm_title("度盘转存 1.0 by Alice & Asu")
 root.wm_geometry('350x426+240+240')
 root.wm_attributes("-alpha", 0.98)
-root.resizable(width=False, height=False)
+root.resizable(width=False, height=True)
 
 # 定义标签和文本框
 Label(root, text='1.下面填入百度Cookies,以BAIDUID=开头到结尾,不带引号').grid(row=1, column=0, sticky=W)
@@ -39,7 +39,7 @@ entry_cookie.grid(row=2, column=0, sticky=W, padx=4)
 Label(root, text='2.下面填入文件保存位置(默认根目录),不能包含<,>,|,*,?,,/').grid(row=3, column=0, sticky=W)
 entry_folder_name = Entry(root, width=48, )
 entry_folder_name.grid(row=4, column=0, sticky=W, padx=4)
-Label(root, text='3.下面粘贴链接,每行一个,勿带多余字符.格式为:链接 提取码').grid(row=5, sticky=W)
+Label(root, text='3.下面粘贴链接,每行一个,支持秒传.格式为:链接 提取码').grid(row=5, sticky=W)
 
 # 链接输入框
 text_links = Text(root, width=48, height=10, wrap=NONE)
@@ -80,6 +80,7 @@ request_header = {
 }
 urllib3.disable_warnings()
 
+
 # 获取bdstoken函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_bdstoken():
@@ -106,6 +107,17 @@ def create_dir(dir_name, bdstoken):
     return response.json()['errno']
 
 
+# 修剪链接
+def fix_input(link_list_line):
+    if link_list_line[:24] == 'https://pan.baidu.com/s/':
+        link_type = '/s/'
+    elif link_list_line.count('#') == 3:
+        link_type = 'rapid'
+    else:
+        link_type = 'unknown'
+    return link_type, link_list_line
+
+
 # 验证链接函数
 @retry(stop_max_attempt_number=5, wait_fixed=2000)
 def check_links(link_url, pass_code):
@@ -118,10 +130,20 @@ def check_links(link_url, pass_code):
 
 
 # 转存文件函数
+@retry(stop_max_attempt_number=200, wait_fixed=2000)
+def transfer_files(check_links_reason, dir_name):
+    url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[1]
+    post_data = {'fsidlist': '[' + check_links_reason[2] + ']', 'path': '/' + dir_name, }
+    response = requests.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False)
+    return response.json()['errno']
+
+
+# 转存秒传链接函数
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
-def transfer_files(shareid, oper_id, fs_id, dir_name):
-    url = 'https://pan.baidu.com/share/transfer?shareid=' + shareid + '&from=' + oper_id
-    post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
+def transfer_files_rapid(rapid_data, dir_name, bdstoken):
+    url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
+    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1],
+                 'content-length': rapid_data[2]}
     response = requests.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False)
     return response.json()['errno']
 
@@ -199,26 +221,21 @@ def main():
                 sys.exit()
 
         # 执行转存
-        for link_url_and_code in link_list:
-            # 分割检查链接格式
-            link_url, pass_code = link_url_and_code.split(' ', maxsplit=1)
-            pass_code = pass_code.strip()
-            if link_url[:24] != 'https://pan.baidu.com/s/':
-                logs = '不支持链接:' + link_url_and_code + '\n'
-                text_logs.insert(END, logs)
-                task_count = task_count + 1
-                label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
-                continue
-            else:
+        for link_list_line in link_list:
+            # 处理用户输入
+            link_type, link_url_and_code = fix_input(link_list_line)
+            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg alice)格式链接
+            if link_type == '/s/':
+                link_url, pass_code = link_url_and_code.split(' ', maxsplit=1)
+                pass_code = pass_code.strip()
                 # 执行检查链接有效性
                 check_links_reason = check_links(link_url, pass_code)
                 if check_links_reason == 1:
                     logs = '链接失效:' + link_url_and_code + '\n'
                     text_logs.insert(END, logs)
                 else:
-                    [shareid, oper_id, fs_id] = check_links_reason
                     # 执行转存文件
-                    transfer_files_reason = transfer_files(shareid, oper_id, fs_id, dir_name)
+                    transfer_files_reason = transfer_files(check_links_reason, dir_name)
                     if transfer_files_reason == 12:
                         logs = '转存失败,目录中已有同名文件存在:' + link_url_and_code + '\n'
                         text_logs.insert(END, logs)
@@ -228,6 +245,37 @@ def main():
                     else:
                         logs = '转存失败,错误代码(' + str(transfer_files_reason) + '):' + link_url_and_code + '\n'
                         text_logs.insert(END, logs)
+            # 处理(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)格式链接
+            elif link_type == 'rapid':
+                rapid_data = link_url_and_code.split('#')
+                transfer_files_reason = transfer_files_rapid(rapid_data, dir_name, bdstoken)
+                if transfer_files_reason == 0:
+                    logs = '转存成功:' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+                elif transfer_files_reason == -8:
+                    logs = '转存失败,目录中已有同名文件存在:' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+                elif transfer_files_reason == 404:
+                    logs = '转存失败,秒传无效:' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+                elif transfer_files_reason == 2:
+                    logs = '转存失败,非法路径:' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+                elif transfer_files_reason == -10:
+                    logs = '转存失败,容量不足:' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+                elif transfer_files_reason == 114514:
+                    logs = '转存失败,接口调用失败:' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+                else:
+                    logs = '转存失败,错误代码(' + str(transfer_files_reason) + '):' + link_url_and_code + '\n'
+                    text_logs.insert(END, logs)
+            elif link_type == 'unknown':
+                logs = '不支持链接:' + link_url_and_code + '\n'
+                text_logs.insert(END, logs)
+                task_count = task_count + 1
+                label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
+                continue
             task_count = task_count + 1
             label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
     except Exception as e:
