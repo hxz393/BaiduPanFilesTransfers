@@ -111,7 +111,7 @@ def create_dir(dir_name, bdstoken):
 
 # 检测链接种类
 def fix_input(link_list_line):
-    if link_list_line.find('https://pan.baidu.com/s/') > 0:
+    if link_list_line.find('https://pan.baidu.com/s/') >= 0:
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
         link_type = 'rapid'
@@ -240,7 +240,7 @@ def main():
             link_type = fix_input(url_code)
             # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg alice)格式链接
             if link_type == '/s/':
-                url_code = url_code.replace('提取：', '')
+                url_code = url_code.replace('提取：', '').strip()
                 link_url, pass_code = url_code.split(' ', maxsplit=1)
                 pass_code = pass_code.strip()[:4]
                 # 执行检查链接有效性
