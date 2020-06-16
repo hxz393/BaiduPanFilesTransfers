@@ -5,3 +5,4 @@ build
 dist
 .idea
 test.py
+/test.py
