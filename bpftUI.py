@@ -12,8 +12,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.0
-更新时间: 2020.6.16
+版本: 1.1
+更新时间: 2020.6.19
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -28,7 +28,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.0 by Alice & Asu")
+root.wm_title("度盘转存 1.1 by Alice & Asu")
 root.wm_geometry('350x426+240+240')
 root.wm_attributes("-alpha", 0.98)
 root.resizable(width=False, height=False)
@@ -123,23 +123,29 @@ def fix_input(link_list_line):
 
 
 # 验证链接函数
-@retry(stop_max_attempt_number=5, wait_fixed=2000)
+@retry(stop_max_attempt_number=20, wait_fixed=2000)
 def check_links(link_url, pass_code, bdstoken):
     check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
     post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-    response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=15, allow_redirects=False)
+    response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False)
     if response_post.json()['errno'] == 0:
-        check_ok = 1
         bdclnd = response_post.json()['randsk']
         request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
     else:
-        check_ok = 0
+        return response_post.json()['errno']
+
     response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
-    oper_id_list = re.findall('"uk":(\\d+?),"', response)
+    user_id_list = re.findall('"uk":(\\d+?),"', response)
     fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
-    return [shareid_list[0], oper_id_list[0],
-            fs_id_list[0]] if check_ok and shareid_list and oper_id_list and fs_id_list else 1
+    if not shareid_list:
+        return 1
+    elif not user_id_list:
+        return 2
+    elif not fs_id_list:
+        return 3
+    else:
+        return [shareid_list[0], user_id_list[0], fs_id_list[0]]
 
 
 # 转存文件函数
@@ -238,15 +244,27 @@ def main():
         for url_code in link_list:
             # 处理用户输入
             link_type = fix_input(url_code)
-            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg alice)格式链接
+            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg lice)格式链接
             if link_type == '/s/':
-                url_code = url_code.replace('提取：', '').strip()
+                url_code = url_code.replace('提取：', '').replace('提取码：', '').strip()
                 link_url, pass_code = url_code.split(' ', maxsplit=1)
                 pass_code = pass_code.strip()[:4]
                 # 执行检查链接有效性
                 check_links_reason = check_links(link_url, pass_code, bdstoken)
                 if check_links_reason == 1:
-                    logs = '链接失效:' + url_code + '\n'
+                    logs = '链接失效,没获取到shareid:' + url_code + '\n'
+                    text_logs.insert(END, logs)
+                elif check_links_reason == 2:
+                    logs = '链接失效,没获取到user_id:' + url_code + '\n'
+                    text_logs.insert(END, logs)
+                elif check_links_reason == 3:
+                    logs = '链接失效,文件已经被删除:' + url_code + '\n'
+                    text_logs.insert(END, logs)
+                elif check_links_reason == -12:
+                    logs = '提取码错误:' + url_code + '\n'
+                    text_logs.insert(END, logs)
+                elif check_links_reason == -62:
+                    logs = '错误尝试次数过多,请稍后再试:' + url_code + '\n'
                     text_logs.insert(END, logs)
                 else:
                     # 执行转存文件
