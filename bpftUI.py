@@ -125,6 +125,7 @@ def fix_input(link_list_line):
 # 验证链接函数
 @retry(stop_max_attempt_number=20, wait_fixed=2000)
 def check_links(link_url, pass_code, bdstoken):
+    # 验证提取码
     check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
     post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
     response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False)
@@ -133,7 +134,7 @@ def check_links(link_url, pass_code, bdstoken):
         request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
     else:
         return response_post.json()['errno']
-
+    # 获取文件信息
     response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
     user_id_list = re.findall('"uk":(\\d+?),"', response)
