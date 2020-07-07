@@ -12,8 +12,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.1
-更新时间: 2020.6.19
+版本: 1.2
+更新时间: 2020.7.7
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -28,7 +28,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.1 by Alice & Asu")
+root.wm_title("度盘转存 1.2 by Alice & Asu")
 root.wm_geometry('350x426+240+240')
 root.wm_attributes("-alpha", 0.98)
 root.resizable(width=False, height=False)
@@ -61,7 +61,7 @@ text_logs.configure(yscrollcommand=scrollbar_logs.set)
 # 定义按钮和状态标签
 bottom_run = Button(root, text='4.点击运行', command=lambda: thread_it(main, ), width=10, height=1, relief='solid')
 bottom_run.grid(row=7, pady=6, sticky=W, padx=4)
-label_state = Label(root, text='点击访问项目GitHub主页', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
+label_state = Label(root, text='检查更新', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
 label_state.grid(row=7, sticky=E, padx=4)
 label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers", new=0))
 
@@ -87,7 +87,7 @@ s = requests.session()
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_bdstoken():
     url = 'https://pan.baidu.com/disk/home'
-    response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True)
+    response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
     bdstoken_list = re.findall('"bdstoken":"(\\S+?)",', response.text)
     return bdstoken_list[0] if bdstoken_list else 1
 
@@ -96,7 +96,7 @@ def get_bdstoken():
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_dir_list(bdstoken):
     url = 'https://pan.baidu.com/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken=' + bdstoken
-    response = s.get(url=url, headers=request_header, timeout=15, allow_redirects=False)
+    response = s.get(url=url, headers=request_header, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
 
 
@@ -105,12 +105,12 @@ def get_dir_list(bdstoken):
 def create_dir(dir_name, bdstoken):
     url = 'https://pan.baidu.com/api/create?a=commit&bdstoken=' + bdstoken
     post_data = {'path': dir_name, 'isdir': '1', 'block_list': '[]', }
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False)
+    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno']
 
 
 # 检测链接种类
-def fix_input(link_list_line):
+def check_link_type(link_list_line):
     if link_list_line.find('https://pan.baidu.com/s/') >= 0:
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
@@ -125,16 +125,19 @@ def fix_input(link_list_line):
 # 验证链接函数
 @retry(stop_max_attempt_number=20, wait_fixed=2000)
 def check_links(link_url, pass_code, bdstoken):
+    # 验证提取码
     check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
     post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-    response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False)
+    response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False,
+                           verify=False)
     if response_post.json()['errno'] == 0:
         bdclnd = response_post.json()['randsk']
         request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
     else:
         return response_post.json()['errno']
-
-    response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True).content.decode("utf-8")
+    # 获取文件信息
+    response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True,
+                     verify=False).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
     user_id_list = re.findall('"uk":(\\d+?),"', response)
     fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
@@ -154,7 +157,7 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
     url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[
         1] + '&bdstoken=' + bdstoken
     post_data = {'fsidlist': '[' + check_links_reason[2] + ']', 'path': '/' + dir_name, }
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False)
+    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno']
 
 
@@ -162,9 +165,9 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
-    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1],
-                 'content-length': rapid_data[2]}
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False)
+    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
+                 'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
+    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno']
 
 
@@ -210,24 +213,21 @@ def main():
         # 检查cookie输入是否正确
         if cookie[:8] != 'BAIDUID=':
             label_state_change(state='error')
-            logs = '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n'
-            text_logs.insert(END, logs)
+            text_logs.insert(END, '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n')
             sys.exit()
 
         # 执行获取bdstoken
         bdstoken = get_bdstoken()
         if bdstoken == 1:
             label_state_change(state='error')
-            logs = '没获取到bdstoken,请检查cookie和网络后重试.' + '\n'
-            text_logs.insert(END, logs)
+            text_logs.insert(END, '没获取到bdstoken,请检查cookie和网络后重试.' + '\n')
             sys.exit()
 
         # 执行获取目录列表
         dir_list_json = get_dir_list(bdstoken)
         if type(dir_list_json) != list:
             label_state_change(state='error')
-            logs = '没获取到网盘目录列表,请检查cookie和网络后重试.' + '\n'
-            text_logs.insert(END, logs)
+            text_logs.insert(END, '没获取到网盘目录列表,请检查cookie和网络后重试.' + '\n')
             sys.exit()
 
         # 执行新建目录
@@ -236,48 +236,38 @@ def main():
             create_dir_reason = create_dir(dir_name, bdstoken)
             if create_dir_reason != 0:
                 label_state_change(state='error')
-                logs = '文件夹名带非法字符,请改正文件夹名称后重试.' + '\n'
-                text_logs.insert(END, logs)
+                text_logs.insert(END, '文件夹名带非法字符,请改正文件夹名称后重试.' + '\n')
                 sys.exit()
 
         # 执行转存
         for url_code in link_list:
             # 处理用户输入
-            link_type = fix_input(url_code)
+            link_type = check_link_type(url_code)
             # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg lice)格式链接
             if link_type == '/s/':
-                url_code = url_code.replace('提取：', '').replace('提取码：', '').strip()
-                link_url, pass_code = url_code.split(' ', maxsplit=1)
+                link_url, pass_code = re.sub(r'提取码*[：:](.*)', r'\1', url_code).split(' ', maxsplit=1)
                 pass_code = pass_code.strip()[:4]
                 # 执行检查链接有效性
                 check_links_reason = check_links(link_url, pass_code, bdstoken)
                 if check_links_reason == 1:
-                    logs = '链接失效,没获取到shareid:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '链接失效,没获取到shareid:' + url_code + '\n')
                 elif check_links_reason == 2:
-                    logs = '链接失效,没获取到user_id:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '链接失效,没获取到user_id:' + url_code + '\n')
                 elif check_links_reason == 3:
-                    logs = '链接失效,文件已经被删除:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '链接失效,文件已经被删除:' + url_code + '\n')
                 elif check_links_reason == -12:
-                    logs = '提取码错误:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '提取码错误:' + url_code + '\n')
                 elif check_links_reason == -62:
-                    logs = '错误尝试次数过多,请稍后再试:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '错误尝试次数过多,请稍后再试:' + url_code + '\n')
                 else:
                     # 执行转存文件
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
                     if transfer_files_reason == 12:
-                        logs = '转存失败,目录中已有同名文件存在:' + url_code + '\n'
-                        text_logs.insert(END, logs)
+                        text_logs.insert(END, '转存失败,目录中已有同名文件存在:' + url_code + '\n')
                     elif transfer_files_reason == 0:
-                        logs = '转存成功:' + url_code + '\n'
-                        text_logs.insert(END, logs)
+                        text_logs.insert(END, '转存成功:' + url_code + '\n')
                     else:
-                        logs = '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n'
-                        text_logs.insert(END, logs)
+                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n')
             # 处理秒传格式链接
             elif link_type == 'rapid':
                 # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
@@ -303,29 +293,21 @@ def main():
                     rapid_data = []
                 transfer_files_reason = transfer_files_rapid(rapid_data, dir_name, bdstoken)
                 if transfer_files_reason == 0:
-                    logs = '转存成功:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存成功:' + url_code + '\n')
                 elif transfer_files_reason == -8:
-                    logs = '转存失败,目录中已有同名文件存在:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存失败,目录中已有同名文件存在:' + url_code + '\n')
                 elif transfer_files_reason == 404:
-                    logs = '转存失败,秒传无效:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存失败,秒传无效:' + url_code + '\n')
                 elif transfer_files_reason == 2:
-                    logs = '转存失败,非法路径:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存失败,非法路径:' + url_code + '\n')
                 elif transfer_files_reason == -10:
-                    logs = '转存失败,容量不足:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存失败,容量不足:' + url_code + '\n')
                 elif transfer_files_reason == 114514:
-                    logs = '转存失败,接口调用失败:' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存失败,接口调用失败:' + url_code + '\n')
                 else:
-                    logs = '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n'
-                    text_logs.insert(END, logs)
+                    text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n')
             elif link_type == 'unknown':
-                logs = '不支持链接:' + url_code + '\n'
-                text_logs.insert(END, logs)
+                text_logs.insert(END, '不支持链接:' + url_code + '\n')
                 task_count = task_count + 1
                 label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
                 continue
