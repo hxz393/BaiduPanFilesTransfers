@@ -168,7 +168,7 @@ def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0],
                  'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
-    if response.json()['errno']== 404:
+    if response.json()['errno'] == 404:
         post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
                      'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
         response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
