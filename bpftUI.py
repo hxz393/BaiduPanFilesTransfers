@@ -12,8 +12,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.2
-更新时间: 2020.7.7
+版本: 1.3
+更新时间: 2020.7.26
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -28,7 +28,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.2 by Alice & Asu")
+root.wm_title("度盘转存 1.3 by Alice & Asu")
 root.wm_geometry('350x426+240+240')
 root.wm_attributes("-alpha", 0.98)
 root.resizable(width=False, height=False)
@@ -115,7 +115,7 @@ def check_link_type(link_list_line):
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
         link_type = 'rapid'
-    elif link_list_line.count('#') == 3:
+    elif link_list_line.count('#') > 2:
         link_type = 'rapid'
     else:
         link_type = 'unknown'
@@ -165,9 +165,14 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
-    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
-                 'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
+    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0],
+                 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
+    if response.json()['errno'] == 404:
+        post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
+                     'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
+        response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
+                          verify=False)
     return response.json()['errno']
 
 
@@ -271,12 +276,12 @@ def main():
             # 处理秒传格式链接
             elif link_type == 'rapid':
                 # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
-                if url_code.count('#') == 3:
-                    rapid_data = url_code.split('#')
+                if url_code.count('#') > 2:
+                    rapid_data = url_code.split('#', maxsplit=3)
                 # 处理游侠 v1标准(bdlink=)
                 elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
                     rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode(
-                        "utf-8").strip().split('#')
+                        "utf-8").strip().split('#', maxsplit=3)
                 # 处理PanDL标准(bdpan://)
                 elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
                     bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode(
@@ -300,6 +305,8 @@ def main():
                     text_logs.insert(END, '转存失败,秒传无效:' + url_code + '\n')
                 elif transfer_files_reason == 2:
                     text_logs.insert(END, '转存失败,非法路径:' + url_code + '\n')
+                elif transfer_files_reason == -7:
+                    text_logs.insert(END, '转存失败,非法文件名:' + url_code + '\n')
                 elif transfer_files_reason == -10:
                     text_logs.insert(END, '转存失败,容量不足:' + url_code + '\n')
                 elif transfer_files_reason == 114514:
