@@ -305,6 +305,8 @@ def main():
                     text_logs.insert(END, '转存失败,秒传无效:' + url_code + '\n')
                 elif transfer_files_reason == 2:
                     text_logs.insert(END, '转存失败,非法路径:' + url_code + '\n')
+                elif transfer_files_reason == -7:
+                    text_logs.insert(END, '转存失败,非法文件名:' + url_code + '\n')
                 elif transfer_files_reason == -10:
                     text_logs.insert(END, '转存失败,容量不足:' + url_code + '\n')
                 elif transfer_files_reason == 114514:
