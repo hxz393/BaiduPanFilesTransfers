@@ -115,7 +115,7 @@ def check_link_type(link_list_line):
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
         link_type = 'rapid'
-    elif link_list_line.count('#') == 3:
+    elif link_list_line.count('#') > 3:
         link_type = 'rapid'
     else:
         link_type = 'unknown'
@@ -276,12 +276,12 @@ def main():
             # 处理秒传格式链接
             elif link_type == 'rapid':
                 # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
-                if url_code.count('#') == 3:
-                    rapid_data = url_code.split('#')
+                if url_code.count('#') > 3:
+                    rapid_data = url_code.split('#', maxsplit=3)
                 # 处理游侠 v1标准(bdlink=)
                 elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
                     rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode(
-                        "utf-8").strip().split('#')
+                        "utf-8").strip().split('#', maxsplit=3)
                 # 处理PanDL标准(bdpan://)
                 elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
                     bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode(
