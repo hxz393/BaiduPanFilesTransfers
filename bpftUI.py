@@ -12,8 +12,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.2
-更新时间: 2020.7.7
+版本: 1.3
+更新时间: 2020.7.26
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -28,7 +28,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.2 by Alice & Asu")
+root.wm_title("度盘转存 1.3 by Alice & Asu")
 root.wm_geometry('350x426+240+240')
 root.wm_attributes("-alpha", 0.98)
 root.resizable(width=False, height=False)
@@ -165,9 +165,14 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
-    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
-                 'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
+    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0],
+                 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
+    if response.json()['errno']== 404:
+        post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
+                     'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
+        response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
+                          verify=False)
     return response.json()['errno']
 
 
