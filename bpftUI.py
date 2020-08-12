@@ -12,8 +12,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.3
-更新时间: 2020.7.26
+版本: 1.4
+更新时间: 2020.8.12
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -28,7 +28,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.3 by Alice & Asu")
+root.wm_title("度盘转存 1.4 by Alice & Asu")
 root.wm_geometry('350x426+240+240')
 root.wm_attributes("-alpha", 0.98)
 root.resizable(width=False, height=False)
@@ -88,7 +88,9 @@ s = requests.session()
 def get_bdstoken():
     url = 'https://pan.baidu.com/disk/home'
     response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
-    bdstoken_list = re.findall('"bdstoken":"(\\S+?)",', response.text)
+    print(response.text)
+    bdstoken_list = re.findall("'bdstoken',\\s'(\\S+?)'", response.text)
+    print(bdstoken_list)
     return bdstoken_list[0] if bdstoken_list else 1
 
 
