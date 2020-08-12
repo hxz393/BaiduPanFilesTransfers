@@ -88,9 +88,7 @@ s = requests.session()
 def get_bdstoken():
     url = 'https://pan.baidu.com/disk/home'
     response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
-    print(response.text)
     bdstoken_list = re.findall("'bdstoken',\\s'(\\S+?)'", response.text)
-    print(bdstoken_list)
     return bdstoken_list[0] if bdstoken_list else 1
 
 
