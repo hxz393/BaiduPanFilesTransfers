@@ -3,6 +3,7 @@ import tempfile
 import threading
 import webbrowser
 import zlib
+import os
 # noinspection PyCompatibility
 from tkinter import *
 
@@ -12,8 +13,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.4
-更新时间: 2020.8.12
+版本: 1.5
+更新时间: 2020.8.15
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -28,8 +29,8 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.4 by Alice & Asu")
-root.wm_geometry('350x426+240+240')
+root.wm_title("度盘转存 1.5 by Alice & Asu")
+root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.98)
 root.resizable(width=False, height=False)
 
@@ -37,32 +38,42 @@ root.resizable(width=False, height=False)
 Label(root, text='1.下面填入百度Cookies,以BAIDUID=开头到结尾,不带引号').grid(row=1, column=0, sticky=W)
 entry_cookie = Entry(root, width=48, )
 entry_cookie.grid(row=2, column=0, sticky=W, padx=4)
-Label(root, text='2.下面填入文件保存位置(默认根目录),不能包含<,>,|,*,?,,/').grid(row=3, column=0, sticky=W)
+Label(root, text='2.下面填入浏览器User-Agent').grid(row=3, column=0, sticky=W)
+entry_ua = Entry(root, width=48, )
+entry_ua.grid(row=4, column=0, sticky=W, padx=4)
+Label(root, text='3.下面填入文件保存位置(默认根目录),不能包含<,>,|,*,?,,/').grid(row=5, column=0, sticky=W)
 entry_folder_name = Entry(root, width=48, )
-entry_folder_name.grid(row=4, column=0, sticky=W, padx=4)
-Label(root, text='3.下面粘贴链接,每行一个,支持秒传.格式为:链接 提取码').grid(row=5, sticky=W)
+entry_folder_name.grid(row=6, column=0, sticky=W, padx=4)
+Label(root, text='4.下面粘贴链接,每行一个,支持秒传.格式为:链接 提取码').grid(row=7, sticky=W)
+
+# 读取配置
+if os.path.exists('config.ini'):
+    with open('config.ini') as config_read:
+        [config_cookie, config_user_agent] = config_read.readlines()
+    entry_cookie.insert(0, config_cookie)
+    entry_ua.insert(0, config_user_agent)
 
 # 链接输入框
 text_links = Text(root, width=48, height=10, wrap=NONE)
-text_links.grid(row=6, column=0, sticky=W, padx=4, )
+text_links.grid(row=8, column=0, sticky=W, padx=4, )
 scrollbar_links = Scrollbar(root, width=5)
-scrollbar_links.grid(row=6, column=0, sticky=S + N + E, )
+scrollbar_links.grid(row=8, column=0, sticky=S + N + E, )
 scrollbar_links.configure(command=text_links.yview)
 text_links.configure(yscrollcommand=scrollbar_links.set)
 
 # 日志输出框
 text_logs = Text(root, width=48, height=10, wrap=NONE)
-text_logs.grid(row=8, column=0, sticky=W, padx=4, )
+text_logs.grid(row=10, column=0, sticky=W, padx=4, )
 scrollbar_logs = Scrollbar(root, width=5)
-scrollbar_logs.grid(row=8, column=0, sticky=S + N + E, )
+scrollbar_logs.grid(row=10, column=0, sticky=S + N + E, )
 scrollbar_logs.configure(command=text_logs.yview)
 text_logs.configure(yscrollcommand=scrollbar_logs.set)
 
 # 定义按钮和状态标签
 bottom_run = Button(root, text='4.点击运行', command=lambda: thread_it(main, ), width=10, height=1, relief='solid')
-bottom_run.grid(row=7, pady=6, sticky=W, padx=4)
+bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
 label_state = Label(root, text='检查更新', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
-label_state.grid(row=7, sticky=E, padx=4)
+label_state.grid(row=9, sticky=E, padx=4)
 label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers", new=0))
 
 # 公共请求头
@@ -70,7 +81,6 @@ request_header = {
     'Host': 'pan.baidu.com',
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
     'Sec-Fetch-Dest': 'document',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     'Sec-Fetch-Site': 'same-site',
@@ -148,7 +158,7 @@ def check_links(link_url, pass_code, bdstoken):
     elif not fs_id_list:
         return 3
     else:
-        return [shareid_list[0], user_id_list[0], fs_id_list[0]]
+        return [shareid_list[0], user_id_list[0], fs_id_list]
 
 
 # 转存文件函数
@@ -156,8 +166,10 @@ def check_links(link_url, pass_code, bdstoken):
 def transfer_files(check_links_reason, dir_name, bdstoken):
     url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[
         1] + '&bdstoken=' + bdstoken
-    post_data = {'fsidlist': '[' + check_links_reason[2] + ']', 'path': '/' + dir_name, }
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
+    fs_id = ','.join(i for i in check_links_reason[2])
+    post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
+    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
+                      verify=False)
     return response.json()['errno']
 
 
@@ -200,10 +212,14 @@ def thread_it(func, *args):
 def main():
     # 获取和初始化数据
     text_logs.delete(1.0, END)
-    cookie = "".join(entry_cookie.get().split())
-    request_header['Cookie'] = cookie
     dir_name = entry_folder_name.get()
     dir_name = "".join(dir_name.split())
+    cookie = "".join(entry_cookie.get().split())
+    request_header['Cookie'] = cookie
+    user_agent = entry_ua.get()
+    request_header['User-Agent'] = user_agent
+    with open('config.ini', 'w') as config_write:
+        config_write.write(cookie + '\n' + user_agent)
     text_input = text_links.get(1.0, END).split('\n')
     link_list = [link for link in text_input if link]
     link_list = [link + ' ' for link in link_list]
