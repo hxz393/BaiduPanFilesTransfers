@@ -331,9 +331,6 @@ def main():
                     text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n')
             elif link_type == 'unknown':
                 text_logs.insert(END, '不支持链接:' + url_code + '\n')
-                task_count = task_count + 1
-                label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
-                continue
             task_count = task_count + 1
             label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
     except Exception as e:
