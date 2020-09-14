@@ -267,7 +267,7 @@ def main():
             link_type = check_link_type(url_code)
             # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg lice)格式链接
             if link_type == '/s/':
-                link_url, pass_code = re.sub(r'提取码*[：:](.*)', r'\1', url_code).split(' ', maxsplit=1)
+                link_url, pass_code = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
                 pass_code = pass_code.strip()[:4]
                 # 执行检查链接有效性
                 check_links_reason = check_links(link_url, pass_code, bdstoken)
