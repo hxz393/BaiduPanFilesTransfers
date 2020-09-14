@@ -13,8 +13,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.5
-更新时间: 2020.8.15
+版本: 1.6
+更新时间: 2020.9.14
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -29,9 +29,9 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.5 by Alice & Asu")
+root.wm_title("度盘转存 1.6 by Alice & Asu")
 root.wm_geometry('350x473+240+240')
-root.wm_attributes("-alpha", 0.98)
+root.wm_attributes("-alpha", 0.9)
 root.resizable(width=False, height=False)
 
 # 定义标签和文本框
@@ -45,13 +45,6 @@ Label(root, text='3.下面填入文件保存位置(默认根目录),不能包含
 entry_folder_name = Entry(root, width=48, )
 entry_folder_name.grid(row=6, column=0, sticky=W, padx=4)
 Label(root, text='4.下面粘贴链接,每行一个,支持秒传.格式为:链接 提取码').grid(row=7, sticky=W)
-
-# 读取配置
-if os.path.exists('config.ini'):
-    with open('config.ini') as config_read:
-        [config_cookie, config_user_agent] = config_read.readlines()
-    entry_cookie.insert(0, config_cookie)
-    entry_ua.insert(0, config_user_agent)
 
 # 链接输入框
 text_links = Text(root, width=48, height=10, wrap=NONE)
@@ -75,6 +68,13 @@ bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
 label_state = Label(root, text='检查更新', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
 label_state.grid(row=9, sticky=E, padx=4)
 label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers", new=0))
+
+# 读取配置
+if os.path.exists('config.ini'):
+    with open('config.ini') as config_read:
+        [config_cookie, config_user_agent] = config_read.readlines()
+    entry_cookie.insert(0, config_cookie)
+    entry_ua.insert(0, config_user_agent)
 
 # 公共请求头
 request_header = {
@@ -136,15 +136,16 @@ def check_link_type(link_list_line):
 @retry(stop_max_attempt_number=20, wait_fixed=2000)
 def check_links(link_url, pass_code, bdstoken):
     # 验证提取码
-    check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
-    post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-    response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False,
-                           verify=False)
-    if response_post.json()['errno'] == 0:
-        bdclnd = response_post.json()['randsk']
-        request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
-    else:
-        return response_post.json()['errno']
+    if pass_code:
+        check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
+        post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
+        response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False,
+                               verify=False)
+        if response_post.json()['errno'] == 0:
+            bdclnd = response_post.json()['randsk']
+            request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+        else:
+            return response_post.json()['errno']
     # 获取文件信息
     response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True,
                      verify=False).content.decode("utf-8")
