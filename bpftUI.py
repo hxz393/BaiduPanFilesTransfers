@@ -293,7 +293,7 @@ def main():
                     elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
                         text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
                     else:
-                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n')
+                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
             # 处理秒传格式链接
             elif link_type == 'rapid':
                 # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
