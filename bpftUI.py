@@ -13,8 +13,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.6
-更新时间: 2020.9.14
+版本: 1.7
+更新时间: 2020.10.17
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -29,7 +29,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.6 by Alice & Asu")
+root.wm_title("度盘转存 1.7 by Alice & Asu")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.9)
 root.resizable(width=False, height=False)
@@ -141,9 +141,12 @@ def check_links(link_url, pass_code, bdstoken):
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
         response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False,
                                verify=False)
+        # 在cookie中加入bdclnd参数
         if response_post.json()['errno'] == 0:
             bdclnd = response_post.json()['randsk']
-            request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+            # 下面方法已失效
+            # request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+            request_header['Cookie'] += '; BDCLND=' + bdclnd
         else:
             return response_post.json()['errno']
     # 获取文件信息
@@ -171,7 +174,7 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
     post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
                       verify=False)
-    return response.json()['errno']
+    return response.json()
 
 
 # 转存秒传链接函数
@@ -213,8 +216,7 @@ def thread_it(func, *args):
 def main():
     # 获取和初始化数据
     text_logs.delete(1.0, END)
-    dir_name = entry_folder_name.get()
-    dir_name = "".join(dir_name.split())
+    dir_name = "".join(entry_folder_name.get().split())
     cookie = "".join(entry_cookie.get().split())
     request_header['Cookie'] = cookie
     user_agent = entry_ua.get()
@@ -284,10 +286,12 @@ def main():
                 else:
                     # 执行转存文件
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
-                    if transfer_files_reason == 12:
-                        text_logs.insert(END, '转存失败,目录中已有同名文件存在:' + url_code + '\n')
-                    elif transfer_files_reason == 0:
+                    if transfer_files_reason['errno'] == 0:
                         text_logs.insert(END, '转存成功:' + url_code + '\n')
+                    elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == -30:
+                        text_logs.insert(END, '转存失败,目录中已有同名文件存在:' + url_code + '\n')
+                    elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
+                        text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
                     else:
                         text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n')
             # 处理秒传格式链接
