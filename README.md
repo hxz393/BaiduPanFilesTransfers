@@ -5,7 +5,7 @@ BaiduPanFilesTransfers
 百度网盘批量转存工具,基于Python 3.8+Tkinter
 详细介绍使用请访问:[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
-![1.5版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.5.jpg)
+![1.7版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.7.jpg)
 
 **1.获取Cookie和User-Agent:**
 
@@ -68,6 +68,10 @@ pyinstaller -F -w -i bpftUI.ico bpftUI.py
 ``
 _ _ _
 #### 更新日志
+**2020.11.01 更新版本 1.7**
+
+更进百度更新,修改链接验证逻辑
+
 **2020.9.14 更新版本 1.6**
 
 修复无验证码分享文件夹链接转存提示'验证码错误'问题

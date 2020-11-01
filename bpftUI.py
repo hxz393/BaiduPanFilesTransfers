@@ -14,7 +14,7 @@ from retrying import retry
 '''
 软件名: BaiduPanFilesTransfers
 版本: 1.7
-更新时间: 2020.10.17
+更新时间: 2020.11.01
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -144,9 +144,8 @@ def check_links(link_url, pass_code, bdstoken):
         # 在cookie中加入bdclnd参数
         if response_post.json()['errno'] == 0:
             bdclnd = response_post.json()['randsk']
-            # 下面方法已失效
-            # request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
-            request_header['Cookie'] += '; BDCLND=' + bdclnd
+            request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+            # request_header['Cookie'] += '; BDCLND=' + bdclnd
         else:
             return response_post.json()['errno']
     # 获取文件信息
@@ -277,13 +276,13 @@ def main():
                     text_logs.insert(END, '链接失效,没获取到shareid:' + url_code + '\n')
                 elif check_links_reason == 2:
                     text_logs.insert(END, '链接失效,没获取到user_id:' + url_code + '\n')
-                elif check_links_reason == 3:
-                    text_logs.insert(END, '链接失效,文件已经被删除:' + url_code + '\n')
+                elif check_links_reason == 3 or check_links_reason == -9:
+                    text_logs.insert(END, '链接失效,文件已经被删除或取消分享:' + url_code + '\n')
                 elif check_links_reason == -12:
                     text_logs.insert(END, '提取码错误:' + url_code + '\n')
                 elif check_links_reason == -62:
                     text_logs.insert(END, '错误尝试次数过多,请稍后再试:' + url_code + '\n')
-                else:
+                elif isinstance(check_links_reason, list):
                     # 执行转存文件
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
                     if transfer_files_reason['errno'] == 0:
@@ -293,7 +292,10 @@ def main():
                     elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
                         text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
                     else:
-                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
+                        text_logs.insert(END,
+                                         '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
+                else:
+                    text_logs.insert(END, '访问链接返回错误代码(' + str(check_links_reason) + '):' + url_code + '\n')
             # 处理秒传格式链接
             elif link_type == 'rapid':
                 # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
