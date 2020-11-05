@@ -32,9 +32,21 @@ def retry(*dargs, **dkw):
     # support both @retry and @retry() as valid syntax
     if len(dargs) == 1 and callable(dargs[0]):
         def wrap_simple(f):
+            """
+            Wrap a function to wrap_simple.
+
+            Args:
+                f: (array): write your description
+            """
 
             @six.wraps(f)
             def wrapped_f(*args, **kw):
+                """
+                Wraps a function callable.
+
+                Args:
+                    kw: (todo): write your description
+                """
                 return Retrying().call(f, *args, **kw)
 
             return wrapped_f
@@ -43,9 +55,21 @@ def retry(*dargs, **dkw):
 
     else:
         def wrap(f):
+            """
+            Wrap a function as a callable.
+
+            Args:
+                f: (todo): write your description
+            """
 
             @six.wraps(f)
             def wrapped_f(*args, **kw):
+                """
+                Wraps a function with a function callable call.
+
+                Args:
+                    kw: (todo): write your description
+                """
                 return Retrying(*dargs, **dkw).call(f, *args, **kw)
 
             return wrapped_f
@@ -69,6 +93,29 @@ class Retrying(object):
                  stop_func=None,
                  wait_func=None,
                  wait_jitter_max=None):
+        """
+        Initialize a new job.
+
+        Args:
+            self: (todo): write your description
+            stop: (int): write your description
+            wait: (bool): write your description
+            stop_max_attempt_number: (int): write your description
+            stop_max_delay: (int): write your description
+            wait_fixed: (bool): write your description
+            wait_random_min: (int): write your description
+            wait_random_max: (int): write your description
+            wait_incrementing_start: (bool): write your description
+            wait_incrementing_increment: (str): write your description
+            wait_exponential_multiplier: (todo): write your description
+            wait_exponential_max: (int): write your description
+            retry_on_exception: (todo): write your description
+            retry_on_result: (bool): write your description
+            wrap_exception: (bool): write your description
+            stop_func: (todo): write your description
+            wait_func: (todo): write your description
+            wait_jitter_max: (int): write your description
+        """
 
         self._stop_max_attempt_number = 5 if stop_max_attempt_number is None else stop_max_attempt_number
         self._stop_max_delay = 100 if stop_max_delay is None else stop_max_delay
@@ -169,6 +216,14 @@ class Retrying(object):
         return result
 
     def exponential_sleep(self, previous_attempt_number, delay_since_first_attempt_ms):
+        """
+        Perform a number of seconds.
+
+        Args:
+            self: (todo): write your description
+            previous_attempt_number: (int): write your description
+            delay_since_first_attempt_ms: (str): write your description
+        """
         exp = 2 ** previous_attempt_number
         result = self._wait_exponential_multiplier * exp
         if result > self._wait_exponential_max:
@@ -178,12 +233,33 @@ class Retrying(object):
         return result
 
     def never_reject(self, result):
+        """
+        Recompute the result.
+
+        Args:
+            self: (todo): write your description
+            result: (todo): write your description
+        """
         return False
 
     def always_reject(self, result):
+        """
+        Return true if the result is not ready.
+
+        Args:
+            self: (todo): write your description
+            result: (todo): write your description
+        """
         return True
 
     def should_reject(self, attempt):
+        """
+        Determine if the call should be ready.
+
+        Args:
+            self: (todo): write your description
+            attempt: (todo): write your description
+        """
         reject = False
         if attempt.has_exception:
             reject |= self._retry_on_exception(attempt.value[1])
@@ -193,6 +269,13 @@ class Retrying(object):
         return reject
 
     def call(self, fn, *args, **kwargs):
+        """
+        Call the given function until the given arguments.
+
+        Args:
+            self: (todo): write your description
+            fn: (array): write your description
+        """
         start_time = int(round(time.time() * 1000))
         attempt_number = 1
         while True:
@@ -230,6 +313,15 @@ class Attempt(object):
     """
 
     def __init__(self, value, attempt_number, has_exception):
+        """
+        Initialize a new attempt.
+
+        Args:
+            self: (todo): write your description
+            value: (todo): write your description
+            attempt_number: (int): write your description
+            has_exception: (todo): write your description
+        """
         self.value = value
         self.attempt_number = attempt_number
         self.has_exception = has_exception
@@ -249,6 +341,12 @@ class Attempt(object):
             return self.value
 
     def __repr__(self):
+        """
+        Return a representation of this object representation.
+
+        Args:
+            self: (todo): write your description
+        """
         if self.has_exception:
             return "Attempts: {0}, Error:\n{1}".format(self.attempt_number, "".join(traceback.format_tb(self.value[2])))
         else:
@@ -261,7 +359,20 @@ class RetryError(Exception):
     """
 
     def __init__(self, last_attempt):
+        """
+        Initialize the connection.
+
+        Args:
+            self: (todo): write your description
+            last_attempt: (todo): write your description
+        """
         self.last_attempt = last_attempt
 
     def __str__(self):
+        """
+        Return a string representation of the file.
+
+        Args:
+            self: (todo): write your description
+        """
         return "RetryError[{0}]".format(self.last_attempt)

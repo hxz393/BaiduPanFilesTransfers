@@ -8,9 +8,24 @@ try:
 except ImportError:  # Platform-specific: No threads available
     class RLock:
         def __enter__(self):
+            """
+            Enter the callable
+
+            Args:
+                self: (todo): write your description
+            """
             pass
 
         def __exit__(self, exc_type, exc_value, traceback):
+            """
+            Exit the given exception.
+
+            Args:
+                self: (todo): write your description
+                exc_type: (todo): write your description
+                exc_value: (todo): write your description
+                traceback: (todo): write your description
+            """
             pass
 
 
@@ -42,6 +57,14 @@ class RecentlyUsedContainer(MutableMapping):
     ContainerCls = OrderedDict
 
     def __init__(self, maxsize=10, dispose_func=None):
+        """
+        Initialize the container.
+
+        Args:
+            self: (todo): write your description
+            maxsize: (int): write your description
+            dispose_func: (todo): write your description
+        """
         self._maxsize = maxsize
         self.dispose_func = dispose_func
 
@@ -49,6 +72,13 @@ class RecentlyUsedContainer(MutableMapping):
         self.lock = RLock()
 
     def __getitem__(self, key):
+        """
+        Get an item from the cache.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+        """
         # Re-insert the item, moving it to the end of the eviction line.
         with self.lock:
             item = self._container.pop(key)
@@ -56,6 +86,14 @@ class RecentlyUsedContainer(MutableMapping):
             return item
 
     def __setitem__(self, key, value):
+        """
+        Sets the value for the key.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+            value: (str): write your description
+        """
         evicted_value = _Null
         with self.lock:
             # Possibly evict the existing value of 'key'
@@ -71,6 +109,13 @@ class RecentlyUsedContainer(MutableMapping):
             self.dispose_func(evicted_value)
 
     def __delitem__(self, key):
+        """
+        Remove an item from the cache.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+        """
         with self.lock:
             value = self._container.pop(key)
 
@@ -78,13 +123,31 @@ class RecentlyUsedContainer(MutableMapping):
             self.dispose_func(value)
 
     def __len__(self):
+        """
+        Returns the length of the lock.
+
+        Args:
+            self: (todo): write your description
+        """
         with self.lock:
             return len(self._container)
 
     def __iter__(self):
+        """
+        Returns an iterator over the iterator.
+
+        Args:
+            self: (todo): write your description
+        """
         raise NotImplementedError('Iteration over this class is unlikely to be threadsafe.')
 
     def clear(self):
+        """
+        Clears all currently loaded configurations.
+
+        Args:
+            self: (todo): write your description
+        """
         with self.lock:
             # Copy pointers to all values, then wipe the mapping
             values = list(itervalues(self._container))
@@ -95,6 +158,12 @@ class RecentlyUsedContainer(MutableMapping):
                 self.dispose_func(value)
 
     def keys(self):
+        """
+        Returns a list of the list.
+
+        Args:
+            self: (todo): write your description
+        """
         with self.lock:
             return list(iterkeys(self._container))
 
@@ -134,6 +203,13 @@ class HTTPHeaderDict(MutableMapping):
     """
 
     def __init__(self, headers=None, **kwargs):
+        """
+        Sets the headers.
+
+        Args:
+            self: (todo): write your description
+            headers: (list): write your description
+        """
         super(HTTPHeaderDict, self).__init__()
         self._container = OrderedDict()
         if headers is not None:
@@ -145,20 +221,56 @@ class HTTPHeaderDict(MutableMapping):
             self.extend(kwargs)
 
     def __setitem__(self, key, val):
+        """
+        Sets the value for a given key.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+            val: (int): write your description
+        """
         self._container[key.lower()] = [key, val]
         return self._container[key.lower()]
 
     def __getitem__(self, key):
+        """
+        Returns the value of a given key.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+        """
         val = self._container[key.lower()]
         return ', '.join(val[1:])
 
     def __delitem__(self, key):
+        """
+        Remove an item from the cache.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+        """
         del self._container[key.lower()]
 
     def __contains__(self, key):
+        """
+        Returns true if the given key contains a given key.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+        """
         return key.lower() in self._container
 
     def __eq__(self, other):
+        """
+        Merge two dicts.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         if not isinstance(other, Mapping) and not hasattr(other, 'keys'):
             return False
         if not isinstance(other, type(self)):
@@ -167,6 +279,13 @@ class HTTPHeaderDict(MutableMapping):
                 dict((k.lower(), v) for k, v in other.itermerged()))
 
     def __ne__(self, other):
+        """
+        Determine if self and false otherwise.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         return not self.__eq__(other)
 
     if not PY3:  # Python 2
@@ -176,9 +295,21 @@ class HTTPHeaderDict(MutableMapping):
     __marker = object()
 
     def __len__(self):
+        """
+        Returns the number of bytes in bytes.
+
+        Args:
+            self: (todo): write your description
+        """
         return len(self._container)
 
     def __iter__(self):
+        """
+        Iterate over all values.
+
+        Args:
+            self: (todo): write your description
+        """
         # Only provide the originally cased names
         for vals in self._container.values():
             yield vals[0]
@@ -201,6 +332,13 @@ class HTTPHeaderDict(MutableMapping):
             return value
 
     def discard(self, key):
+        """
+        Remove the key from the cache.
+
+        Args:
+            self: (todo): write your description
+            key: (str): write your description
+        """
         try:
             del self[key]
         except KeyError:
@@ -269,9 +407,22 @@ class HTTPHeaderDict(MutableMapping):
     get_all = getlist
 
     def __repr__(self):
+        """
+        Return a repr representation of this object.
+
+        Args:
+            self: (todo): write your description
+        """
         return "%s(%s)" % (type(self).__name__, dict(self.itermerged()))
 
     def _copy_from(self, other):
+        """
+        Copies the contents of the contents of other.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         for key in other:
             val = other.getlist(key)
             if isinstance(val, list):
@@ -280,6 +431,12 @@ class HTTPHeaderDict(MutableMapping):
             self._container[key.lower()] = [key] + val
 
     def copy(self):
+        """
+        Returns a copy of this record.
+
+        Args:
+            self: (todo): write your description
+        """
         clone = type(self)()
         clone._copy_from(self)
         return clone
@@ -298,6 +455,12 @@ class HTTPHeaderDict(MutableMapping):
             yield val[0], ', '.join(val[1:])
 
     def items(self):
+        """
+        Return an iterator over all items.
+
+        Args:
+            self: (dict): write your description
+        """
         return list(self.iteritems())
 
     @classmethod

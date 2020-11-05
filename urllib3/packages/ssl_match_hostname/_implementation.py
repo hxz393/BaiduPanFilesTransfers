@@ -76,6 +76,12 @@ def _dnsname_match(dn, hostname, max_wildcards=1):
 
 
 def _to_unicode(obj):
+    """
+    Return a unicode object to a unicode string.
+
+    Args:
+        obj: (todo): write your description
+    """
     if isinstance(obj, str) and sys.version_info < (3,):
         obj = unicode(obj, encoding='ascii', errors='strict')
     return obj

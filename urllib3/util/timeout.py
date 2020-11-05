@@ -91,12 +91,29 @@ class Timeout(object):
     DEFAULT_TIMEOUT = _GLOBAL_DEFAULT_TIMEOUT
 
     def __init__(self, total=None, connect=_Default, read=_Default):
+        """
+        Initialize the connection.
+
+        Args:
+            self: (todo): write your description
+            total: (int): write your description
+            connect: (bool): write your description
+            _Default: (bool): write your description
+            read: (todo): write your description
+            _Default: (bool): write your description
+        """
         self._connect = self._validate_timeout(connect, 'connect')
         self._read = self._validate_timeout(read, 'read')
         self.total = self._validate_timeout(total, 'total')
         self._start_connect = None
 
     def __str__(self):
+        """
+        Returns the string representation of the object.
+
+        Args:
+            self: (todo): write your description
+        """
         return '%s(connect=%r, read=%r, total=%r)' % (
             type(self).__name__, self._connect, self._read, self.total)
 

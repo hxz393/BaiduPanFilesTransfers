@@ -294,6 +294,13 @@ class WrappedSocket(object):
     collector of PyPy.
     """
     def __init__(self, socket):
+        """
+        Initialize the socket.
+
+        Args:
+            self: (todo): write your description
+            socket: (todo): write your description
+        """
         self.socket = socket
         self.context = None
         self._makefile_refs = 0
@@ -498,22 +505,49 @@ class WrappedSocket(object):
                     break
 
     def fileno(self):
+        """
+        Return the number of the socket.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.socket.fileno()
 
     # Copy-pasted from Python 3.5 source code
     def _decref_socketios(self):
+        """
+        Called when the socket is closed.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._makefile_refs > 0:
             self._makefile_refs -= 1
         if self._closed:
             self.close()
 
     def recv(self, bufsiz):
+        """
+        Receive a message from the socket.
+
+        Args:
+            self: (todo): write your description
+            bufsiz: (int): write your description
+        """
         buffer = ctypes.create_string_buffer(bufsiz)
         bytes_read = self.recv_into(buffer, bufsiz)
         data = buffer[:bytes_read]
         return data
 
     def recv_into(self, buffer, nbytes=None):
+        """
+        Receive data from the socket.
+
+        Args:
+            self: (todo): write your description
+            buffer: (todo): write your description
+            nbytes: (str): write your description
+        """
         # Read short on EOF.
         if self._closed:
             return 0
@@ -554,12 +588,32 @@ class WrappedSocket(object):
         return processed_bytes.value
 
     def settimeout(self, timeout):
+        """
+        Sets the timeout.
+
+        Args:
+            self: (todo): write your description
+            timeout: (float): write your description
+        """
         self._timeout = timeout
 
     def gettimeout(self):
+        """
+        Get the timeout of the request.
+
+        Args:
+            self: (todo): write your description
+        """
         return self._timeout
 
     def send(self, data):
+        """
+        Send data to the socket.
+
+        Args:
+            self: (todo): write your description
+            data: (todo): write your description
+        """
         processed_bytes = ctypes.c_size_t(0)
 
         with self._raise_on_error():
@@ -577,16 +631,35 @@ class WrappedSocket(object):
         return processed_bytes.value
 
     def sendall(self, data):
+        """
+        Sends data to the given data.
+
+        Args:
+            self: (todo): write your description
+            data: (todo): write your description
+        """
         total_sent = 0
         while total_sent < len(data):
             sent = self.send(data[total_sent:total_sent + SSL_WRITE_BLOCKSIZE])
             total_sent += sent
 
     def shutdown(self):
+        """
+        Shutdown the stream.
+
+        Args:
+            self: (todo): write your description
+        """
         with self._raise_on_error():
             Security.SSLClose(self.context)
 
     def close(self):
+        """
+        Closes the connection.
+
+        Args:
+            self: (todo): write your description
+        """
         # TODO: should I do clean shutdown here? Do I have to?
         if self._makefile_refs < 1:
             self._closed = True
@@ -606,6 +679,13 @@ class WrappedSocket(object):
             self._makefile_refs -= 1
 
     def getpeercert(self, binary_form=False):
+        """
+        Gets the binary string of the binary.
+
+        Args:
+            self: (todo): write your description
+            binary_form: (str): write your description
+        """
         # Urgh, annoying.
         #
         # Here's how we do this:
@@ -668,9 +748,21 @@ class WrappedSocket(object):
         return der_bytes
 
     def _reuse(self):
+        """
+        Reuse the file_refs
+
+        Args:
+            self: (todo): write your description
+        """
         self._makefile_refs += 1
 
     def _drop(self):
+        """
+        Drop the file.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._makefile_refs < 1:
             self.close()
         else:
@@ -679,10 +771,26 @@ class WrappedSocket(object):
 
 if _fileobject:  # Platform-specific: Python 2
     def makefile(self, mode, bufsize=-1):
+        """
+        Return a file object.
+
+        Args:
+            self: (todo): write your description
+            mode: (str): write your description
+            bufsize: (int): write your description
+        """
         self._makefile_refs += 1
         return _fileobject(self, mode, bufsize, close=True)
 else:  # Platform-specific: Python 3
     def makefile(self, mode="r", buffering=None, *args, **kwargs):
+        """
+        Make a file - like object.
+
+        Args:
+            self: (todo): write your description
+            mode: (str): write your description
+            buffering: (str): write your description
+        """
         # We disable buffering with SecureTransport because it conflicts with
         # the buffering that ST does internally (see issue #1153 for more).
         buffering = 0
@@ -698,6 +806,13 @@ class SecureTransportContext(object):
     SecureTransport.
     """
     def __init__(self, protocol):
+        """
+        Initialize the client.
+
+        Args:
+            self: (todo): write your description
+            protocol: (todo): write your description
+        """
         self._min_version, self._max_version = _protocol_to_min_max[protocol]
         self._options = 0
         self._verify = False
@@ -724,6 +839,12 @@ class SecureTransportContext(object):
 
     @property
     def options(self):
+        """
+        Returns the options.
+
+        Args:
+            self: (todo): write your description
+        """
         # TODO: Well, crap.
         #
         # So this is the bit of the code that is the most likely to cause us
@@ -734,18 +855,44 @@ class SecureTransportContext(object):
 
     @options.setter
     def options(self, value):
+        """
+        Set the options.
+
+        Args:
+            self: (todo): write your description
+            value: (str): write your description
+        """
         # TODO: Update in line with above.
         self._options = value
 
     @property
     def verify_mode(self):
+        """
+        Checks if the ssl mode.
+
+        Args:
+            self: (todo): write your description
+        """
         return ssl.CERT_REQUIRED if self._verify else ssl.CERT_NONE
 
     @verify_mode.setter
     def verify_mode(self, value):
+        """
+        Checks if the given value is valid.
+
+        Args:
+            self: (todo): write your description
+            value: (str): write your description
+        """
         self._verify = True if value == ssl.CERT_REQUIRED else False
 
     def set_default_verify_paths(self):
+        """
+        Sets the default paths.
+
+        Args:
+            self: (todo): write your description
+        """
         # So, this has to do something a bit weird. Specifically, what it does
         # is nothing.
         #
@@ -758,9 +905,22 @@ class SecureTransportContext(object):
         pass
 
     def load_default_certs(self):
+        """
+        Load the default certificate certificates.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.set_default_verify_paths()
 
     def set_ciphers(self, ciphers):
+        """
+        Set the ciphers.
+
+        Args:
+            self: (todo): write your description
+            ciphers: (todo): write your description
+        """
         # For now, we just require the default cipher string.
         if ciphers != util.ssl_.DEFAULT_CIPHERS:
             raise ValueError(
@@ -768,6 +928,15 @@ class SecureTransportContext(object):
             )
 
     def load_verify_locations(self, cafile=None, capath=None, cadata=None):
+        """
+        Load the locations of the bundle.
+
+        Args:
+            self: (todo): write your description
+            cafile: (str): write your description
+            capath: (str): write your description
+            cadata: (str): write your description
+        """
         # OK, we only really support cadata and cafile.
         if capath is not None:
             raise ValueError(
@@ -777,6 +946,15 @@ class SecureTransportContext(object):
         self._trust_bundle = cafile or cadata
 
     def load_cert_chain(self, certfile, keyfile=None, password=None):
+        """
+        Load a certificate from the given keyfile.
+
+        Args:
+            self: (todo): write your description
+            certfile: (str): write your description
+            keyfile: (str): write your description
+            password: (str): write your description
+        """
         self._client_cert = certfile
         self._client_key = keyfile
         self._client_cert_passphrase = password
@@ -784,6 +962,17 @@ class SecureTransportContext(object):
     def wrap_socket(self, sock, server_side=False,
                     do_handshake_on_connect=True, suppress_ragged_eofs=True,
                     server_hostname=None):
+        """
+        Wrap a socket.
+
+        Args:
+            self: (todo): write your description
+            sock: (todo): write your description
+            server_side: (str): write your description
+            do_handshake_on_connect: (bool): write your description
+            suppress_ragged_eofs: (bool): write your description
+            server_hostname: (str): write your description
+        """
         # So, what do we do here? Firstly, we assert some properties. This is a
         # stripped down shim, so there is some functionality we don't support.
         # See PEP 543 for the real deal.

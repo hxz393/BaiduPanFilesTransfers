@@ -37,6 +37,12 @@ class NTLMConnectionPool(HTTPSConnectionPool):
         self.pw = pw
 
     def _new_conn(self):
+        """
+        Establish a connection.
+
+        Args:
+            self: (todo): write your description
+        """
         # Performs the NTLM handshake that secures the connection. The socket
         # must be kept open while requests are performed.
         self.num_connections += 1
@@ -102,6 +108,19 @@ class NTLMConnectionPool(HTTPSConnectionPool):
 
     def urlopen(self, method, url, body=None, headers=None, retries=3,
                 redirect=True, assert_same_host=True):
+        """
+        Return a : class for http method.
+
+        Args:
+            self: (todo): write your description
+            method: (str): write your description
+            url: (str): write your description
+            body: (str): write your description
+            headers: (dict): write your description
+            retries: (int): write your description
+            redirect: (str): write your description
+            assert_same_host: (str): write your description
+        """
         if headers is None:
             headers = {}
         headers['Connection'] = 'Keep-Alive'

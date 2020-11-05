@@ -62,6 +62,14 @@ class ConnectionPool(object):
     QueueCls = LifoQueue
 
     def __init__(self, host, port=None):
+        """
+        Initialize the connection.
+
+        Args:
+            self: (todo): write your description
+            host: (str): write your description
+            port: (int): write your description
+        """
         if not host:
             raise LocationValueError("No host specified.")
 
@@ -70,13 +78,34 @@ class ConnectionPool(object):
         self.port = port
 
     def __str__(self):
+        """
+        Return the host string.
+
+        Args:
+            self: (todo): write your description
+        """
         return '%s(host=%r, port=%r)' % (type(self).__name__,
                                          self.host, self.port)
 
     def __enter__(self):
+        """
+        Decor function.
+
+        Args:
+            self: (todo): write your description
+        """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Close the given exception is raised.
+
+        Args:
+            self: (todo): write your description
+            exc_type: (todo): write your description
+            exc_val: (todo): write your description
+            exc_tb: (todo): write your description
+        """
         self.close()
         # Return False to re-raise any potential exceptions
         return False
@@ -161,6 +190,25 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                  headers=None, retries=None,
                  _proxy=None, _proxy_headers=None,
                  **conn_kw):
+        """
+        Initialize a connection.
+
+        Args:
+            self: (todo): write your description
+            host: (str): write your description
+            port: (int): write your description
+            strict: (bool): write your description
+            timeout: (int): write your description
+            Timeout: (int): write your description
+            DEFAULT_TIMEOUT: (int): write your description
+            maxsize: (int): write your description
+            block: (todo): write your description
+            headers: (list): write your description
+            retries: (todo): write your description
+            _proxy: (str): write your description
+            _proxy_headers: (str): write your description
+            conn_kw: (str): write your description
+        """
         ConnectionPool.__init__(self, host, port)
         RequestMethods.__init__(self, headers)
 
@@ -284,6 +332,13 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
         pass
 
     def _prepare_proxy(self, conn):
+        """
+        Prepare a proxy proxy.
+
+        Args:
+            self: (todo): write your description
+            conn: (todo): write your description
+        """
         # Nothing to do for HTTP connections.
         pass
 
@@ -402,6 +457,13 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
         return httplib_response
 
     def _absolute_url(self, path):
+        """
+        Return the absolute url.
+
+        Args:
+            self: (todo): write your description
+            path: (str): write your description
+        """
         return Url(scheme=self.scheme, host=self.host, port=self.port, path=path).url
 
     def close(self):
@@ -667,6 +729,12 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                                 **response_kw)
 
         def drain_and_release_conn(response):
+            """
+            Receives a connection from the connection.
+
+            Args:
+                response: (todo): write your description
+            """
             try:
                 # discard any remaining response body, the connection will be
                 # released back to the pool once the entire response is read
@@ -762,6 +830,33 @@ class HTTPSConnectionPool(HTTPConnectionPool):
                  ca_certs=None, ssl_version=None,
                  assert_hostname=None, assert_fingerprint=None,
                  ca_cert_dir=None, **conn_kw):
+        """
+        Initialize a connection to the given host.
+
+        Args:
+            self: (todo): write your description
+            host: (str): write your description
+            port: (int): write your description
+            strict: (bool): write your description
+            timeout: (int): write your description
+            Timeout: (int): write your description
+            DEFAULT_TIMEOUT: (int): write your description
+            maxsize: (int): write your description
+            block: (todo): write your description
+            headers: (list): write your description
+            retries: (todo): write your description
+            _proxy: (str): write your description
+            _proxy_headers: (str): write your description
+            key_file: (str): write your description
+            cert_file: (str): write your description
+            cert_reqs: (str): write your description
+            ca_certs: (str): write your description
+            ssl_version: (str): write your description
+            assert_hostname: (str): write your description
+            assert_fingerprint: (todo): write your description
+            ca_cert_dir: (str): write your description
+            conn_kw: (str): write your description
+        """
 
         HTTPConnectionPool.__init__(self, host, port, strict, timeout, maxsize,
                                     block, headers, retries, _proxy, _proxy_headers,

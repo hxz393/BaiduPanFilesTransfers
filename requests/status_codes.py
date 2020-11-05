@@ -102,6 +102,11 @@ _codes = {
 codes = LookupDict(name='status_codes')
 
 def _init():
+    """
+    Initialize the docstring.
+
+    Args:
+    """
     for code, titles in _codes.items():
         for title in titles:
             setattr(codes, title, code)
@@ -109,6 +114,12 @@ def _init():
                 setattr(codes, title.upper(), code)
 
     def doc(code):
+        """
+        Generate docstring for the docstring.
+
+        Args:
+            code: (str): write your description
+        """
         names = ', '.join('``%s``' % n for n in _codes[code])
         return '* %d: %s' % (code, names)
 

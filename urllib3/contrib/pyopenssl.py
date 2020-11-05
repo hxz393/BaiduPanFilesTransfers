@@ -255,6 +255,15 @@ class WrappedSocket(object):
     '''
 
     def __init__(self, connection, socket, suppress_ragged_eofs=True):
+        """
+        Initialize the socket.
+
+        Args:
+            self: (todo): write your description
+            connection: (todo): write your description
+            socket: (todo): write your description
+            suppress_ragged_eofs: (todo): write your description
+        """
         self.connection = connection
         self.socket = socket
         self.suppress_ragged_eofs = suppress_ragged_eofs
@@ -262,16 +271,34 @@ class WrappedSocket(object):
         self._closed = False
 
     def fileno(self):
+        """
+        Return the number of the socket.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.socket.fileno()
 
     # Copy-pasted from Python 3.5 source code
     def _decref_socketios(self):
+        """
+        Called when the socket is closed.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._makefile_refs > 0:
             self._makefile_refs -= 1
         if self._closed:
             self.close()
 
     def recv(self, *args, **kwargs):
+        """
+        Receive data from the socket.
+
+        Args:
+            self: (todo): write your description
+        """
         try:
             data = self.connection.recv(*args, **kwargs)
         except OpenSSL.SSL.SysCallError as e:
@@ -293,6 +320,12 @@ class WrappedSocket(object):
             return data
 
     def recv_into(self, *args, **kwargs):
+        """
+        Receive data from the socket.
+
+        Args:
+            self: (todo): write your description
+        """
         try:
             return self.connection.recv_into(*args, **kwargs)
         except OpenSSL.SSL.SysCallError as e:
@@ -312,9 +345,23 @@ class WrappedSocket(object):
                 return self.recv_into(*args, **kwargs)
 
     def settimeout(self, timeout):
+        """
+        Set the timeout for the socket.
+
+        Args:
+            self: (todo): write your description
+            timeout: (float): write your description
+        """
         return self.socket.settimeout(timeout)
 
     def _send_until_done(self, data):
+        """
+        Send data to the socket.
+
+        Args:
+            self: (todo): write your description
+            data: (array): write your description
+        """
         while True:
             try:
                 return self.connection.send(data)
@@ -326,16 +373,35 @@ class WrappedSocket(object):
                 raise SocketError(str(e))
 
     def sendall(self, data):
+        """
+        Send some data : param data : : return :
+
+        Args:
+            self: (todo): write your description
+            data: (todo): write your description
+        """
         total_sent = 0
         while total_sent < len(data):
             sent = self._send_until_done(data[total_sent:total_sent + SSL_WRITE_BLOCKSIZE])
             total_sent += sent
 
     def shutdown(self):
+        """
+        Shutdown the connection.
+
+        Args:
+            self: (todo): write your description
+        """
         # FIXME rethrow compatible exceptions should we ever use this
         self.connection.shutdown()
 
     def close(self):
+        """
+        Closes the connection.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._makefile_refs < 1:
             try:
                 self._closed = True
@@ -346,6 +412,13 @@ class WrappedSocket(object):
             self._makefile_refs -= 1
 
     def getpeercert(self, binary_form=False):
+        """
+        Returns the certificate for this certificate
+
+        Args:
+            self: (todo): write your description
+            binary_form: (str): write your description
+        """
         x509 = self.connection.get_peer_certificate()
 
         if not x509:
@@ -364,9 +437,21 @@ class WrappedSocket(object):
         }
 
     def _reuse(self):
+        """
+        Reuse the file_refs
+
+        Args:
+            self: (todo): write your description
+        """
         self._makefile_refs += 1
 
     def _drop(self):
+        """
+        Drop the file.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._makefile_refs < 1:
             self.close()
         else:
@@ -375,6 +460,14 @@ class WrappedSocket(object):
 
 if _fileobject:  # Platform-specific: Python 2
     def makefile(self, mode, bufsize=-1):
+        """
+        Return a file object.
+
+        Args:
+            self: (todo): write your description
+            mode: (str): write your description
+            bufsize: (int): write your description
+        """
         self._makefile_refs += 1
         return _fileobject(self, mode, bufsize, close=True)
 else:  # Platform-specific: Python 3
@@ -390,6 +483,13 @@ class PyOpenSSLContext(object):
     to calls into PyOpenSSL.
     """
     def __init__(self, protocol):
+        """
+        Initialize the protocol.
+
+        Args:
+            self: (todo): write your description
+            protocol: (todo): write your description
+        """
         self.protocol = _openssl_versions[protocol]
         self._ctx = OpenSSL.SSL.Context(self.protocol)
         self._options = 0
@@ -397,33 +497,81 @@ class PyOpenSSLContext(object):
 
     @property
     def options(self):
+        """
+        Returns the options.
+
+        Args:
+            self: (todo): write your description
+        """
         return self._options
 
     @options.setter
     def options(self, value):
+        """
+        Set options.
+
+        Args:
+            self: (todo): write your description
+            value: (str): write your description
+        """
         self._options = value
         self._ctx.set_options(value)
 
     @property
     def verify_mode(self):
+        """
+        Verifies ifsl_to_mode.
+
+        Args:
+            self: (todo): write your description
+        """
         return _openssl_to_stdlib_verify[self._ctx.get_verify_mode()]
 
     @verify_mode.setter
     def verify_mode(self, value):
+        """
+        Verify that the mode ::
+
+        Args:
+            self: (todo): write your description
+            value: (str): write your description
+        """
         self._ctx.set_verify(
             _stdlib_to_openssl_verify[value],
             _verify_callback
         )
 
     def set_default_verify_paths(self):
+        """
+        Sets the default paths.
+
+        Args:
+            self: (todo): write your description
+        """
         self._ctx.set_default_verify_paths()
 
     def set_ciphers(self, ciphers):
+        """
+        Set the ciphers.
+
+        Args:
+            self: (todo): write your description
+            ciphers: (todo): write your description
+        """
         if isinstance(ciphers, six.text_type):
             ciphers = ciphers.encode('utf-8')
         self._ctx.set_cipher_list(ciphers)
 
     def load_verify_locations(self, cafile=None, capath=None, cadata=None):
+        """
+        Load locations from a list of caf files.
+
+        Args:
+            self: (todo): write your description
+            cafile: (str): write your description
+            capath: (str): write your description
+            cadata: (str): write your description
+        """
         if cafile is not None:
             cafile = cafile.encode('utf-8')
         if capath is not None:
@@ -433,6 +581,15 @@ class PyOpenSSLContext(object):
             self._ctx.load_verify_locations(BytesIO(cadata))
 
     def load_cert_chain(self, certfile, keyfile=None, password=None):
+        """
+        Load the certificate chain.
+
+        Args:
+            self: (todo): write your description
+            certfile: (str): write your description
+            keyfile: (str): write your description
+            password: (str): write your description
+        """
         self._ctx.use_certificate_chain_file(certfile)
         if password is not None:
             self._ctx.set_passwd_cb(lambda max_length, prompt_twice, userdata: password)
@@ -441,6 +598,17 @@ class PyOpenSSLContext(object):
     def wrap_socket(self, sock, server_side=False,
                     do_handshake_on_connect=True, suppress_ragged_eofs=True,
                     server_hostname=None):
+        """
+        Wrap a socket.
+
+        Args:
+            self: (todo): write your description
+            sock: (todo): write your description
+            server_side: (str): write your description
+            do_handshake_on_connect: (bool): write your description
+            suppress_ragged_eofs: (bool): write your description
+            server_hostname: (str): write your description
+        """
         cnx = OpenSSL.SSL.Connection(self._ctx, sock)
 
         if isinstance(server_hostname, six.text_type):  # Platform-specific: Python 3
@@ -466,4 +634,14 @@ class PyOpenSSLContext(object):
 
 
 def _verify_callback(cnx, x509, err_no, err_depth, return_code):
+    """
+    Verify a callback.
+
+    Args:
+        cnx: (todo): write your description
+        x509: (todo): write your description
+        err_no: (int): write your description
+        err_depth: (int): write your description
+        return_code: (bool): write your description
+    """
     return err_no == 0

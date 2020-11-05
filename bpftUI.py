@@ -96,6 +96,11 @@ s = requests.session()
 # 获取bdstoken函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_bdstoken():
+    """
+    Returns a list of all bstoken.
+
+    Args:
+    """
     url = 'https://pan.baidu.com/disk/home'
     response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
     bdstoken_list = re.findall("'bdstoken',\\s'(\\S+?)'", response.text)
@@ -105,6 +110,12 @@ def get_bdstoken():
 # 获取目录列表函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_dir_list(bdstoken):
+    """
+    Retrieve a list of directories in a directory.
+
+    Args:
+        bdstoken: (str): write your description
+    """
     url = 'https://pan.baidu.com/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken=' + bdstoken
     response = s.get(url=url, headers=request_header, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
@@ -113,6 +124,13 @@ def get_dir_list(bdstoken):
 # 新建目录函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def create_dir(dir_name, bdstoken):
+    """
+    Create a directory.
+
+    Args:
+        dir_name: (str): write your description
+        bdstoken: (str): write your description
+    """
     url = 'https://pan.baidu.com/api/create?a=commit&bdstoken=' + bdstoken
     post_data = {'path': dir_name, 'isdir': '1', 'block_list': '[]', }
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
@@ -121,6 +139,12 @@ def create_dir(dir_name, bdstoken):
 
 # 检测链接种类
 def check_link_type(link_list_line):
+    """
+    Check if link_list_line_line_line_line is valid
+
+    Args:
+        link_list_line: (list): write your description
+    """
     if link_list_line.find('https://pan.baidu.com/s/') >= 0:
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
@@ -135,6 +159,14 @@ def check_link_type(link_list_line):
 # 验证链接函数
 @retry(stop_max_attempt_number=20, wait_fixed=2000)
 def check_links(link_url, pass_code, bdstoken):
+    """
+    Check link links.
+
+    Args:
+        link_url: (str): write your description
+        pass_code: (str): write your description
+        bdstoken: (str): write your description
+    """
     # 验证提取码
     if pass_code:
         check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
@@ -167,6 +199,14 @@ def check_links(link_url, pass_code, bdstoken):
 # 转存文件函数
 @retry(stop_max_attempt_number=200, wait_fixed=2000)
 def transfer_files(check_links_reason, dir_name, bdstoken):
+    """
+    Transfer link files.
+
+    Args:
+        check_links_reason: (bool): write your description
+        dir_name: (str): write your description
+        bdstoken: (str): write your description
+    """
     url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[
         1] + '&bdstoken=' + bdstoken
     fs_id = ','.join(i for i in check_links_reason[2])
@@ -179,6 +219,14 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 # 转存秒传链接函数
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
+    """
+    Transfer files to a new recording
+
+    Args:
+        rapid_data: (todo): write your description
+        dir_name: (str): write your description
+        bdstoken: (str): write your description
+    """
     url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
     post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0],
                  'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
@@ -193,6 +241,14 @@ def transfer_files_rapid(rapid_data, dir_name, bdstoken):
 
 # 状态标签变化函数
 def label_state_change(state, task_count=0, task_total_count=0):
+    """
+    Label a task label
+
+    Args:
+        state: (todo): write your description
+        task_count: (int): write your description
+        task_total_count: (int): write your description
+    """
     label_state.unbind("<Button-1>")
     label_state['font'] = ('Arial', 9)
     label_state['foreground'] = "#000000"
@@ -205,6 +261,12 @@ def label_state_change(state, task_count=0, task_total_count=0):
 
 # 多线程
 def thread_it(func, *args):
+    """
+    Run a new thread.
+
+    Args:
+        func: (todo): write your description
+    """
     t = threading.Thread(target=func, args=args)
     t.setDaemon(True)
     t.start()
@@ -213,6 +275,11 @@ def thread_it(func, *args):
 
 # 主程序
 def main():
+    """
+    Main entry point.
+
+    Args:
+    """
     # 获取和初始化数据
     text_logs.delete(1.0, END)
     dir_name = "".join(entry_folder_name.get().split())

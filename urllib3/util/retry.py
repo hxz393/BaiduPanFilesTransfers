@@ -161,6 +161,27 @@ class Retry(object):
                  backoff_factor=0, raise_on_redirect=True, raise_on_status=True,
                  history=None, respect_retry_after_header=True,
                  remove_headers_on_redirect=DEFAULT_REDIRECT_HEADERS_BLACKLIST):
+        """
+        Initialize the http request.
+
+        Args:
+            self: (todo): write your description
+            total: (int): write your description
+            connect: (bool): write your description
+            read: (todo): write your description
+            redirect: (str): write your description
+            status: (str): write your description
+            method_whitelist: (str): write your description
+            DEFAULT_METHOD_WHITELIST: (str): write your description
+            status_forcelist: (str): write your description
+            backoff_factor: (float): write your description
+            raise_on_redirect: (bool): write your description
+            raise_on_status: (bool): write your description
+            history: (list): write your description
+            respect_retry_after_header: (todo): write your description
+            remove_headers_on_redirect: (bool): write your description
+            DEFAULT_REDIRECT_HEADERS_BLACKLIST: (todo): write your description
+        """
 
         self.total = total
         self.connect = connect
@@ -183,6 +204,13 @@ class Retry(object):
             h.lower() for h in remove_headers_on_redirect])
 
     def new(self, **kw):
+        """
+        Make a new http request.
+
+        Args:
+            self: (todo): write your description
+            kw: (todo): write your description
+        """
         params = dict(
             total=self.total,
             connect=self.connect, read=self.read, redirect=self.redirect, status=self.status,
@@ -226,6 +254,13 @@ class Retry(object):
         return min(self.BACKOFF_MAX, backoff_value)
 
     def parse_retry_after(self, retry_after):
+        """
+        Parse the given retry time.
+
+        Args:
+            self: (todo): write your description
+            retry_after: (bool): write your description
+        """
         # Whitespace: https://tools.ietf.org/html/rfc7230#section-3.2.4
         if re.match(r"^\s*[0-9]+\s*$", retry_after):
             seconds = int(retry_after)
@@ -252,6 +287,13 @@ class Retry(object):
         return self.parse_retry_after(retry_after)
 
     def sleep_for_retry(self, response=None):
+        """
+        Returns true if retry is retry.
+
+        Args:
+            self: (todo): write your description
+            response: (todo): write your description
+        """
         retry_after = self.get_retry_after(response)
         if retry_after:
             time.sleep(retry_after)
@@ -260,6 +302,12 @@ class Retry(object):
         return False
 
     def _sleep_backoff(self):
+        """
+        Sleep the number of the backend.
+
+        Args:
+            self: (todo): write your description
+        """
         backoff = self.get_backoff_time()
         if backoff <= 0:
             return
@@ -403,6 +451,12 @@ class Retry(object):
         return new_retry
 
     def __repr__(self):
+        """
+        Return a human - readable representation.
+
+        Args:
+            self: (todo): write your description
+        """
         return ('{cls.__name__}(total={self.total}, connect={self.connect}, '
                 'read={self.read}, redirect={self.redirect}, status={self.status})').format(
                     cls=type(self), self=self)

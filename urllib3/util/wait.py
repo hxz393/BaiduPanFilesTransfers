@@ -39,10 +39,24 @@ class NoWayToWaitForSocketError(Exception):
 if sys.version_info >= (3, 5):
     # Modern Python, that retries syscalls by default
     def _retry_on_intr(fn, timeout):
+        """
+        Decorator for retry.
+
+        Args:
+            fn: (todo): write your description
+            timeout: (float): write your description
+        """
         return fn(timeout)
 else:
     # Old and broken Pythons.
     def _retry_on_intr(fn, timeout):
+        """
+        Retry timeout seconds until timeout seconds.
+
+        Args:
+            fn: (todo): write your description
+            timeout: (float): write your description
+        """
         if timeout is None:
             deadline = float("inf")
         else:
@@ -66,6 +80,15 @@ else:
 
 
 def select_wait_for_socket(sock, read=False, write=False, timeout=None):
+    """
+    Selects a socket from the socket.
+
+    Args:
+        sock: (todo): write your description
+        read: (bool): write your description
+        write: (bool): write your description
+        timeout: (float): write your description
+    """
     if not read and not write:
         raise RuntimeError("must specify at least one of read=True, write=True")
     rcheck = []
@@ -85,6 +108,15 @@ def select_wait_for_socket(sock, read=False, write=False, timeout=None):
 
 
 def poll_wait_for_socket(sock, read=False, write=False, timeout=None):
+    """
+    Poll for socket to be closed.
+
+    Args:
+        sock: (todo): write your description
+        read: (bool): write your description
+        write: (bool): write your description
+        timeout: (float): write your description
+    """
     if not read and not write:
         raise RuntimeError("must specify at least one of read=True, write=True")
     mask = 0
@@ -97,6 +129,12 @@ def poll_wait_for_socket(sock, read=False, write=False, timeout=None):
 
     # For some reason, poll() takes timeout in milliseconds
     def do_poll(t):
+        """
+        Poll the number of - time.
+
+        Args:
+            t: (todo): write your description
+        """
         if t is not None:
             t *= 1000
         return poll_obj.poll(t)
@@ -105,10 +143,20 @@ def poll_wait_for_socket(sock, read=False, write=False, timeout=None):
 
 
 def null_wait_for_socket(*args, **kwargs):
+    """
+    Wait for the socket is closed.
+
+    Args:
+    """
     raise NoWayToWaitForSocketError("no select-equivalent available")
 
 
 def _have_working_poll():
+    """
+    Determine poll is_obj.
+
+    Args:
+    """
     # Apparently some systems have a select.poll that fails as soon as you try
     # to use it, either due to strange configuration or broken monkeypatching
     # from libraries like eventlet/greenlet.
@@ -122,6 +170,11 @@ def _have_working_poll():
 
 
 def wait_for_socket(*args, **kwargs):
+    """
+    Wait for a socket to be closed.
+
+    Args:
+    """
     # We delay choosing which implementation to use until the first time we're
     # called. We could do it at import time, but then we might make the wrong
     # decision if someone goes wild with monkeypatching select.poll after
