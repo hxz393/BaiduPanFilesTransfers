@@ -151,6 +151,15 @@ class PoolManager(RequestMethods):
     proxy = None
 
     def __init__(self, num_pools=10, headers=None, **connection_pool_kw):
+        """
+        Initialize a connection pool.
+
+        Args:
+            self: (todo): write your description
+            num_pools: (int): write your description
+            headers: (list): write your description
+            connection_pool_kw: (todo): write your description
+        """
         RequestMethods.__init__(self, headers)
         self.connection_pool_kw = connection_pool_kw
         self.pools = RecentlyUsedContainer(num_pools,
@@ -162,9 +171,24 @@ class PoolManager(RequestMethods):
         self.key_fn_by_scheme = key_fn_by_scheme.copy()
 
     def __enter__(self):
+        """
+        Decor function.
+
+        Args:
+            self: (todo): write your description
+        """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit the given exception.
+
+        Args:
+            self: (todo): write your description
+            exc_type: (todo): write your description
+            exc_val: (todo): write your description
+            exc_tb: (todo): write your description
+        """
         self.clear()
         # Return False to re-raise any potential exceptions
         return False
@@ -391,6 +415,17 @@ class ProxyManager(PoolManager):
 
     def __init__(self, proxy_url, num_pools=10, headers=None,
                  proxy_headers=None, **connection_pool_kw):
+        """
+        Return a connection pool.
+
+        Args:
+            self: (todo): write your description
+            proxy_url: (str): write your description
+            num_pools: (int): write your description
+            headers: (list): write your description
+            proxy_headers: (str): write your description
+            connection_pool_kw: (todo): write your description
+        """
 
         if isinstance(proxy_url, HTTPConnectionPool):
             proxy_url = '%s://%s:%i' % (proxy_url.scheme, proxy_url.host,
@@ -413,6 +448,16 @@ class ProxyManager(PoolManager):
             num_pools, headers, **connection_pool_kw)
 
     def connection_from_host(self, host, port=None, scheme='http', pool_kwargs=None):
+        """
+        Return a : class :.
+
+        Args:
+            self: (todo): write your description
+            host: (str): write your description
+            port: (int): write your description
+            scheme: (todo): write your description
+            pool_kwargs: (dict): write your description
+        """
         if scheme == "https":
             return super(ProxyManager, self).connection_from_host(
                 host, port, scheme, pool_kwargs=pool_kwargs)
@@ -450,4 +495,11 @@ class ProxyManager(PoolManager):
 
 
 def proxy_from_url(url, **kw):
+    """
+    Creates a proxy from a url.
+
+    Args:
+        url: (str): write your description
+        kw: (todo): write your description
+    """
     return ProxyManager(proxy_url=url, **kw)

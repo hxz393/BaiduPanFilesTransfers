@@ -61,6 +61,16 @@ class RequestField(object):
         An optional dict-like object of headers to initially use for the field.
     """
     def __init__(self, name, data, filename=None, headers=None):
+        """
+        Initialize a new file.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            data: (todo): write your description
+            filename: (str): write your description
+            headers: (list): write your description
+        """
         self._name = name
         self._filename = filename
         self.data = data

@@ -44,6 +44,11 @@ try:
     from urllib3.contrib.socks import SOCKSProxyManager
 except ImportError:
     def SOCKSProxyManager(*args, **kwargs):
+        """
+        Deprecated.
+
+        Args:
+        """
         raise InvalidSchema("Missing dependencies for SOCKS support.")
 
 DEFAULT_POOLBLOCK = False
@@ -56,6 +61,12 @@ class BaseAdapter(object):
     """The Base Transport Adapter"""
 
     def __init__(self):
+        """
+        Initialize the state
+
+        Args:
+            self: (todo): write your description
+        """
         super(BaseAdapter, self).__init__()
 
     def send(self, request, stream=False, timeout=None, verify=True,
@@ -113,6 +124,20 @@ class HTTPAdapter(BaseAdapter):
     def __init__(self, pool_connections=DEFAULT_POOLSIZE,
                  pool_maxsize=DEFAULT_POOLSIZE, max_retries=DEFAULT_RETRIES,
                  pool_block=DEFAULT_POOLBLOCK):
+        """
+        Initialize a connection pool.
+
+        Args:
+            self: (todo): write your description
+            pool_connections: (todo): write your description
+            DEFAULT_POOLSIZE: (int): write your description
+            pool_maxsize: (int): write your description
+            DEFAULT_POOLSIZE: (int): write your description
+            max_retries: (int): write your description
+            DEFAULT_RETRIES: (str): write your description
+            pool_block: (todo): write your description
+            DEFAULT_POOLBLOCK: (str): write your description
+        """
         if max_retries == DEFAULT_RETRIES:
             self.max_retries = Retry(0, read=False)
         else:
@@ -129,9 +154,22 @@ class HTTPAdapter(BaseAdapter):
         self.init_poolmanager(pool_connections, pool_maxsize, block=pool_block)
 
     def __getstate__(self):
+        """
+        Return the state of this object.
+
+        Args:
+            self: (todo): write your description
+        """
         return {attr: getattr(self, attr, None) for attr in self.__attrs__}
 
     def __setstate__(self, state):
+        """
+        Set the connection pool.
+
+        Args:
+            self: (todo): write your description
+            state: (dict): write your description
+        """
         # Can't handle by adding 'proxy_manager' to self.__attrs__ because
         # self.poolmanager uses a lambda function, which isn't pickleable.
         self.proxy_manager = {}

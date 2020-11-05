@@ -39,11 +39,31 @@ class RequestMethods(object):
     _encode_url_methods = {'DELETE', 'GET', 'HEAD', 'OPTIONS'}
 
     def __init__(self, headers=None):
+        """
+        Initialize the request.
+
+        Args:
+            self: (todo): write your description
+            headers: (list): write your description
+        """
         self.headers = headers or {}
 
     def urlopen(self, method, url, body=None, headers=None,
                 encode_multipart=True, multipart_boundary=None,
                 **kw):  # Abstract
+        """
+        Return a url - safe for url.
+
+        Args:
+            self: (todo): write your description
+            method: (str): write your description
+            url: (str): write your description
+            body: (str): write your description
+            headers: (dict): write your description
+            encode_multipart: (bool): write your description
+            multipart_boundary: (str): write your description
+            kw: (todo): write your description
+        """
         raise NotImplementedError("Classes extending RequestMethods must implement "
                                   "their own ``urlopen`` method.")
 

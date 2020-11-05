@@ -25,6 +25,19 @@ class Url(namedtuple('Url', url_attrs)):
 
     def __new__(cls, scheme=None, auth=None, host=None, port=None, path=None,
                 query=None, fragment=None):
+        """
+        Create a new : class :.
+
+        Args:
+            cls: (todo): write your description
+            scheme: (str): write your description
+            auth: (todo): write your description
+            host: (str): write your description
+            port: (int): write your description
+            path: (str): write your description
+            query: (str): write your description
+            fragment: (todo): write your description
+        """
         if path and not path.startswith('/'):
             path = '/' + path
         if scheme:
@@ -97,6 +110,12 @@ class Url(namedtuple('Url', url_attrs)):
         return url
 
     def __str__(self):
+        """
+        Returns the url as a string.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.url
 
 

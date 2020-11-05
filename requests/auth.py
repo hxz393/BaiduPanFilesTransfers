@@ -73,6 +73,13 @@ class AuthBase(object):
     """Base class that all auth implementations derive from"""
 
     def __call__(self, r):
+        """
+        Call the given call.
+
+        Args:
+            self: (todo): write your description
+            r: (array): write your description
+        """
         raise NotImplementedError('Auth hooks must be callable.')
 
 
@@ -80,19 +87,48 @@ class HTTPBasicAuth(AuthBase):
     """Attaches HTTP Basic Authentication to the given Request object."""
 
     def __init__(self, username, password):
+        """
+        Initialize a username and password.
+
+        Args:
+            self: (todo): write your description
+            username: (str): write your description
+            password: (str): write your description
+        """
         self.username = username
         self.password = password
 
     def __eq__(self, other):
+        """
+        Determine if other is equal.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         return all([
             self.username == getattr(other, 'username', None),
             self.password == getattr(other, 'password', None)
         ])
 
     def __ne__(self, other):
+        """
+        Determine if self objects.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         return not self == other
 
     def __call__(self, r):
+        """
+        Make a http request.
+
+        Args:
+            self: (todo): write your description
+            r: (array): write your description
+        """
         r.headers['Authorization'] = _basic_auth_str(self.username, self.password)
         return r
 
@@ -101,6 +137,13 @@ class HTTPProxyAuth(HTTPBasicAuth):
     """Attaches HTTP Proxy Authentication to a given Request object."""
 
     def __call__(self, r):
+        """
+        Make a http request.
+
+        Args:
+            self: (todo): write your description
+            r: (array): write your description
+        """
         r.headers['Proxy-Authorization'] = _basic_auth_str(self.username, self.password)
         return r
 
@@ -109,12 +152,26 @@ class HTTPDigestAuth(AuthBase):
     """Attaches HTTP Digest Authentication to the given Request object."""
 
     def __init__(self, username, password):
+        """
+        Initialize the thread.
+
+        Args:
+            self: (todo): write your description
+            username: (str): write your description
+            password: (str): write your description
+        """
         self.username = username
         self.password = password
         # Keep state in per-thread local storage
         self._thread_local = threading.local()
 
     def init_per_thread_state(self):
+        """
+        Initialize the state.
+
+        Args:
+            self: (todo): write your description
+        """
         # Ensure state is initialized just once per-thread
         if not hasattr(self._thread_local, 'init'):
             self._thread_local.init = True
@@ -143,24 +200,48 @@ class HTTPDigestAuth(AuthBase):
         # lambdas assume digest modules are imported at the top level
         if _algorithm == 'MD5' or _algorithm == 'MD5-SESS':
             def md5_utf8(x):
+                """
+                Compute the md5 checksum of a string.
+
+                Args:
+                    x: (str): write your description
+                """
                 if isinstance(x, str):
                     x = x.encode('utf-8')
                 return hashlib.md5(x).hexdigest()
             hash_utf8 = md5_utf8
         elif _algorithm == 'SHA':
             def sha_utf8(x):
+                """
+                Convert a utf - 8 - byte string.
+
+                Args:
+                    x: (str): write your description
+                """
                 if isinstance(x, str):
                     x = x.encode('utf-8')
                 return hashlib.sha1(x).hexdigest()
             hash_utf8 = sha_utf8
         elif _algorithm == 'SHA-256':
             def sha256_utf8(x):
+                """
+                Convert a utf - 8 - byte string.
+
+                Args:
+                    x: (str): write your description
+                """
                 if isinstance(x, str):
                     x = x.encode('utf-8')
                 return hashlib.sha256(x).hexdigest()
             hash_utf8 = sha256_utf8
         elif _algorithm == 'SHA-512':
             def sha512_utf8(x):
+                """
+                Convert a utf - like object.
+
+                Args:
+                    x: (str): write your description
+                """
                 if isinstance(x, str):
                     x = x.encode('utf-8')
                 return hashlib.sha512(x).hexdigest()
@@ -276,6 +357,13 @@ class HTTPDigestAuth(AuthBase):
         return r
 
     def __call__(self, r):
+        """
+        Call the call.
+
+        Args:
+            self: (todo): write your description
+            r: (todo): write your description
+        """
         # Initialize per-thread state, if needed
         self.init_per_thread_state()
         # If we have a saved nonce, skip the 401
@@ -296,10 +384,24 @@ class HTTPDigestAuth(AuthBase):
         return r
 
     def __eq__(self, other):
+        """
+        Determine if other is equal.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         return all([
             self.username == getattr(other, 'username', None),
             self.password == getattr(other, 'password', None)
         ])
 
     def __ne__(self, other):
+        """
+        Determine if self objects.
+
+        Args:
+            self: (todo): write your description
+            other: (todo): write your description
+        """
         return not self == other

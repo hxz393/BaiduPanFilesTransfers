@@ -363,6 +363,12 @@ class Session(SessionRedirectMixin):
     ]
 
     def __init__(self):
+        """
+        Initialize the http request.
+
+        Args:
+            self: (todo): write your description
+        """
 
         #: A case-insensitive dictionary of headers to be sent on each
         #: :class:`Request <Request>` sent from this
@@ -418,9 +424,21 @@ class Session(SessionRedirectMixin):
         self.mount('http://', HTTPAdapter())
 
     def __enter__(self):
+        """
+        Decor function.
+
+        Args:
+            self: (todo): write your description
+        """
         return self
 
     def __exit__(self, *args):
+        """
+        Exit the exit.
+
+        Args:
+            self: (todo): write your description
+        """
         self.close()
 
     def prepare_request(self, request):
@@ -747,10 +765,23 @@ class Session(SessionRedirectMixin):
             self.adapters[key] = self.adapters.pop(key)
 
     def __getstate__(self):
+        """
+        Get the state of this object.
+
+        Args:
+            self: (todo): write your description
+        """
         state = {attr: getattr(self, attr, None) for attr in self.__attrs__}
         return state
 
     def __setstate__(self, state):
+        """
+        Sets the state of an attribute.
+
+        Args:
+            self: (todo): write your description
+            state: (dict): write your description
+        """
         for attr, value in state.items():
             setattr(self, attr, value)
 

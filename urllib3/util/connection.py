@@ -83,6 +83,13 @@ def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
 
 
 def _set_socket_options(sock, options):
+    """
+    Set socket options.
+
+    Args:
+        sock: (todo): write your description
+        options: (todo): write your description
+    """
     if options is None:
         return
 

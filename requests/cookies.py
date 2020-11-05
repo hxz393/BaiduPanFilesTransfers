@@ -35,20 +35,51 @@ class MockRequest(object):
     """
 
     def __init__(self, request):
+        """
+        Initialize the request.
+
+        Args:
+            self: (todo): write your description
+            request: (dict): write your description
+        """
         self._r = request
         self._new_headers = {}
         self.type = urlparse(self._r.url).scheme
 
     def get_type(self):
+        """
+        Get the type of the type.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.type
 
     def get_host(self):
+        """
+        Returns the hostparse.
+
+        Args:
+            self: (todo): write your description
+        """
         return urlparse(self._r.url).netloc
 
     def get_origin_req_host(self):
+        """
+        Returns the request s origin.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.get_host()
 
     def get_full_url(self):
+        """
+        Return the full url of the request.
+
+        Args:
+            self: (todo): write your description
+        """
         # Only return the response's URL if the user hadn't set the Host
         # header
         if not self._r.headers.get('Host'):
@@ -63,12 +94,33 @@ class MockRequest(object):
         ])
 
     def is_unverifiable(self):
+        """
+        Returns true if the user can be unverifiable
+
+        Args:
+            self: (todo): write your description
+        """
         return True
 
     def has_header(self, name):
+        """
+        Return true if the given header has the given name.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+        """
         return name in self._r.headers or name in self._new_headers
 
     def get_header(self, name, default=None):
+        """
+        Gets a header.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            default: (todo): write your description
+        """
         return self._r.headers.get(name, self._new_headers.get(name, default))
 
     def add_header(self, key, val):
@@ -76,21 +128,53 @@ class MockRequest(object):
         raise NotImplementedError("Cookie headers should be added with add_unredirected_header()")
 
     def add_unredirected_header(self, name, value):
+        """
+        Add a new request header.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            value: (todo): write your description
+        """
         self._new_headers[name] = value
 
     def get_new_headers(self):
+        """
+        Return a list of the request.
+
+        Args:
+            self: (todo): write your description
+        """
         return self._new_headers
 
     @property
     def unverifiable(self):
+        """
+        Returns a : class
+
+        Args:
+            self: (todo): write your description
+        """
         return self.is_unverifiable()
 
     @property
     def origin_req_host(self):
+        """
+        Return the origin hostname.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.get_origin_req_host()
 
     @property
     def host(self):
+        """
+        Get the host.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.get_host()
 
 
@@ -109,9 +193,22 @@ class MockResponse(object):
         self._headers = headers
 
     def info(self):
+        """
+        Returns a dictionary of the header.
+
+        Args:
+            self: (todo): write your description
+        """
         return self._headers
 
     def getheaders(self, name):
+        """
+        Retrieves headers for the given name.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+        """
         self._headers.getheaders(name)
 
 
@@ -313,6 +410,13 @@ class RequestsCookieJar(cookielib.CookieJar, MutableMapping):
         return dictionary
 
     def __contains__(self, name):
+        """
+        Returns true if the given name exists.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+        """
         try:
             return super(RequestsCookieJar, self).__contains__(name)
         except CookieConflictError:
@@ -341,6 +445,13 @@ class RequestsCookieJar(cookielib.CookieJar, MutableMapping):
         remove_cookie_by_name(self, name)
 
     def set_cookie(self, cookie, *args, **kwargs):
+        """
+        Add a cookie.
+
+        Args:
+            self: (todo): write your description
+            cookie: (str): write your description
+        """
         if hasattr(cookie.value, 'startswith') and cookie.value.startswith('"') and cookie.value.endswith('"'):
             cookie.value = cookie.value.replace('\\"', '')
         return super(RequestsCookieJar, self).set_cookie(cookie, *args, **kwargs)
@@ -424,6 +535,12 @@ class RequestsCookieJar(cookielib.CookieJar, MutableMapping):
 
 
 def _copy_cookie_jar(jar):
+    """
+    Create a copy of the jar.
+
+    Args:
+        jar: (array): write your description
+    """
     if jar is None:
         return None
 

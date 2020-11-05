@@ -18,10 +18,24 @@ class HTTPWarning(Warning):
 class PoolError(HTTPError):
     "Base exception for errors caused within a pool."
     def __init__(self, pool, message):
+        """
+        Initialize pool.
+
+        Args:
+            self: (todo): write your description
+            pool: (todo): write your description
+            message: (str): write your description
+        """
         self.pool = pool
         HTTPError.__init__(self, "%s: %s" % (pool, message))
 
     def __reduce__(self):
+        """
+        Return a new : attr : meth.
+
+        Args:
+            self: (todo): write your description
+        """
         # For pickling purposes.
         return self.__class__, (None, None)
 
@@ -29,10 +43,25 @@ class PoolError(HTTPError):
 class RequestError(PoolError):
     "Base exception for PoolErrors that have associated URLs."
     def __init__(self, pool, url, message):
+        """
+        Initialize a pool.
+
+        Args:
+            self: (todo): write your description
+            pool: (todo): write your description
+            url: (str): write your description
+            message: (str): write your description
+        """
         self.url = url
         PoolError.__init__(self, pool, message)
 
     def __reduce__(self):
+        """
+        Reduce the url.
+
+        Args:
+            self: (todo): write your description
+        """
         # For pickling purposes.
         return self.__class__, (None, self.url, None)
 
@@ -74,6 +103,15 @@ class MaxRetryError(RequestError):
     """
 
     def __init__(self, pool, url, reason=None):
+        """
+        Initialize a pool.
+
+        Args:
+            self: (todo): write your description
+            pool: (todo): write your description
+            url: (str): write your description
+            reason: (str): write your description
+        """
         self.reason = reason
 
         message = "Max retries exceeded with url: %s (Caused by %r)" % (
@@ -86,6 +124,15 @@ class HostChangedError(RequestError):
     "Raised when an existing pool gets a request for a foreign host."
 
     def __init__(self, pool, url, retries=3):
+        """
+        Initialize a pool.
+
+        Args:
+            self: (todo): write your description
+            pool: (todo): write your description
+            url: (str): write your description
+            retries: (todo): write your description
+        """
         message = "Tried to open a foreign host with url: %s" % url
         RequestError.__init__(self, pool, url, message)
         self.retries = retries
@@ -141,6 +188,13 @@ class LocationParseError(LocationValueError):
     "Raised when get_host or similar fails to parse the URL input."
 
     def __init__(self, location):
+        """
+        Initialize the location.
+
+        Args:
+            self: (todo): write your description
+            location: (str): write your description
+        """
         message = "Failed to parse: %s" % location
         HTTPError.__init__(self, message)
 
@@ -213,9 +267,23 @@ class IncompleteRead(HTTPError, httplib_IncompleteRead):
     reads.
     """
     def __init__(self, partial, expected):
+        """
+        Initialize self.
+
+        Args:
+            self: (todo): write your description
+            partial: (todo): write your description
+            expected: (str): write your description
+        """
         super(IncompleteRead, self).__init__(partial, expected)
 
     def __repr__(self):
+        """
+        Return a human - readable representation.
+
+        Args:
+            self: (todo): write your description
+        """
         return ('IncompleteRead(%i bytes read, '
                 '%i more expected)' % (self.partial, self.expected))
 
@@ -230,6 +298,13 @@ class ProxySchemeUnknown(AssertionError, ValueError):
     # TODO(t-8ch): Stop inheriting from AssertionError in v2.0.
 
     def __init__(self, scheme):
+        """
+        Initialize the scheme.
+
+        Args:
+            self: (todo): write your description
+            scheme: (str): write your description
+        """
         message = "Not supported proxy scheme %s" % scheme
         super(ProxySchemeUnknown, self).__init__(message)
 
@@ -237,6 +312,14 @@ class ProxySchemeUnknown(AssertionError, ValueError):
 class HeaderParsingError(HTTPError):
     "Raised by assert_header_parsing, but we convert it to a log.warning statement."
     def __init__(self, defects, unparsed_data):
+        """
+        Initialize the message.
+
+        Args:
+            self: (todo): write your description
+            defects: (todo): write your description
+            unparsed_data: (todo): write your description
+        """
         message = '%s, unparsed data: %r' % (defects or 'Unknown', unparsed_data)
         super(HeaderParsingError, self).__init__(message)
 

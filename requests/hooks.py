@@ -15,6 +15,11 @@ HOOKS = ['response']
 
 
 def default_hooks():
+    """
+    Return all hooks list of hooks.
+
+    Args:
+    """
     return {event: [] for event in HOOKS}
 
 # TODO: response is the only one

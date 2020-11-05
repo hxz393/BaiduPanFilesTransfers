@@ -226,6 +226,22 @@ class Request(RequestHooksMixin):
     def __init__(self,
             method=None, url=None, headers=None, files=None, data=None,
             params=None, auth=None, cookies=None, hooks=None, json=None):
+        """
+        Initialize a new url.
+
+        Args:
+            self: (todo): write your description
+            method: (str): write your description
+            url: (str): write your description
+            headers: (list): write your description
+            files: (list): write your description
+            data: (todo): write your description
+            params: (dict): write your description
+            auth: (dict): write your description
+            cookies: (todo): write your description
+            hooks: (dict): write your description
+            json: (dict): write your description
+        """
 
         # Default empty dicts for dict params.
         data = [] if data is None else data
@@ -249,6 +265,12 @@ class Request(RequestHooksMixin):
         self.cookies = cookies
 
     def __repr__(self):
+        """
+        Return a human - readable representation.
+
+        Args:
+            self: (todo): write your description
+        """
         return '<Request [%s]>' % (self.method)
 
     def prepare(self):
@@ -288,6 +310,12 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
     """
 
     def __init__(self):
+        """
+        Initialize the webhook.
+
+        Args:
+            self: (todo): write your description
+        """
         #: HTTP verb to send to the server.
         self.method = None
         #: HTTP URL to send the request to.
@@ -323,9 +351,21 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         self.prepare_hooks(hooks)
 
     def __repr__(self):
+        """
+        Return a human - readable representation.
+
+        Args:
+            self: (todo): write your description
+        """
         return '<PreparedRequest [%s]>' % (self.method)
 
     def copy(self):
+        """
+        Returns a copy of this request.
+
+        Args:
+            self: (todo): write your description
+        """
         p = PreparedRequest()
         p.method = self.method
         p.url = self.url
@@ -344,6 +384,12 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
 
     @staticmethod
     def _get_idna_encoded_host(host):
+        """
+        Get the host id from the given host.
+
+        Args:
+            host: (str): write your description
+        """
         import idna
 
         try:
@@ -594,6 +640,12 @@ class Response(object):
     ]
 
     def __init__(self):
+        """
+        Initialize the request.
+
+        Args:
+            self: (todo): write your description
+        """
         self._content = False
         self._content_consumed = False
         self._next = None
@@ -641,12 +693,30 @@ class Response(object):
         self.request = None
 
     def __enter__(self):
+        """
+        Decor function.
+
+        Args:
+            self: (todo): write your description
+        """
         return self
 
     def __exit__(self, *args):
+        """
+        Exit the exit.
+
+        Args:
+            self: (todo): write your description
+        """
         self.close()
 
     def __getstate__(self):
+        """
+        Return the state of this object.
+
+        Args:
+            self: (todo): write your description
+        """
         # Consume everything; accessing the content attribute makes
         # sure the content has been fully read.
         if not self._content_consumed:
@@ -655,6 +725,13 @@ class Response(object):
         return {attr: getattr(self, attr, None) for attr in self.__attrs__}
 
     def __setstate__(self, state):
+        """
+        Sets the state of an attribute.
+
+        Args:
+            self: (todo): write your description
+            state: (dict): write your description
+        """
         for name, value in state.items():
             setattr(self, name, value)
 
@@ -663,6 +740,12 @@ class Response(object):
         setattr(self, 'raw', None)
 
     def __repr__(self):
+        """
+        Return a human - readable representation of this object.
+
+        Args:
+            self: (todo): write your description
+        """
         return '<Response [%s]>' % (self.status_code)
 
     def __bool__(self):
@@ -744,6 +827,11 @@ class Response(object):
         """
 
         def generate():
+            """
+            Generator that yields a generator.
+
+            Args:
+            """
             # Special case for urllib3.
             if hasattr(self.raw, 'stream'):
                 try:

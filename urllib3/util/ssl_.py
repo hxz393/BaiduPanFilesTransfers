@@ -66,12 +66,26 @@ else:
         import ipaddress
 
         def inet_pton(_, host):
+            """
+            Convert an ip address to an ip address.
+
+            Args:
+                _: (todo): write your description
+                host: (str): write your description
+            """
             if isinstance(host, bytes):
                 host = host.decode('ascii')
             return ipaddress.ip_address(host)
 
     except ImportError:  # Platform-specific: Non-Linux
         def inet_pton(_, host):
+            """
+            Return true if_aton is a socket.
+
+            Args:
+                _: (todo): write your description
+                host: (str): write your description
+            """
             return socket.inet_aton(host)
 
 
@@ -114,6 +128,13 @@ try:
 except ImportError:
     class SSLContext(object):  # Platform-specific: Python 2
         def __init__(self, protocol_version):
+            """
+            Initialize the ssl certificate.
+
+            Args:
+                self: (todo): write your description
+                protocol_version: (tuple): write your description
+            """
             self.protocol = protocol_version
             # Use default values from a real SSLContext
             self.check_hostname = False
@@ -125,19 +146,51 @@ except ImportError:
             self.ciphers = None
 
         def load_cert_chain(self, certfile, keyfile):
+            """
+            Load the certificate chain
+
+            Args:
+                self: (todo): write your description
+                certfile: (str): write your description
+                keyfile: (str): write your description
+            """
             self.certfile = certfile
             self.keyfile = keyfile
 
         def load_verify_locations(self, cafile=None, capath=None):
+            """
+            Load certificates from the given cafile.
+
+            Args:
+                self: (todo): write your description
+                cafile: (str): write your description
+                capath: (str): write your description
+            """
             self.ca_certs = cafile
 
             if capath is not None:
                 raise SSLError("CA directories not supported in older Pythons")
 
         def set_ciphers(self, cipher_suite):
+            """
+            Set the cipite_suhers.
+
+            Args:
+                self: (todo): write your description
+                cipher_suite: (str): write your description
+            """
             self.ciphers = cipher_suite
 
         def wrap_socket(self, socket, server_hostname=None, server_side=False):
+            """
+            Wrap socket_side. socket.
+
+            Args:
+                self: (todo): write your description
+                socket: (todo): write your description
+                server_hostname: (str): write your description
+                server_side: (str): write your description
+            """
             warnings.warn(
                 'A true SSLContext object is not available. This prevents '
                 'urllib3 from configuring SSL appropriately and may cause '

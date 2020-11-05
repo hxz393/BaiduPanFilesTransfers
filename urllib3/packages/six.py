@@ -60,6 +60,12 @@ else:
         class X(object):
 
             def __len__(self):
+                """
+                Returns the number of bytes in this list.
+
+                Args:
+                    self: (todo): write your description
+                """
                 return 1 << 31
         try:
             len(X())
@@ -86,9 +92,24 @@ def _import_module(name):
 class _LazyDescr(object):
 
     def __init__(self, name):
+        """
+        Sets the name.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+        """
         self.name = name
 
     def __get__(self, obj, tp):
+        """
+        Get the value of the given object.
+
+        Args:
+            self: (todo): write your description
+            obj: (todo): write your description
+            tp: (int): write your description
+        """
         result = self._resolve()
         setattr(obj, self.name, result)  # Invokes __set__.
         try:
@@ -103,6 +124,15 @@ class _LazyDescr(object):
 class MovedModule(_LazyDescr):
 
     def __init__(self, name, old, new=None):
+        """
+        Initialize a new module.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            old: (list): write your description
+            new: (list): write your description
+        """
         super(MovedModule, self).__init__(name)
         if PY3:
             if new is None:
@@ -112,9 +142,22 @@ class MovedModule(_LazyDescr):
             self.mod = old
 
     def _resolve(self):
+        """
+        Resolve the module.
+
+        Args:
+            self: (todo): write your description
+        """
         return _import_module(self.mod)
 
     def __getattr__(self, attr):
+        """
+        Get the value of the given attribute.
+
+        Args:
+            self: (todo): write your description
+            attr: (str): write your description
+        """
         _module = self._resolve()
         value = getattr(_module, attr)
         setattr(self, attr, value)
@@ -124,10 +167,23 @@ class MovedModule(_LazyDescr):
 class _LazyModule(types.ModuleType):
 
     def __init__(self, name):
+        """
+        Initialize a class.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+        """
         super(_LazyModule, self).__init__(name)
         self.__doc__ = self.__class__.__doc__
 
     def __dir__(self):
+        """
+        Returns a list of all the attributes of the given object.
+
+        Args:
+            self: (todo): write your description
+        """
         attrs = ["__doc__", "__name__"]
         attrs += [attr.name for attr in self._moved_attributes]
         return attrs
@@ -139,6 +195,17 @@ class _LazyModule(types.ModuleType):
 class MovedAttribute(_LazyDescr):
 
     def __init__(self, name, old_mod, new_mod, old_attr=None, new_attr=None):
+        """
+        Add a new attribute.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            old_mod: (str): write your description
+            new_mod: (str): write your description
+            old_attr: (todo): write your description
+            new_attr: (todo): write your description
+        """
         super(MovedAttribute, self).__init__(name)
         if PY3:
             if new_mod is None:
@@ -157,6 +224,12 @@ class MovedAttribute(_LazyDescr):
             self.attr = old_attr
 
     def _resolve(self):
+        """
+        Resolve a module.
+
+        Args:
+            self: (todo): write your description
+        """
         module = _import_module(self.mod)
         return getattr(module, self.attr)
 
@@ -171,28 +244,72 @@ class _SixMetaPathImporter(object):
     """
 
     def __init__(self, six_module_name):
+        """
+        Initialize the module.
+
+        Args:
+            self: (todo): write your description
+            six_module_name: (str): write your description
+        """
         self.name = six_module_name
         self.known_modules = {}
 
     def _add_module(self, mod, *fullnames):
+        """
+        Add a module to the list.
+
+        Args:
+            self: (todo): write your description
+            mod: (todo): write your description
+            fullnames: (str): write your description
+        """
         for fullname in fullnames:
             self.known_modules[self.name + "." + fullname] = mod
 
     def _get_module(self, fullname):
+        """
+        Returns the module object by fullname.
+
+        Args:
+            self: (todo): write your description
+            fullname: (str): write your description
+        """
         return self.known_modules[self.name + "." + fullname]
 
     def find_module(self, fullname, path=None):
+        """
+        Find a module by fullname.
+
+        Args:
+            self: (todo): write your description
+            fullname: (str): write your description
+            path: (list): write your description
+        """
         if fullname in self.known_modules:
             return self
         return None
 
     def __get_module(self, fullname):
+        """
+        Returns the module by full name.
+
+        Args:
+            self: (todo): write your description
+            fullname: (str): write your description
+        """
         try:
             return self.known_modules[fullname]
         except KeyError:
             raise ImportError("This loader does not know module " + fullname)
 
     def load_module(self, fullname):
+        """
+        Load a module.
+
+        Args:
+            self: (todo): write your description
+            fullname: (str): write your description
+        """
         try:
             # in case of a reload
             return sys.modules[fullname]
@@ -477,6 +594,12 @@ class Module_six_moves_urllib(types.ModuleType):
     robotparser = _importer._get_module("moves.urllib_robotparser")
 
     def __dir__(self):
+        """
+        A list of - directories directories.
+
+        Args:
+            self: (todo): write your description
+        """
         return ['parse', 'error', 'request', 'response', 'robotparser']
 
 _importer._add_module(Module_six_moves_urllib(__name__ + ".moves.urllib"),
@@ -521,6 +644,12 @@ try:
     advance_iterator = next
 except NameError:
     def advance_iterator(it):
+        """
+        Advance an iterator.
+
+        Args:
+            it: (todo): write your description
+        """
         return it.next()
 next = advance_iterator
 
@@ -529,32 +658,77 @@ try:
     callable = callable
 except NameError:
     def callable(obj):
+        """
+        Return true if obj is a callable.
+
+        Args:
+            obj: (todo): write your description
+        """
         return any("__call__" in klass.__dict__ for klass in type(obj).__mro__)
 
 
 if PY3:
     def get_unbound_function(unbound):
+        """
+        Get unbound unbound function.
+
+        Args:
+            unbound: (str): write your description
+        """
         return unbound
 
     create_bound_method = types.MethodType
 
     def create_unbound_method(func, cls):
+        """
+        Decorator that will be used to instantiate a method.
+
+        Args:
+            func: (todo): write your description
+            cls: (todo): write your description
+        """
         return func
 
     Iterator = object
 else:
     def get_unbound_function(unbound):
+        """
+        Returns the unbound unbound function.
+
+        Args:
+            unbound: (str): write your description
+        """
         return unbound.im_func
 
     def create_bound_method(func, obj):
+        """
+        Create a bound bound method for the given object.
+
+        Args:
+            func: (todo): write your description
+            obj: (todo): write your description
+        """
         return types.MethodType(func, obj, obj.__class__)
 
     def create_unbound_method(func, cls):
+        """
+        Create a method that creates a method.
+
+        Args:
+            func: (todo): write your description
+            cls: (todo): write your description
+        """
         return types.MethodType(func, None, cls)
 
     class Iterator(object):
 
         def next(self):
+            """
+            Returns the next type.
+
+            Args:
+                self: (todo): write your description
+            """
             return type(self).__next__(self)
 
     callable = callable
@@ -572,15 +746,43 @@ get_function_globals = operator.attrgetter(_func_globals)
 
 if PY3:
     def iterkeys(d, **kw):
+        """
+        Iterate an iterator over dicts.
+
+        Args:
+            d: (todo): write your description
+            kw: (todo): write your description
+        """
         return iter(d.keys(**kw))
 
     def itervalues(d, **kw):
+        """
+        Return a copy of d with the given d.
+
+        Args:
+            d: (todo): write your description
+            kw: (todo): write your description
+        """
         return iter(d.values(**kw))
 
     def iteritems(d, **kw):
+        """
+        Return an iterator over items from iterable.
+
+        Args:
+            d: (dict): write your description
+            kw: (todo): write your description
+        """
         return iter(d.items(**kw))
 
     def iterlists(d, **kw):
+        """
+        Iterate over all the given iterlists.
+
+        Args:
+            d: (todo): write your description
+            kw: (todo): write your description
+        """
         return iter(d.lists(**kw))
 
     viewkeys = operator.methodcaller("keys")
@@ -590,15 +792,43 @@ if PY3:
     viewitems = operator.methodcaller("items")
 else:
     def iterkeys(d, **kw):
+        """
+        Return an iterator over the keys in d.
+
+        Args:
+            d: (todo): write your description
+            kw: (todo): write your description
+        """
         return d.iterkeys(**kw)
 
     def itervalues(d, **kw):
+        """
+        Conveniohttp.
+
+        Args:
+            d: (todo): write your description
+            kw: (todo): write your description
+        """
         return d.itervalues(**kw)
 
     def iteritems(d, **kw):
+        """
+        Return an iteritems iterator over the items.
+
+        Args:
+            d: (dict): write your description
+            kw: (todo): write your description
+        """
         return d.iteritems(**kw)
 
     def iterlists(d, **kw):
+        """
+        Return an iterlists from a dictionary.
+
+        Args:
+            d: (todo): write your description
+            kw: (todo): write your description
+        """
         return d.iterlists(**kw)
 
     viewkeys = operator.methodcaller("viewkeys")
@@ -617,9 +847,21 @@ _add_doc(iterlists,
 
 if PY3:
     def b(s):
+        """
+        : param s : class : bytes.
+
+        Args:
+            s: (todo): write your description
+        """
         return s.encode("latin-1")
 
     def u(s):
+        """
+        Convert a list of the string.
+
+        Args:
+            s: (int): write your description
+        """
         return s
     unichr = chr
     import struct
@@ -640,18 +882,43 @@ if PY3:
         _assertRegex = "assertRegex"
 else:
     def b(s):
+        """
+        Returns a b
+
+        Args:
+            s: (int): write your description
+        """
         return s
     # Workaround for standalone backslash
 
     def u(s):
+        """
+        Return a unicode.
+
+        Args:
+            s: (str): write your description
+        """
         return unicode(s.replace(r'\\', r'\\\\'), "unicode_escape")
     unichr = unichr
     int2byte = chr
 
     def byte2int(bs):
+        """
+        Convert a bs
+
+        Args:
+            bs: (todo): write your description
+        """
         return ord(bs[0])
 
     def indexbytes(buf, i):
+        """
+        Return the index of a buffer i.
+
+        Args:
+            buf: (todo): write your description
+            i: (todo): write your description
+        """
         return ord(buf[i])
     iterbytes = functools.partial(itertools.imap, ord)
     import StringIO
@@ -664,14 +931,32 @@ _add_doc(u, """Text literal""")
 
 
 def assertCountEqual(self, *args, **kwargs):
+    """
+    Compute the number of bits in the given order.
+
+    Args:
+        self: (todo): write your description
+    """
     return getattr(self, _assertCountEqual)(*args, **kwargs)
 
 
 def assertRaisesRegex(self, *args, **kwargs):
+    """
+    Assertionerror if.
+
+    Args:
+        self: (todo): write your description
+    """
     return getattr(self, _assertRaisesRegex)(*args, **kwargs)
 
 
 def assertRegex(self, *args, **kwargs):
+    """
+    See : meth : ~simple : meth : ~simple
+
+    Args:
+        self: (todo): write your description
+    """
     return getattr(self, _assertRegex)(*args, **kwargs)
 
 
@@ -679,6 +964,14 @@ if PY3:
     exec_ = getattr(moves.builtins, "exec")
 
     def reraise(tp, value, tb=None):
+        """
+        Convenience function.
+
+        Args:
+            tp: (todo): write your description
+            value: (todo): write your description
+            tb: (todo): write your description
+        """
         if value is None:
             value = tp()
         if value.__traceback__ is not tb:
@@ -715,6 +1008,13 @@ elif sys.version_info[:2] > (3, 2):
 """)
 else:
     def raise_from(value, from_value):
+        """
+        Convert value from from_value.
+
+        Args:
+            value: (todo): write your description
+            from_value: (todo): write your description
+        """
         raise value
 
 
@@ -727,6 +1027,12 @@ if print_ is None:
             return
 
         def write(data):
+            """
+            Write data to a string.
+
+            Args:
+                data: (todo): write your description
+            """
             if not isinstance(data, basestring):
                 data = str(data)
             # If the file has an encoding, encode unicode with it.
@@ -777,6 +1083,11 @@ if sys.version_info[:2] < (3, 3):
     _print = print_
 
     def print_(*args, **kwargs):
+        """
+        Print the contents of the file.
+
+        Args:
+        """
         fp = kwargs.get("file", sys.stdout)
         flush = kwargs.pop("flush", False)
         _print(*args, **kwargs)
@@ -788,7 +1099,25 @@ _add_doc(reraise, """Reraise an exception.""")
 if sys.version_info[0:2] < (3, 4):
     def wraps(wrapped, assigned=functools.WRAPPER_ASSIGNMENTS,
               updated=functools.WRAPPER_UPDATES):
+        """
+        Decorator for the wrapped function.
+
+        Args:
+            wrapped: (bool): write your description
+            assigned: (todo): write your description
+            functools: (todo): write your description
+            WRAPPER_ASSIGNMENTS: (todo): write your description
+            updated: (todo): write your description
+            functools: (todo): write your description
+            WRAPPER_UPDATES: (todo): write your description
+        """
         def wrapper(f):
+            """
+            Decorator to ensure that the wrapped function call.
+
+            Args:
+                f: (int): write your description
+            """
             f = functools.wraps(wrapped, assigned, updated)(f)
             f.__wrapped__ = wrapped
             return f
@@ -805,6 +1134,15 @@ def with_metaclass(meta, *bases):
     class metaclass(meta):
 
         def __new__(cls, name, this_bases, d):
+            """
+            Create a new : param name.
+
+            Args:
+                cls: (todo): write your description
+                name: (str): write your description
+                this_bases: (list): write your description
+                d: (todo): write your description
+            """
             return meta(name, bases, d)
     return type.__new__(metaclass, 'temporary_class', (), {})
 
@@ -812,6 +1150,12 @@ def with_metaclass(meta, *bases):
 def add_metaclass(metaclass):
     """Class decorator for creating a class with a metaclass."""
     def wrapper(cls):
+        """
+        Decor for a metaclass.
+
+        Args:
+            cls: (todo): write your description
+        """
         orig_vars = cls.__dict__.copy()
         slots = orig_vars.get('__slots__')
         if slots is not None:

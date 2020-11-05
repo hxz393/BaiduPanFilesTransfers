@@ -61,6 +61,12 @@ class SOCKSConnection(HTTPConnection):
     A plain-text HTTP connection that connects via a SOCKS proxy.
     """
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the connection.
+
+        Args:
+            self: (todo): write your description
+        """
         self._socks_options = kwargs.pop('_socks_options')
         super(SOCKSConnection, self).__init__(*args, **kwargs)
 
@@ -150,6 +156,18 @@ class SOCKSProxyManager(PoolManager):
 
     def __init__(self, proxy_url, username=None, password=None,
                  num_pools=10, headers=None, **connection_pool_kw):
+        """
+        Return a connection pool.
+
+        Args:
+            self: (todo): write your description
+            proxy_url: (str): write your description
+            username: (str): write your description
+            password: (str): write your description
+            num_pools: (int): write your description
+            headers: (list): write your description
+            connection_pool_kw: (todo): write your description
+        """
         parsed = parse_url(proxy_url)
 
         if username is None and password is None and parsed.auth is not None:
