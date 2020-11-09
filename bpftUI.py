@@ -144,10 +144,12 @@ def check_links(link_url, pass_code, bdstoken):
         # 在cookie中加入bdclnd参数
         if response_post.json()['errno'] == 0:
             bdclnd = response_post.json()['randsk']
-            request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
-            # request_header['Cookie'] += '; BDCLND=' + bdclnd
         else:
             return response_post.json()['errno']
+        if bool(re.search('BDCLND=', request_header['Cookie'], re.IGNORECASE)):
+            request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+        else:
+            request_header['Cookie'] += '; BDCLND=' + bdclnd
     # 获取文件信息
     response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True,
                      verify=False).content.decode("utf-8")
