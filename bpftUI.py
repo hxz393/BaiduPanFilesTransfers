@@ -13,8 +13,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.7
-更新时间: 2020.11.01
+版本: 1.8
+更新时间: 2020.12.15
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -29,13 +29,13 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.7 by Alice & Asu")
+root.wm_title("度盘转存 1.8 by Alice & Asu")
 root.wm_geometry('350x473+240+240')
-root.wm_attributes("-alpha", 0.9)
+root.wm_attributes("-alpha", 0.91)
 root.resizable(width=False, height=False)
 
 # 定义标签和文本框
-Label(root, text='1.下面填入百度Cookies,以BAIDUID=开头到结尾,不带引号').grid(row=1, column=0, sticky=W)
+Label(root, text='1.下面填入百度Cookies,不带引号').grid(row=1, column=0, sticky=W)
 entry_cookie = Entry(root, width=48, )
 entry_cookie.grid(row=2, column=0, sticky=W, padx=4)
 Label(root, text='2.下面填入浏览器User-Agent').grid(row=3, column=0, sticky=W)
@@ -44,7 +44,7 @@ entry_ua.grid(row=4, column=0, sticky=W, padx=4)
 Label(root, text='3.下面填入文件保存位置(默认根目录),不能包含<,>,|,*,?,,/').grid(row=5, column=0, sticky=W)
 entry_folder_name = Entry(root, width=48, )
 entry_folder_name.grid(row=6, column=0, sticky=W, padx=4)
-Label(root, text='4.下面粘贴链接,每行一个,支持秒传.格式为:链接 提取码').grid(row=7, sticky=W)
+Label(root, text='4.下面粘贴链接,每行一个,格式为:链接 提取码.支持秒传格式.').grid(row=7, sticky=W)
 
 # 链接输入框
 text_links = Text(root, width=48, height=10, wrap=NONE)
@@ -65,7 +65,7 @@ text_logs.configure(yscrollcommand=scrollbar_logs.set)
 # 定义按钮和状态标签
 bottom_run = Button(root, text='4.点击运行', command=lambda: thread_it(main, ), width=10, height=1, relief='solid')
 bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
-label_state = Label(root, text='检查更新', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
+label_state = Label(root, text='检查新版', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
 label_state.grid(row=9, sticky=E, padx=4)
 label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers", new=0))
 
@@ -98,7 +98,8 @@ s = requests.session()
 def get_bdstoken():
     url = 'https://pan.baidu.com/disk/home'
     response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
-    bdstoken_list = re.findall("'bdstoken',\\s'(\\S+?)'", response.text)
+    # bdstoken_list = re.findall("'bdstoken',\\s'(\\S+?)'", response.text)
+    bdstoken_list = re.findall('"bdstoken":"(\\S+?)"', response.text)
     return bdstoken_list[0] if bdstoken_list else 1
 
 
@@ -236,7 +237,7 @@ def main():
     # 开始运行函数
     try:
         # 检查cookie输入是否正确
-        if cookie[:8] != 'BAIDUID=':
+        if cookie.find('BAIDUID=') == -1:
             label_state_change(state='error')
             text_logs.insert(END, '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n')
             sys.exit()
