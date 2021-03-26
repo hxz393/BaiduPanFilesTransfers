@@ -1,6 +1,7 @@
 import base64
 import tempfile
 import threading
+import time
 import webbrowser
 import zlib
 import os
@@ -138,7 +139,9 @@ def check_link_type(link_list_line):
 def check_links(link_url, pass_code, bdstoken):
     # 验证提取码
     if pass_code:
-        check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken
+        # 生成时间戳
+        t_str = str(int(round(time.time() * 1000)))
+        check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken + '&t=' + t_str + '&channel=chunlei&web=1&clienttype=0'
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
         response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False,
                                verify=False)
@@ -155,7 +158,7 @@ def check_links(link_url, pass_code, bdstoken):
     response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True,
                      verify=False).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
-    user_id_list = re.findall('"uk":(\\d+?),"', response)
+    user_id_list = re.findall('"share_uk":"(\\d+?)","', response)
     fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
     if not shareid_list:
         return 1
@@ -171,7 +174,7 @@ def check_links(link_url, pass_code, bdstoken):
 @retry(stop_max_attempt_number=200, wait_fixed=2000)
 def transfer_files(check_links_reason, dir_name, bdstoken):
     url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[
-        1] + '&bdstoken=' + bdstoken
+        1] + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
     fs_id = ','.join(i for i in check_links_reason[2])
     post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
