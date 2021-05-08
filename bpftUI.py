@@ -5,6 +5,7 @@ import time
 import webbrowser
 import zlib
 import os
+import re
 # noinspection PyCompatibility
 from tkinter import *
 
@@ -243,6 +244,11 @@ def main():
         if cookie.find('BAIDUID=') == -1:
             label_state_change(state='error')
             text_logs.insert(END, '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n')
+            sys.exit()
+        
+        if any([ord(s) not in range(256) for s in cookie]):
+            label_state_change(state='error')
+            text_logs.insert(END, '百度网盘cookie输入不正确,拷贝的cookie中有非法字符。\n    Firefox等浏览器在长cookie时，会有省略号，是否拷贝全面？.' + '\n')
             sys.exit()
 
         # 执行获取bdstoken
