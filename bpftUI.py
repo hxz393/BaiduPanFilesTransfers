@@ -124,8 +124,6 @@ def create_dir(dir_name, bdstoken):
 
 # 检测链接种类
 def check_link_type(link_list_line):
-    # 支持旧格式
-    link_list_line = link_list_line.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
     if link_list_line.find('https://pan.baidu.com/s/') >= 0:
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
@@ -250,7 +248,7 @@ def main():
         
         if any([ord(word) not in range(256) for word in cookie]):
             label_state_change(state='error')
-            text_logs.insert(END, '百度网盘cookie中带非法字符.' + '\n' + 'Firefox等浏览器获取长cookie时会截断以省略号代替.' + '\n')
+            text_logs.insert(END, '百度网盘cookie中带非法字符,请检查cookie后重试.' + '\n')
             sys.exit()
 
         # 执行获取bdstoken
@@ -278,7 +276,9 @@ def main():
 
         # 执行转存
         for url_code in link_list:
-            # 处理用户输入
+            # 处理旧格式链接
+            url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
+            # 判断连接类型
             link_type = check_link_type(url_code)
             # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg lice)格式链接
             if link_type == '/s/':
