@@ -15,8 +15,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.8
-更新时间: 2020.12.15
+版本: 1.9
+更新时间: 2021.05.09
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -31,7 +31,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.8 by Alice & Asu")
+root.wm_title("度盘转存 1.9 by Alice & Asu")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
 root.resizable(width=False, height=False)
@@ -124,6 +124,8 @@ def create_dir(dir_name, bdstoken):
 
 # 检测链接种类
 def check_link_type(link_list_line):
+    # 支持旧格式
+    link_list_line = link_list_line.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
     if link_list_line.find('https://pan.baidu.com/s/') >= 0:
         link_type = '/s/'
     elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
@@ -246,9 +248,9 @@ def main():
             text_logs.insert(END, '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n')
             sys.exit()
         
-        if any([ord(s) not in range(256) for s in cookie]):
+        if any([ord(word) not in range(256) for word in cookie]):
             label_state_change(state='error')
-            text_logs.insert(END, '百度网盘cookie输入不正确,拷贝的cookie中有非法字符。\n    Firefox等浏览器在长cookie时，会有省略号，是否拷贝全面？.' + '\n')
+            text_logs.insert(END, '百度网盘cookie中带非法字符.' + '\n' + 'Firefox等浏览器获取长cookie时会截断以省略号代替.' + '\n')
             sys.exit()
 
         # 执行获取bdstoken

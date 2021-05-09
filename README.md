@@ -5,7 +5,7 @@ BaiduPanFilesTransfers
 百度网盘批量转存工具,基于Python 3.8+Tkinter
 详细介绍使用请访问:[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
-![1.8版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.8.jpg)
+![1.9版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.9.jpg)
 
 **1.获取Cookie和User-Agent:**
 
@@ -28,6 +28,7 @@ https://pan.baidu.com/s/1EFCrmlh0rhnWy8pi9uhkyA 提取码：4444
 https://pan.baidu.com/s/14Az6kqaluwtUDr5JH9WViA 提取:v70q
 https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 6img
 https://pan.baidu.com/s/1EFCrmlh0rhnWy8pi9uhkyA
+https://pan.baidu.com/share/init?surl=W7U9g47xiDez_5ItgNIs0w
 ```
 
 *游侠 v1标准*
@@ -55,7 +56,7 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 1.如在浏览器端登出百度账号,再次登录需要重新手动获取Cookie值,否则会提示获取不到bdstoken;
 
-2.同一账号在多浏览器登录会导致获取不到shareid.请退出所有账号并重新打开唯一的浏览器登录并获取Cookie和User-Agent.
+2.同一账号在多浏览器登录会导致获取不到shareid.请退出所有账号并重新打开唯一的浏览器登录(建议使用Chrome)并获取Cookie和User-Agent.
 _ _ _
 #### 下载使用
 点到release页面下载bpftUI.exe,直接打开使用
@@ -68,6 +69,14 @@ pyinstaller -F -w -i bpftUI.ico bpftUI.py
 ``
 _ _ _
 #### 更新日志
+**2020.05.09 更新版本 1.9**
+
+1.修复可用性;
+
+2.增加对旧式生成链接的支持;
+
+3.增加cookie非法字符检测.
+
 **2020.12.15 更新版本 1.8**
 
 修复可用性,修改部分用语
@@ -76,11 +85,11 @@ _ _ _
 
 更进百度更新,修改链接验证逻辑
 
-**2020.9.14 更新版本 1.6**
+**2020.09.14 更新版本 1.6**
 
 修复无验证码分享文件夹链接转存提示'验证码错误'问题
 
-**2020.8.15 更新版本 1.5**
+**2020.08.15 更新版本 1.5**
 
 1.修复非文件多文件共享链接只转存第一个文件的问题;
 
@@ -88,23 +97,23 @@ _ _ _
 
 3.增加配置保存功能.
 
-**2020.8.12 更新版本 1.4**
+**2020.08.12 更新版本 1.4**
 
 修复百度更新后获取不到bdstoken问题
 
-**2020.7.26 更新版本 1.3**
+**2020.07.26 更新版本 1.3**
 
 修复部分秒传链接无法识别问题
 
-**2020.7.7 更新版本 1.2**
+**2020.07.07 更新版本 1.2**
 
 修复由于md5值大小写原因造成的秒传链接转存失败
 
-**2020.6.19 更新版本 1.1**
+**2020.06.19 更新版本 1.1**
 
 增加对提取码不正确,文件已被删除,弹出验证码状态判断
 
-**2020.6.16 更新版本 1.0**
+**2020.06.16 更新版本 1.0**
 
 增加对文件夹和秒传链接的支持
 
