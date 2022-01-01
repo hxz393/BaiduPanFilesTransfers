@@ -15,7 +15,7 @@ for entry in NewsFeed.entries:
     start = entry.find("https://pan.baidu.com")
     end = entry[start:].find(" ")
     url = entry[start:start+end-1]
-    if url in savedUrl:
+    if url+"\n" in savedUrl:
         continue
     start = entry.find("password")
     end = entry[start:].find(">") + start +1
@@ -48,7 +48,7 @@ for url, key in urlKey:
         transfer_files_reason = transfer_files(check_links_reason, "", bdstoken)
         if transfer_files_reason['errno'] == 0:
             print( '转存成功:' + url + '\n')
-            savedUrl.append(url)
+            savedUrl.append(url +"\n")
         elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == -30:
             print('转存失败,目录中已有同名文件存在:' + url + '\n')
         elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
@@ -60,4 +60,4 @@ for url, key in urlKey:
 with open("saved_url.txt", "w+") as file:
     if len(savedUrl) > 1000:
         savedUrl = savedUrl[-100:]
-    file.write("\n".join(savedUrl))
+    file.write("".join(savedUrl))
