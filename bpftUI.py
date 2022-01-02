@@ -183,6 +183,33 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
     return response.json()
 
 
+@retry(stop_max_attempt_number=200, wait_fixed=2000)
+def cloud_push_files(success_count, bdstoken):
+    url = "https://pan.baidu.com/rest/2.0/dss/command?method=publish&appid=250528" + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
+    post_data = {'device_id': 119531963838761009,
+                 'cmdinfo[0][title]': 'title',
+                 'cmdinfo[0][content]': 'content',
+                 'cmdinfo[0][cmd_no]': 80,
+                 'cmdinfo[0][type]':1,
+                 'cmdinfo[0][cmd_version]':1.0,
+                 'cmdinfo[0][is_parallel]':0,
+                 'cmdinfo[0][priority]' : 1,
+                 'cmdinfo[0][period]' : 10,
+                 'cmdinfo[0][src]': 1}
+    filelist = get_dir_list(bdstoken)[2:2+success_count]
+    for idx, file in enumerate(filelist):
+        header = 'cmdinfo[0][cmd_param][filelist][' + str(idx) + ']'
+        for key in file:
+            if isinstance(file[key], dict):
+                for subkey in file[key]:
+                    post_data[header + '[' + key + '][' + subkey + ']'] = file[key][subkey]
+            else:
+                post_data[header + '[' + key + ']'] = file[key]
+    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
+                      verify=False)
+    return response.json()
+
+
 # 转存秒传链接函数
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):

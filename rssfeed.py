@@ -1,5 +1,5 @@
 import feedparser
-from bpftUI import get_bdstoken, check_links,transfer_files, request_header
+from bpftUI import get_bdstoken, check_links,transfer_files, request_header,cloud_push_files,get_dir_list
 import os
 if not os.path.exists("saved_url.txt"):
     with open("saved_url.txt", "w+") as file:
@@ -24,7 +24,7 @@ for entry in NewsFeed.entries:
 with open("cookie.txt", "r") as file:
     cookie = file.readline()[:-1]
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
-
+success_count = 0
 for url, key in urlKey:
     request_header['Cookie'] = cookie
     request_header['User-Agent'] = user_agent
@@ -49,6 +49,7 @@ for url, key in urlKey:
         if transfer_files_reason['errno'] == 0:
             print( '转存成功:' + url + '\n')
             savedUrl.append(url +"\n")
+            success_count += 1
         elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == -30:
             print('转存失败,目录中已有同名文件存在:' + url + '\n')
         elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
@@ -61,3 +62,9 @@ with open("saved_url.txt", "w+") as file:
     if len(savedUrl) > 1000:
         savedUrl = savedUrl[-100:]
     file.write("".join(savedUrl))
+
+request_header['Cookie'] = cookie
+request_header['User-Agent'] = user_agent
+bdstoken = get_bdstoken()
+filelist = get_dir_list(bdstoken)[2:]
+cloud_push_files(success_count, bdstoken)
