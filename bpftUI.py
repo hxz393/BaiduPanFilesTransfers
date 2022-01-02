@@ -395,4 +395,4 @@ def main():
         bottom_run['text'] = '4.点击运行'
 
 
-# root.mainloop()
+root.mainloop()
