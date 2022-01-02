@@ -66,5 +66,7 @@ with open("saved_url.txt", "w+") as file:
 request_header['Cookie'] = cookie
 request_header['User-Agent'] = user_agent
 bdstoken = get_bdstoken()
+with open("device_id.txt", "r") as file:
+    device_id = file.readline()[:-1]
 filelist = get_dir_list(bdstoken)[2:]
-cloud_push_files(success_count, bdstoken)
+cloud_push_files(success_count, bdstoken, device_id)

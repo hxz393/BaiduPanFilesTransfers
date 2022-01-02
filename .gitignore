@@ -10,3 +10,4 @@ test.py
 /cookie.txt
 /saved_url.txt
 *.bat
+/device_id.txt

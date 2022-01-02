@@ -184,9 +184,9 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 
 
 @retry(stop_max_attempt_number=200, wait_fixed=2000)
-def cloud_push_files(success_count, bdstoken):
+def cloud_push_files(success_count, bdstoken, device_id):
     url = "https://pan.baidu.com/rest/2.0/dss/command?method=publish&appid=250528" + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
-    post_data = {'device_id': 119531963838761009,
+    post_data = {'device_id': device_id,
                  'cmdinfo[0][title]': 'title',
                  'cmdinfo[0][content]': 'content',
                  'cmdinfo[0][cmd_no]': 80,
@@ -395,4 +395,4 @@ def main():
         bottom_run['text'] = '4.点击运行'
 
 
-root.mainloop()
+# root.mainloop()
