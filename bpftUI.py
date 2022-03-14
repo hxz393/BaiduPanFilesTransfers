@@ -5,6 +5,7 @@ import time
 import webbrowser
 import zlib
 import os
+import sys
 import re
 # noinspection PyCompatibility
 from tkinter import *
@@ -15,8 +16,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.9
-更新时间: 2021.05.09
+版本: 1.10
+更新时间: 2022.03.14
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -31,10 +32,10 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.9 by Alice & Asu")
+root.wm_title("度盘转存 1.10 by assassing")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
-root.resizable(width=False, height=False)
+# root.resizable(width=False, height=False)
 
 # 定义标签和文本框
 Label(root, text='1.下面填入百度Cookies,不带引号').grid(row=1, column=0, sticky=W)
@@ -89,7 +90,7 @@ request_header = {
     'Sec-Fetch-Mode': 'navigate',
     'Referer': 'https://pan.baidu.com',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
 }
 urllib3.disable_warnings()
 s = requests.session()
@@ -98,11 +99,9 @@ s = requests.session()
 # 获取bdstoken函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_bdstoken():
-    url = 'https://pan.baidu.com/disk/home'
+    url = 'https://pan.baidu.com/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
     response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
-    # bdstoken_list = re.findall("'bdstoken',\\s'(\\S+?)'", response.text)
-    bdstoken_list = re.findall('"bdstoken":"(\\S+?)"', response.text)
-    return bdstoken_list[0] if bdstoken_list else 1
+    return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
 
 
 # 获取目录列表函数
@@ -144,8 +143,7 @@ def check_links(link_url, pass_code, bdstoken):
         t_str = str(int(round(time.time() * 1000)))
         check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken + '&t=' + t_str + '&channel=chunlei&web=1&clienttype=0'
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-        response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False,
-                               verify=False)
+        response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False, verify=False)
         # 在cookie中加入bdclnd参数
         if response_post.json()['errno'] == 0:
             bdclnd = response_post.json()['randsk']
@@ -156,17 +154,17 @@ def check_links(link_url, pass_code, bdstoken):
         else:
             request_header['Cookie'] += '; BDCLND=' + bdclnd
     # 获取文件信息
-    response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True,
-                     verify=False).content.decode("utf-8")
+    response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True, verify=False).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
     user_id_list = re.findall('"share_uk":"(\\d+?)","', response)
     fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
+    info_title = re.findall('>百度网盘-*(.+)<', response)[0]
     if not shareid_list:
         return 1
     elif not user_id_list:
         return 2
     elif not fs_id_list:
-        return 3
+        return info_title
     else:
         return [shareid_list[0], user_id_list[0], fs_id_list]
 
@@ -174,12 +172,10 @@ def check_links(link_url, pass_code, bdstoken):
 # 转存文件函数
 @retry(stop_max_attempt_number=200, wait_fixed=2000)
 def transfer_files(check_links_reason, dir_name, bdstoken):
-    url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[
-        1] + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
+    url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[1] + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
     fs_id = ','.join(i for i in check_links_reason[2])
     post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
-                      verify=False)
+    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()
 
 
@@ -187,14 +183,11 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 @retry(stop_max_attempt_number=100, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
-    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0],
-                 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
+    post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     if response.json()['errno'] == 404:
-        post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(),
-                     'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
-        response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False,
-                          verify=False)
+        post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0].lower(), 'slice-md5': rapid_data[1].lower(), 'content-length': rapid_data[2]}
+        response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno']
 
 
@@ -212,8 +205,7 @@ def label_state_change(state, task_count=0, task_total_count=0):
 
 # 多线程
 def thread_it(func, *args):
-    t = threading.Thread(target=func, args=args)
-    t.setDaemon(True)
+    t = threading.Thread(target=func, args=args, daemon=True)
     t.start()
     # t.join()
 
@@ -241,21 +233,16 @@ def main():
     # 开始运行函数
     try:
         # 检查cookie输入是否正确
-        if cookie.find('BAIDUID=') == -1:
+        if any([ord(word) not in range(256) for word in cookie]) or cookie.find('BAIDUID=') == -1:
             label_state_change(state='error')
             text_logs.insert(END, '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n')
-            sys.exit()
-        
-        if any([ord(word) not in range(256) for word in cookie]):
-            label_state_change(state='error')
-            text_logs.insert(END, '百度网盘cookie中带非法字符,请检查cookie后重试.' + '\n')
             sys.exit()
 
         # 执行获取bdstoken
         bdstoken = get_bdstoken()
-        if bdstoken == 1:
+        if isinstance(bdstoken, int):
             label_state_change(state='error')
-            text_logs.insert(END, '没获取到bdstoken,请检查cookie和网络后重试.' + '\n')
+            text_logs.insert(END, '没获取到bdstoken,错误代码:' + str(bdstoken) + '\n')
             sys.exit()
 
         # 执行获取目录列表
@@ -280,22 +267,24 @@ def main():
             url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
             # 判断连接类型
             link_type = check_link_type(url_code)
-            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg lice)格式链接
+            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 123w)格式链接
             if link_type == '/s/':
-                link_url, pass_code = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
-                pass_code = pass_code.strip()[:4]
+                link_url_org, pass_code_org = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
+                [link_url, pass_code] = [link_url_org.strip()[:47], pass_code_org.strip()[:4]]
                 # 执行检查链接有效性
                 check_links_reason = check_links(link_url, pass_code, bdstoken)
                 if check_links_reason == 1:
                     text_logs.insert(END, '链接失效,没获取到shareid:' + url_code + '\n')
                 elif check_links_reason == 2:
                     text_logs.insert(END, '链接失效,没获取到user_id:' + url_code + '\n')
-                elif check_links_reason == 3 or check_links_reason == -9:
+                elif check_links_reason == -9:
                     text_logs.insert(END, '链接失效,文件已经被删除或取消分享:' + url_code + '\n')
                 elif check_links_reason == -12:
                     text_logs.insert(END, '提取码错误:' + url_code + '\n')
                 elif check_links_reason == -62:
                     text_logs.insert(END, '错误尝试次数过多,请稍后再试:' + url_code + '\n')
+                elif check_links_reason == 105:
+                    text_logs.insert(END, '链接格式不正确,请检查输入:' + url_code + '\n')
                 elif isinstance(check_links_reason, list):
                     # 执行转存文件
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
@@ -306,8 +295,7 @@ def main():
                     elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
                         text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
                     else:
-                        text_logs.insert(END,
-                                         '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
+                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
                 else:
                     text_logs.insert(END, '访问链接返回错误代码(' + str(check_links_reason) + '):' + url_code + '\n')
             # 处理秒传格式链接
@@ -317,12 +305,10 @@ def main():
                     rapid_data = url_code.split('#', maxsplit=3)
                 # 处理游侠 v1标准(bdlink=)
                 elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
-                    rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode(
-                        "utf-8").strip().split('#', maxsplit=3)
+                    rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode("utf-8").strip().split('#', maxsplit=3)
                 # 处理PanDL标准(bdpan://)
                 elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
-                    bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode(
-                        "utf-8").strip().split('|')
+                    bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode("utf-8").strip().split('|')
                     rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
                 # 处理PCS-Go标准(BaiduPCS-Go)
                 elif bool(re.search('BaiduPCS-Go', url_code, re.IGNORECASE)):
