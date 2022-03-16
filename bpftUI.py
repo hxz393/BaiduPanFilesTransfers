@@ -16,8 +16,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.10
-更新时间: 2022.03.14
+版本: 1.10.1
+更新时间: 2022.03.16
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -32,7 +32,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.10 by assassing")
+root.wm_title("度盘转存 1.10.1 by assassing")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
 # root.resizable(width=False, height=False)
@@ -135,7 +135,7 @@ def check_link_type(link_list_line):
 
 
 # 验证链接函数
-@retry(stop_max_attempt_number=20, wait_fixed=2000)
+@retry(stop_max_attempt_number=6, wait_fixed=2000)
 def check_links(link_url, pass_code, bdstoken):
     # 验证提取码
     if pass_code:
@@ -158,19 +158,19 @@ def check_links(link_url, pass_code, bdstoken):
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
     user_id_list = re.findall('"share_uk":"(\\d+?)","', response)
     fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
-    info_title = re.findall('>百度网盘-*(.+)<', response)[0]
+    info_title_list = re.findall('<title>(.+)</title>', response)
     if not shareid_list:
         return 1
     elif not user_id_list:
         return 2
     elif not fs_id_list:
-        return info_title
+        return info_title_list[0] if info_title_list else 3
     else:
         return [shareid_list[0], user_id_list[0], fs_id_list]
 
 
 # 转存文件函数
-@retry(stop_max_attempt_number=200, wait_fixed=2000)
+@retry(stop_max_attempt_number=20, wait_fixed=2000)
 def transfer_files(check_links_reason, dir_name, bdstoken):
     url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[1] + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
     fs_id = ','.join(i for i in check_links_reason[2])
@@ -180,7 +180,7 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 
 
 # 转存秒传链接函数
-@retry(stop_max_attempt_number=100, wait_fixed=1000)
+@retry(stop_max_attempt_number=10, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     url = 'https://pan.baidu.com/api/rapidupload?bdstoken=' + bdstoken
     post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
@@ -277,22 +277,26 @@ def main():
                     text_logs.insert(END, '链接失效,没获取到shareid:' + url_code + '\n')
                 elif check_links_reason == 2:
                     text_logs.insert(END, '链接失效,没获取到user_id:' + url_code + '\n')
-                elif check_links_reason == -9:
+                elif check_links_reason == 3:
+                    text_logs.insert(END, '链接失效,没获取到fs_id:' + url_code + '\n')
+                elif check_links_reason == '百度网盘-链接不存在':
                     text_logs.insert(END, '链接失效,文件已经被删除或取消分享:' + url_code + '\n')
+                elif check_links_reason == '百度网盘 请输入提取码':
+                    text_logs.insert(END, '链接错误,缺少提取码:' + url_code + '\n')
                 elif check_links_reason == -12:
-                    text_logs.insert(END, '提取码错误:' + url_code + '\n')
+                    text_logs.insert(END, '链接错误,提取码错误:' + url_code + '\n')
                 elif check_links_reason == -62:
-                    text_logs.insert(END, '错误尝试次数过多,请稍后再试:' + url_code + '\n')
+                    text_logs.insert(END, '链接错误尝试次数过多,请手动转存或稍后再试:' + url_code + '\n')
                 elif check_links_reason == 105:
-                    text_logs.insert(END, '链接格式不正确,请检查输入:' + url_code + '\n')
+                    text_logs.insert(END, '链接错误,链接格式不正确:' + url_code + '\n')
                 elif isinstance(check_links_reason, list):
                     # 执行转存文件
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
                     if transfer_files_reason['errno'] == 0:
                         text_logs.insert(END, '转存成功:' + url_code + '\n')
-                    elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == -30:
-                        text_logs.insert(END, '转存失败,目录中已有同名文件存在:' + url_code + '\n')
-                    elif transfer_files_reason['errno'] == 12 and transfer_files_reason['info'][0]['errno'] == 120:
+                    elif transfer_files_reason['errno'] == 4:
+                        text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
+                    elif transfer_files_reason['errno'] == 12:
                         text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
                     else:
                         text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
@@ -322,8 +326,8 @@ def main():
                 transfer_files_reason = transfer_files_rapid(rapid_data, dir_name, bdstoken)
                 if transfer_files_reason == 0:
                     text_logs.insert(END, '转存成功:' + url_code + '\n')
-                elif transfer_files_reason == -8:
-                    text_logs.insert(END, '转存失败,目录中已有同名文件存在:' + url_code + '\n')
+                elif transfer_files_reason == 4:
+                    text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
                 elif transfer_files_reason == 404:
                     text_logs.insert(END, '转存失败,秒传无效:' + url_code + '\n')
                 elif transfer_files_reason == 2:
