@@ -73,7 +73,10 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 - 如在浏览器端登出百度账号,再次登录需要重新手动获取Cookie值,否则会提示获取不到bdstoken;
 
-- 同一账号在多浏览器登录会导致获取不到shareid.请退出所有账号并重新打开唯一的浏览器登录(建议使用Chrome)并获取Cookie和User-Agent.
+- 同一账号在多浏览器登录会导致获取不到shareid.请在其他浏览器上退出登录,并重新打开唯一的浏览器登录(建议使用Chrome)并获取Cookie和User-Agent.
+
+- 如果依然有Cookie问题,或转存提示'无效登录',可以在网盘主页打开开发工具中,手动清除Cookie后重新登录.操作如下图所示:
+![向导图4](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
 
 
 
