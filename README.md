@@ -5,7 +5,7 @@ BaiduPanFilesTransfers
 百度网盘批量转存工具,基于Python 3.8+Tkinter
 详细介绍使用请访问:[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
-![1.10.1版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.10.1.jpg)
+![1.10.2版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.10.2.jpg)
 
 
 
@@ -89,6 +89,12 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 
 ## 更新日志
+**2022.03.21 更新版本 1.10.2**
+
+1.修复转存提示错误代码200025问题;
+
+2.增加账号无效登录判断.
+
 **2022.03.16 更新版本 1.10.1**
 
 1.修改部分连接重试次数;

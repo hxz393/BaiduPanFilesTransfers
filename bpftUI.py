@@ -16,8 +16,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.10.1
-更新时间: 2022.03.16
+版本: 1.10.2
+更新时间: 2022.03.21
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -32,7 +32,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.10.1 by assassing")
+root.wm_title("度盘转存 1.10.2 by assassing")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
 # root.resizable(width=False, height=False)
@@ -150,9 +150,9 @@ def check_links(link_url, pass_code, bdstoken):
         else:
             return response_post.json()['errno']
         if bool(re.search('BDCLND=', request_header['Cookie'], re.IGNORECASE)):
-            request_header['Cookie'] = re.sub(r'BDCLND=(\S+?);', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+            request_header['Cookie'] = re.sub(r'BDCLND=(\S+);?', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
         else:
-            request_header['Cookie'] += '; BDCLND=' + bdclnd
+            request_header['Cookie'] += ';BDCLND=' + bdclnd
     # 获取文件信息
     response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True, verify=False).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
@@ -294,6 +294,8 @@ def main():
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
                     if transfer_files_reason['errno'] == 0:
                         text_logs.insert(END, '转存成功:' + url_code + '\n')
+                    elif transfer_files_reason['errno'] == -4:
+                        text_logs.insert(END, '转存失败,无效登录.请退出账号在其他地方的登录:' + url_code + '\n')
                     elif transfer_files_reason['errno'] == 4:
                         text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
                     elif transfer_files_reason['errno'] == 12:
