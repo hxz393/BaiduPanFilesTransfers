@@ -359,5 +359,5 @@ def main():
         bottom_run['relief'] = 'solid'
         bottom_run['text'] = '4.点击运行'
 
-
-root.mainloop()
+if __name__ == '__main__':
+    root.mainloop()
