@@ -94,6 +94,7 @@ request_header = {
 }
 urllib3.disable_warnings()
 s = requests.session()
+s.trust_env = False
 
 
 # 获取bdstoken函数
