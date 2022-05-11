@@ -94,6 +94,7 @@ request_header = {
 }
 urllib3.disable_warnings()
 s = requests.session()
+s.trust_env = False
 
 
 # 获取bdstoken函数
@@ -263,6 +264,8 @@ def main():
 
         # 执行转存
         for url_code in link_list:
+            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
+            url_code = url_code.replace("?pwd=", " ")
             # 处理旧格式链接
             url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
             # 判断连接类型
