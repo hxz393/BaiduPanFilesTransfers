@@ -299,7 +299,7 @@ def main():
                         text_logs.insert(END, '转存成功:' + url_code + '\n')
                     elif transfer_files_reason['errno'] == -4:
                         text_logs.insert(END, '转存失败,无效登录.请退出账号在其他地方的登录:' + url_code + '\n')
-                    elif transfer_files_reason['errno'] == 4:
+                    elif transfer_files_reason['errno'] == 4 or transfer_files_reason['errno'] == -8:
                         text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
                     elif transfer_files_reason['errno'] == 12:
                         text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
@@ -331,7 +331,7 @@ def main():
                 transfer_files_reason = transfer_files_rapid(rapid_data, dir_name, bdstoken)
                 if transfer_files_reason == 0:
                     text_logs.insert(END, '转存成功:' + url_code + '\n')
-                elif transfer_files_reason == 4:
+                elif transfer_files_reason == 4 or transfer_files_reason['errno'] == -8:
                     text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
                 elif transfer_files_reason == 404:
                     text_logs.insert(END, '转存失败,秒传无效:' + url_code + '\n')
