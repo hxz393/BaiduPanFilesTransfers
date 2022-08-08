@@ -16,8 +16,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.10.2
-更新时间: 2022.03.21
+版本: 1.10.3
+更新时间: 2022.08.08
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -32,7 +32,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.10.2 by assassing")
+root.wm_title("度盘转存 1.10.3 by assassing")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
 # root.resizable(width=False, height=False)
