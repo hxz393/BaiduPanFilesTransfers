@@ -177,7 +177,7 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
     fs_id = ','.join(i for i in check_links_reason[2])
     post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
     response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
-    return response.json()
+    return response.json()['errno']
 
 
 # 转存秒传链接函数
@@ -295,16 +295,16 @@ def main():
                 elif isinstance(check_links_reason, list):
                     # 执行转存文件
                     transfer_files_reason = transfer_files(check_links_reason, dir_name, bdstoken)
-                    if transfer_files_reason['errno'] == 0:
+                    if transfer_files_reason == 0:
                         text_logs.insert(END, '转存成功:' + url_code + '\n')
-                    elif transfer_files_reason['errno'] == -4:
+                    elif transfer_files_reason == -4:
                         text_logs.insert(END, '转存失败,无效登录.请退出账号在其他地方的登录:' + url_code + '\n')
-                    elif transfer_files_reason['errno'] == 4 or transfer_files_reason['errno'] == -8:
+                    elif transfer_files_reason == 4 or transfer_files_reason == -8:
                         text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
-                    elif transfer_files_reason['errno'] == 12:
+                    elif transfer_files_reason == 12:
                         text_logs.insert(END, '转存失败,转存文件数超过限制:' + url_code + '\n')
                     else:
-                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason['errno']) + '):' + url_code + '\n')
+                        text_logs.insert(END, '转存失败,错误代码(' + str(transfer_files_reason) + '):' + url_code + '\n')
                 else:
                     text_logs.insert(END, '访问链接返回错误代码(' + str(check_links_reason) + '):' + url_code + '\n')
             # 处理秒传格式链接
@@ -331,7 +331,7 @@ def main():
                 transfer_files_reason = transfer_files_rapid(rapid_data, dir_name, bdstoken)
                 if transfer_files_reason == 0:
                     text_logs.insert(END, '转存成功:' + url_code + '\n')
-                elif transfer_files_reason == 4 or transfer_files_reason['errno'] == -8:
+                elif transfer_files_reason == 4 or transfer_files_reason == -8:
                     text_logs.insert(END, '转存失败,目录中已有同名文件或文件夹存在:' + url_code + '\n')
                 elif transfer_files_reason == 404:
                     text_logs.insert(END, '转存失败,秒传无效:' + url_code + '\n')
