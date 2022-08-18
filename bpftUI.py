@@ -264,6 +264,8 @@ def main():
 
         # 执行转存
         for url_code in link_list:
+            # 处理http链接
+            url_code = url_code.replace("http://", "https://")
             # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
             url_code = url_code.replace("?pwd=", " ")
             # 处理旧格式链接
