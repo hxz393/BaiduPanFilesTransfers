@@ -326,7 +326,8 @@ def main():
                     go_md5 = re.findall(r'-md5=(\S+)', url_code)[0]
                     go_md5s = re.findall(r'-slicemd5=(\S+)', url_code)[0]
                     go_len = re.findall(r'-length=(\S+)', url_code)[0]
-                    go_name = re.findall(r'-crc32=\d+\s(.+)', url_code)[0].replace('"', '').replace('/', '\\').strip()
+                    # go_name = re.findall(r'-crc32=\d+\s(.+)', url_code)[0].replace('"', '').replace('/', '\\').strip()
+                    go_name = re.findall(r'"(.*)"', url_code)[0].replace('"', '').replace('/', '\\').strip()
                     rapid_data = [go_md5, go_md5s, go_len, go_name]
                 else:
                     rapid_data = []
