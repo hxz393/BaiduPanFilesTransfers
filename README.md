@@ -5,7 +5,7 @@ BaiduPanFilesTransfers
 百度网盘批量转存工具,基于Python 3.8+Tkinter
 详细介绍使用请访问:[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
-![1.10.2版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.10.2.jpg)
+![1.11版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE1.11.jpg)
 
 
 
@@ -92,6 +92,15 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 
 ## 更新日志
+**2022.11.10 更新版本 1.11**
+
+1.强制转换http链接到https;
+
+2.升级urllib和requests版本;
+
+3.修复转存秒存链接返回错误代码'2'的问题.
+
+
 **2022.08.08 更新版本 1.10.3**
 
 1.修复转存返回码检测导致的运行错误;
