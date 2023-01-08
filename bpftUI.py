@@ -16,8 +16,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.12
-更新时间: 2023.01.03
+版本: 1.12.1
+更新时间: 2023.01.08
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -32,7 +32,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.12 by assassing")
+root.wm_title("度盘转存 1.12.1 by assassing")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
 # root.resizable(width=False, height=False)
@@ -187,10 +187,10 @@ def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     request_header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
     url = 'https://pan.baidu.com/rest/2.0/xpan/file?method=create&bdstoken=' + bdstoken
     # post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
-    post_data = "&block_list=%5B%22"+rapid_data[0]+"%22%5D&path=%2F"+dir_name+"%2F"+rapid_data[3]+"&size="+rapid_data[2]+"&isdir=0&rtype=0"
+    post_data = '&block_list=["{}"]&path=/{}/{}&size={}&isdir=0&rtype=0'.format(rapid_data[0], dir_name.replace("&","%26"), rapid_data[3].replace("&","%26"), rapid_data[2])
     response = s.post(url=url, headers=request_header, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
     if response.json()['errno'] == 404:
-        post_data = "&block_list=%5B%22" + rapid_data[0].lower() + "%22%5D&path=%2F" + dir_name + "%2F" + rapid_data[3] + "&size=" + rapid_data[2] + "&isdir=0&rtype=0"
+        post_data = '&block_list=["{}"]&path=/{}/{}&size={}&isdir=0&rtype=0'.format(rapid_data[0].lower(), dir_name.replace("&", "%26"), rapid_data[3].replace("&", "%26"), rapid_data[2])
         response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
     elif response.json()['errno'] == 2:
         time.sleep(1)
