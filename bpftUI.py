@@ -16,8 +16,8 @@ from retrying import retry
 
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.12.1
-更新时间: 2023.01.08
+版本: 1.13
+更新时间: 2023.03.21
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -32,7 +32,7 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.12.1 by assassing")
+root.wm_title("度盘转存 1.13 by assassing")
 root.wm_geometry('350x473+240+240')
 root.wm_attributes("-alpha", 0.91)
 # root.resizable(width=False, height=False)
@@ -185,7 +185,7 @@ def transfer_files(check_links_reason, dir_name, bdstoken):
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
     user_agent = request_header['User-Agent']
     request_header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
-    url = 'https://pan.baidu.com/rest/2.0/xpan/file?method=create&bdstoken=' + bdstoken
+    url = 'https://pan.baidu.com/api/create&bdstoken=' + bdstoken
     # post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
     post_data = '&block_list=["{}"]&path=/{}/{}&size={}&isdir=0&rtype=0'.format(rapid_data[0], dir_name.replace("&","%26"), rapid_data[3].replace("&","%26"), rapid_data[2])
     response = s.post(url=url, headers=request_header, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
@@ -295,7 +295,7 @@ def main():
                     text_logs.insert(END, '链接失效,文件已经被删除或取消分享:' + url_code + '\n')
                 elif check_links_reason == '百度网盘 请输入提取码':
                     text_logs.insert(END, '链接错误,缺少提取码:' + url_code + '\n')
-                elif check_links_reason == -12:
+                elif check_links_reason == -9:
                     text_logs.insert(END, '链接错误,提取码错误:' + url_code + '\n')
                 elif check_links_reason == -62:
                     text_logs.insert(END, '链接错误尝试次数过多,请手动转存或稍后再试:' + url_code + '\n')
