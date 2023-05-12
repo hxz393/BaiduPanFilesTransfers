@@ -8,16 +8,17 @@ import os
 import sys
 import re
 # noinspection PyCompatibility
-from tkinter import *
+from tkinter import Tk, Entry, Label, Text, Scrollbar, Button, W, S, N, E, END, NONE
 
 import requests
 import urllib3
 from retrying import retry
 
+
 '''
 软件名: BaiduPanFilesTransfers
-版本: 1.13
-更新时间: 2023.03.21
+版本: 1.14
+更新时间: 2023.05.12
 打包命令: pyinstaller -F -w -i bpftUI.ico bpftUI.py
 '''
 
@@ -32,55 +33,61 @@ with open(ICON_PATH, 'wb') as icon_file:
 root.iconbitmap(default=ICON_PATH)
 
 # 主窗口配置
-root.wm_title("度盘转存 1.13 by assassing")
-root.wm_geometry('350x473+240+240')
-root.wm_attributes("-alpha", 0.91)
-# root.resizable(width=False, height=False)
+root.wm_title("度盘转存 1.14 by assassing")
+root.wm_geometry('360x480+240+240')
+root.minsize(360, 480)
+root.wm_attributes("-alpha", 0.88)
 
 # 定义标签和文本框
-Label(root, text='1.下面填入百度Cookies,不带引号').grid(row=1, column=0, sticky=W)
-entry_cookie = Entry(root, width=48, )
-entry_cookie.grid(row=2, column=0, sticky=W, padx=4)
-Label(root, text='2.下面填入浏览器User-Agent').grid(row=3, column=0, sticky=W)
-entry_ua = Entry(root, width=48, )
-entry_ua.grid(row=4, column=0, sticky=W, padx=4)
-Label(root, text='3.下面填入文件保存位置(默认根目录),不能包含<,>,|,*,?,,/').grid(row=5, column=0, sticky=W)
-entry_folder_name = Entry(root, width=48, )
-entry_folder_name.grid(row=6, column=0, sticky=W, padx=4)
-Label(root, text='4.下面粘贴链接,每行一个,格式为:链接 提取码.支持秒传格式.').grid(row=7, sticky=W)
+def create_label_entry(row, label_text):
+    Label(root, text=label_text).grid(row=row, column=0, sticky=W)
+    entry = Entry(root)
+    entry.grid(row=row+1, column=0, sticky=W+E, padx=(4,1), pady=(5,5))
+    root.grid_columnconfigure(0, weight=1)
+    return entry
 
-# 链接输入框
-text_links = Text(root, width=48, height=10, wrap=NONE)
-text_links.grid(row=8, column=0, sticky=W, padx=4, )
-scrollbar_links = Scrollbar(root, width=5)
-scrollbar_links.grid(row=8, column=0, sticky=S + N + E, )
-scrollbar_links.configure(command=text_links.yview)
-text_links.configure(yscrollcommand=scrollbar_links.set)
+entry_cookie = create_label_entry(1, '1.下面填入百度 Cookies，不带引号：')
+entry_ua = create_label_entry(3, '2.下面填入浏览器 User-Agent：')
+entry_folder_name = create_label_entry(5, '3.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
 
-# 日志输出框
-text_logs = Text(root, width=48, height=10, wrap=NONE)
-text_logs.grid(row=10, column=0, sticky=W, padx=4, )
-scrollbar_logs = Scrollbar(root, width=5)
-scrollbar_logs.grid(row=10, column=0, sticky=S + N + E, )
-scrollbar_logs.configure(command=text_logs.yview)
-text_logs.configure(yscrollcommand=scrollbar_logs.set)
+# 链接输入框和日志输出框
+def create_text_scrollbar(row):
+    text = Text(root, height=5, wrap=NONE)
+    text.grid(row=row, column=0, sticky=W+E+N+S, padx=(4,1), pady=(5,5))
+    scrollbar = Scrollbar(root, width=5)
+    scrollbar.grid(row=row, column=1, sticky=S + N, rowspan=2)
+    scrollbar.configure(command=text.yview)
+    text.configure(yscrollcommand=scrollbar.set)
+    root.grid_rowconfigure(row, weight=1)
+    return text
 
-# 定义按钮和状态标签
-bottom_run = Button(root, text='4.点击运行', command=lambda: thread_it(main, ), width=10, height=1, relief='solid')
+Label(root, text='4.下面粘贴链接，每行一个。格式为：链接 提取码 或 秒传格式。').grid(row=7, sticky=W)
+text_links = create_text_scrollbar(8)
+text_logs = create_text_scrollbar(10)
+
+# 定义按钮
+bottom_run = Button(root, text='5.点击运行', command=lambda: thread_it(main, ), width=10, height=1, relief='solid')
 bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
-label_state = Label(root, text='检查新版', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
+
+# 定义状态标签
+label_state = Label(root, text='检查新版', font=('Arial', 10, 'underline'), foreground="#0000ff", cursor='heart')
 label_state.grid(row=9, sticky=E, padx=4)
 label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers", new=0))
 
 # 读取配置
 if os.path.exists('config.ini'):
     with open('config.ini') as config_read:
-        [config_cookie, config_user_agent] = config_read.readlines()
+        config_cookie, config_user_agent = config_read.readlines()
     entry_cookie.insert(0, config_cookie)
     entry_ua.insert(0, config_user_agent)
 
-# 公共请求头
-request_header = {
+# 会话配置
+urllib3.disable_warnings()
+s = requests.session()
+# s.trust_env = False
+
+# 请求变量
+REQUEST_HEADER = {
     'Host': 'pan.baidu.com',
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
@@ -92,70 +99,51 @@ request_header = {
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
 }
-urllib3.disable_warnings()
-s = requests.session()
-s.trust_env = False
-
+BASE_URL = 'https://pan.baidu.com'
 
 # 获取bdstoken函数
-@retry(stop_max_attempt_number=5, wait_fixed=1000)
+@retry(stop_max_attempt_number=3, wait_fixed=1000)
 def get_bdstoken():
-    url = 'https://pan.baidu.com/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
-    response = s.get(url=url, headers=request_header, timeout=20, allow_redirects=True, verify=False)
+    url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
+    response = s.get(url=url, headers=REQUEST_HEADER, timeout=20, allow_redirects=True, verify=False)
     return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
-
 
 # 获取目录列表函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_dir_list(bdstoken):
-    url = 'https://pan.baidu.com/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken=' + bdstoken
-    response = s.get(url=url, headers=request_header, timeout=15, allow_redirects=False, verify=False)
+    url = f'{BASE_URL}/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken={bdstoken}'
+    response = s.get(url=url, headers=REQUEST_HEADER, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
-
 
 # 新建目录函数
 @retry(stop_max_attempt_number=5, wait_fixed=1000)
 def create_dir(dir_name, bdstoken):
-    url = 'https://pan.baidu.com/api/create?a=commit&bdstoken=' + bdstoken
+    url = f'{BASE_URL}/api/create?a=commit&bdstoken={bdstoken}'
     post_data = {'path': dir_name, 'isdir': '1', 'block_list': '[]', }
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
+    response = s.post(url=url, headers=REQUEST_HEADER, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno']
 
-
-# 检测链接种类
-def check_link_type(link_list_line):
-    if link_list_line.find('https://pan.baidu.com/s/') >= 0:
-        link_type = '/s/'
-    elif bool(re.search('(bdlink=|bdpan://|BaiduPCS-Go)', link_list_line, re.IGNORECASE)):
-        link_type = 'rapid'
-    elif link_list_line.count('#') >= 2:
-        link_type = 'rapid'
-    else:
-        link_type = 'unknown'
-    return link_type
-
-
 # 验证链接函数
-@retry(stop_max_attempt_number=6, wait_fixed=2000)
+@retry(stop_max_attempt_number=12, wait_fixed=1700)
 def check_links(link_url, pass_code, bdstoken):
     # 验证提取码
     if pass_code:
         # 生成时间戳
         t_str = str(int(round(time.time() * 1000)))
-        check_url = 'https://pan.baidu.com/share/verify?surl=' + link_url[25:48] + '&bdstoken=' + bdstoken + '&t=' + t_str + '&channel=chunlei&web=1&clienttype=0'
+        check_url = f'{BASE_URL}/share/verify?surl={link_url[25:48]}&bdstoken={bdstoken}&t={t_str}&channel=chunlei&web=1&clienttype=0'
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-        response_post = s.post(url=check_url, headers=request_header, data=post_data, timeout=10, allow_redirects=False, verify=False)
-        # 在cookie中加入bdclnd参数
+        response_post = s.post(url=check_url, headers=REQUEST_HEADER, data=post_data, timeout=10, allow_redirects=False, verify=False)
+        # 在 cookie 中加入 bdclnd 参数
         if response_post.json()['errno'] == 0:
             bdclnd = response_post.json()['randsk']
         else:
             return response_post.json()['errno']
-        if bool(re.search('BDCLND=', request_header['Cookie'], re.IGNORECASE)):
-            request_header['Cookie'] = re.sub(r'BDCLND=(\S+);?', r'BDCLND=' + bdclnd + ';', request_header['Cookie'])
+        if 'BDCLND=' in REQUEST_HEADER['Cookie']:
+            REQUEST_HEADER['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', REQUEST_HEADER['Cookie'])
         else:
-            request_header['Cookie'] += ';BDCLND=' + bdclnd
+            REQUEST_HEADER['Cookie'] += f';BDCLND={bdclnd}'
     # 获取文件信息
-    response = s.get(url=link_url, headers=request_header, timeout=15, allow_redirects=True, verify=False).content.decode("utf-8")
+    response = s.get(url=link_url, headers=REQUEST_HEADER, timeout=15, allow_redirects=True, verify=False).content.decode("utf-8")
     shareid_list = re.findall('"shareid":(\\d+?),"', response)
     user_id_list = re.findall('"share_uk":"(\\d+?)","', response)
     fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
@@ -169,47 +157,66 @@ def check_links(link_url, pass_code, bdstoken):
     else:
         return [shareid_list[0], user_id_list[0], fs_id_list]
 
-
 # 转存文件函数
-@retry(stop_max_attempt_number=20, wait_fixed=2000)
+@retry(stop_max_attempt_number=20, wait_fixed=1853)
 def transfer_files(check_links_reason, dir_name, bdstoken):
-    url = 'https://pan.baidu.com/share/transfer?shareid=' + check_links_reason[0] + '&from=' + check_links_reason[1] + '&bdstoken=' + bdstoken + '&channel=chunlei&web=1&clienttype=0'
+    url = f'{BASE_URL}/share/transfer?shareid={check_links_reason[0]}&from={check_links_reason[1]}&bdstoken={bdstoken}&channel=chunlei&web=1&clienttype=0'
     fs_id = ','.join(i for i in check_links_reason[2])
-    post_data = {'fsidlist': '[' + fs_id + ']', 'path': '/' + dir_name, }
-    response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
+    post_data = {'fsidlist': f'[{fs_id}]', 'path': f'/{dir_name}', }
+    response = s.post(url=url, headers=REQUEST_HEADER, data=post_data, timeout=15, allow_redirects=False, verify=False)
     return response.json()['errno']
-
 
 # 转存秒传链接函数
 @retry(stop_max_attempt_number=10, wait_fixed=1000)
 def transfer_files_rapid(rapid_data, dir_name, bdstoken):
-    user_agent = request_header['User-Agent']
-    request_header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
-    url = 'https://pan.baidu.com/api/create&bdstoken=' + bdstoken
+    user_agent = REQUEST_HEADER['User-Agent']
+    REQUEST_HEADER['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
+    url = f'{BASE_URL}/api/create&bdstoken={bdstoken}'
     # post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
     post_data = '&block_list=["{}"]&path=/{}/{}&size={}&isdir=0&rtype=0'.format(rapid_data[0], dir_name.replace("&","%26"), rapid_data[3].replace("&","%26"), rapid_data[2])
-    response = s.post(url=url, headers=request_header, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
+    response = s.post(url=url, headers=REQUEST_HEADER, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
     if response.json()['errno'] == 404:
         post_data = '&block_list=["{}"]&path=/{}/{}&size={}&isdir=0&rtype=0'.format(rapid_data[0].lower(), dir_name.replace("&", "%26"), rapid_data[3].replace("&", "%26"), rapid_data[2])
-        response = s.post(url=url, headers=request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
+        response = s.post(url=url, headers=REQUEST_HEADER, data=post_data, timeout=15, allow_redirects=False, verify=False)
     elif response.json()['errno'] == 2:
         time.sleep(1)
         return transfer_files_rapid(rapid_data, dir_name, bdstoken)
-    request_header['User-Agent'] = user_agent
+    REQUEST_HEADER['User-Agent'] = user_agent
     return response.json()['errno']
 
+# 检测链接种类
+def check_link_type(link_list_line):
+    link_type = 'unknown'
+    if 'https://pan.baidu.com/s/' in link_list_line:
+        link_type = '/s/'
+    elif re.search(r'(bdlink=|bdpan://|BaiduPCS-Go|#.*#)', link_list_line, re.IGNORECASE):
+        link_type = 'rapid'
+    return link_type
 
 # 状态标签变化函数
 def label_state_change(state, task_count=0, task_total_count=0):
+    label_state.config(font=('Arial', 9), foreground="#000000", cursor="arrow")
     label_state.unbind("<Button-1>")
-    label_state['font'] = ('Arial', 9)
-    label_state['foreground'] = "#000000"
-    label_state['cursor'] = "arrow"
-    if state == 'error':
-        label_state['text'] = '发生错误,错误日志如下:'
-    elif state == 'running':
-        label_state['text'] = '下面为转存结果,进度:' + str(task_count) + '/' + str(task_total_count)
 
+    if state == 'error':
+        label_state['text'] = '发生错误，错误日志如下：'
+    elif state == 'running':
+        label_state['text'] = f'下面为转存结果，进度：{task_count}/{task_total_count}'
+
+# 写配置文件函数
+def write_config(cookie, user_agent):
+    with open('config.ini', 'w') as config_write:
+        config_write.write(cookie + '\n' + user_agent)
+
+# 处理链接格式函数
+def sanitize_link(url_code):
+    # 处理 http 链接
+    url_code = url_code.replace("http://", "https://")
+    # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
+    url_code = url_code.replace("?pwd=", " ")
+    # 处理旧格式链接
+    url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
+    return url_code
 
 # 多线程
 def thread_it(func, *args):
@@ -217,21 +224,18 @@ def thread_it(func, *args):
     t.start()
     # t.join()
 
-
 # 主程序
 def main():
     # 获取和初始化数据
     text_logs.delete(1.0, END)
     dir_name = "".join(entry_folder_name.get().split())
     cookie = "".join(entry_cookie.get().split())
-    request_header['Cookie'] = cookie
+    REQUEST_HEADER['Cookie'] = cookie
     user_agent = entry_ua.get()
-    request_header['User-Agent'] = user_agent
-    with open('config.ini', 'w') as config_write:
-        config_write.write(cookie + '\n' + user_agent)
+    REQUEST_HEADER['User-Agent'] = user_agent
+    write_config(cookie, user_agent)
     text_input = text_links.get(1.0, END).split('\n')
-    link_list = [link for link in text_input if link]
-    link_list = [link + ' ' for link in link_list]
+    link_list = [sanitize_link(link + ' ') for link in text_input if link]
     task_count = 0
     task_total_count = len(link_list)
     bottom_run['state'] = 'disabled'
@@ -240,13 +244,13 @@ def main():
 
     # 开始运行函数
     try:
-        # 检查cookie输入是否正确
+        # 检查 cookie 输入是否正确
         if any([ord(word) not in range(256) for word in cookie]) or cookie.find('BAIDUID=') == -1:
             label_state_change(state='error')
-            text_logs.insert(END, '百度网盘cookie输入不正确,请检查cookie后重试.' + '\n')
+            text_logs.insert(END, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。' + '\n')
             sys.exit()
 
-        # 执行获取bdstoken
+        # 执行获取 bdstoken
         bdstoken = get_bdstoken()
         if isinstance(bdstoken, int):
             label_state_change(state='error')
@@ -271,12 +275,6 @@ def main():
 
         # 执行转存
         for url_code in link_list:
-            # 处理http链接
-            url_code = url_code.replace("http://", "https://")
-            # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
-            url_code = url_code.replace("?pwd=", " ")
-            # 处理旧格式链接
-            url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
             # 判断连接类型
             link_type = check_link_type(url_code)
             # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 123w)格式链接
@@ -372,7 +370,6 @@ def main():
         bottom_run['state'] = 'normal'
         bottom_run['relief'] = 'solid'
         bottom_run['text'] = '4.点击运行'
-
 
 if __name__ == '__main__':
     root.mainloop()
