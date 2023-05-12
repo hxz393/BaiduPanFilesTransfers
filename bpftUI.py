@@ -25,9 +25,9 @@ def check_link_type(link_list_line):
 
 
 # 写配置文件函数
-def write_config(cookie, user_agent):
+def write_config(cookie):
     with open('config.ini', 'w') as config_write:
-        config_write.write(cookie + '\n' + user_agent)
+        config_write.write(cookie)
 
 
 # 处理链接格式函数
@@ -50,9 +50,9 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     软件名：BaiduPanFilesTransfers
-    版本：1.14
-    更新时间：2023.05.12
-    打包命令：pyinstaller -F -w -i bpftUI.ico bpftUI.py
+    版本：2.0
+    更新时间：2023.05.13
+    打包命令：pyinstaller -F -w bpftUI.py
     """
 
     # 请求变量
@@ -68,6 +68,7 @@ class BaiduPanFilesTransfers:
         'Referer': 'https://pan.baidu.com',
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
     }
 
     # 错误代码和消息的字典
@@ -110,19 +111,18 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("度盘转存 1.14 by assassing")
-        self.root.wm_geometry('360x480+240+240')
-        self.root.minsize(360, 480)
+        self.root.wm_title("百度网盘链接批量转存工具 2.0 by assassing")
+        self.root.wm_geometry('410x480+240+240')
+        self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
 
         # 定义窗口元素
         self.entry_cookie = self.create_label_entry(1, '1.下面填入百度 Cookies，不带引号：')
-        self.entry_ua = self.create_label_entry(3, '2.下面填入浏览器 User-Agent：')
-        self.entry_folder_name = self.create_label_entry(5, '3.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
-        Label(self.root, text='4.下面粘贴链接，每行一个。格式为：链接 提取码 或 秒传格式。').grid(row=7, sticky=W)
+        self.entry_folder_name = self.create_label_entry(5, '2.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
+        Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码 或 秒传格式。').grid(row=7, sticky=W)
         self.text_links = self.create_text_scrollbar(8)
         self.text_logs = self.create_text_scrollbar(10)
-        self.bottom_run = Button(self.root, text='5.点击运行', command=lambda: thread_it(self.main, ), width=10, height=1, relief='solid')
+        self.bottom_run = Button(self.root, text='4.点击运行', command=lambda: thread_it(self.main, ), width=10, height=1, relief='solid')
         self.bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
         self.label_state = Label(self.root, text='检查新版', font=('Arial', 10, 'underline'), foreground="#0000ff", cursor='heart')
         self.label_state.grid(row=9, sticky=E, padx=4)
@@ -133,7 +133,6 @@ class BaiduPanFilesTransfers:
             with open('config.ini') as config_read:
                 config_cookie, config_user_agent = config_read.readlines()
             self.entry_cookie.insert(0, config_cookie)
-            self.entry_ua.insert(0, config_user_agent.strip())
 
     # 建立标签和输入框函数
     def create_label_entry(self, row, label_text):
@@ -273,9 +272,9 @@ class BaiduPanFilesTransfers:
         elif link_type == 'rapid':
             self.process_rapid_link(url_code, dir_name)
         elif link_type == 'unknown':
-            self.insert_logs(f'不支持链接：{url_code}')
+            self.insert_logs(f'不支持的链接：{url_code}')
 
-    # 处理 /s/ 类型链接函数
+    # 转存 /s/ 类型链接函数
     def process_s_link(self, url_code, dir_name):
         link_url_org, pass_code_org = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
         [link_url, pass_code] = [link_url_org.strip()[:47], pass_code_org.strip()[:4]]
@@ -290,7 +289,7 @@ class BaiduPanFilesTransfers:
         else:
             self.insert_logs(f'访问链接返回错误代码（{check_links_reason}）：{url_code}')
 
-    # 处理 rapid 类型链接函数
+    # 转存 rapid 类型链接函数
     def process_rapid_link(self, url_code, dir_name):
         # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
         if url_code.count('#') > 2:
@@ -331,15 +330,13 @@ class BaiduPanFilesTransfers:
         # 获取和初始化数据
         self.text_logs.delete(1.0, END)
         cookie = "".join(self.entry_cookie.get().split())
-        user_agent = self.entry_ua.get()
         dir_name = "".join(self.entry_folder_name.get().split())
         link_list = [sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
         task_count = 0
         task_total_count = len(link_list)
-        write_config(cookie, user_agent)
+        write_config(cookie)
 
         self.REQUEST_HEADER['Cookie'] = cookie
-        self.REQUEST_HEADER['User-Agent'] = user_agent
         self.bottom_run['state'] = 'disabled'
         self.bottom_run['relief'] = 'groove'
         self.bottom_run['text'] = '运行中...'
@@ -370,6 +367,7 @@ class BaiduPanFilesTransfers:
                 self.process_link(url_code, dir_name)
                 task_count += 1
                 self.label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
+
         except Exception as e:
             self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：')
             self.insert_logs(f'{str(e)}')
