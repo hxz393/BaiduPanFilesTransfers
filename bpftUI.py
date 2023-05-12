@@ -84,6 +84,7 @@ class BaiduPanFilesTransfers:
         4: '转存失败，目录中已有同名文件或文件夹存在',
         -8: '转存失败，目录中已有同名文件或文件夹存在',
         12: '转存失败，转存文件数超过限制',
+        -7: '转存失败，文件名有非法字符',
         404: '转存失败，秒传无效',
         -10: '转存失败，容量不足',
         0: '转存成功',
@@ -261,6 +262,70 @@ class BaiduPanFilesTransfers:
     def insert_logs(self, message):
         self.text_logs.insert(END, message + '\n')
 
+    # 处理链接函数
+    def process_link(self, url_code, dir_name):
+        # 判断连接类型
+        link_type = check_link_type(url_code)
+        # 处理 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 123w 格式链接
+        if link_type == '/s/':
+            self.process_s_link(url_code, dir_name)
+        # 处理秒传格式链接
+        elif link_type == 'rapid':
+            self.process_rapid_link(url_code, dir_name)
+        elif link_type == 'unknown':
+            self.insert_logs(f'不支持链接：{url_code}')
+
+    # 处理 /s/ 类型链接函数
+    def process_s_link(self, url_code, dir_name):
+        link_url_org, pass_code_org = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
+        [link_url, pass_code] = [link_url_org.strip()[:47], pass_code_org.strip()[:4]]
+        # 执行检查链接有效性
+        check_links_reason = self.check_links(link_url, pass_code)
+        if isinstance(check_links_reason, list):
+            # 执行转存文件
+            transfer_files_reason = self.transfer_files(check_links_reason, dir_name)
+            self.check_transfer_files_reason(transfer_files_reason, url_code)
+        elif check_links_reason in self.ERROR_CODES:
+            self.insert_logs(f'{self.ERROR_CODES[check_links_reason]}：{url_code}')
+        else:
+            self.insert_logs(f'访问链接返回错误代码（{check_links_reason}）：{url_code}')
+
+    # 处理 rapid 类型链接函数
+    def process_rapid_link(self, url_code, dir_name):
+        # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
+        if url_code.count('#') > 2:
+            rapid_data = url_code.split('#', maxsplit=3)
+        elif url_code.count('#') == 2:
+            rapid_data = url_code.split('#', maxsplit=2)
+            rapid_data.insert(1, '')
+        # 处理游侠 v1标准(bdlink=)
+        elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
+            rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode("utf-8").strip().split('#', maxsplit=3)
+        # 处理PanDL标准(bdpan://)
+        elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
+            bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode("utf-8").strip().split('|')
+            rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
+        # 处理PCS-Go标准(BaiduPCS-Go)
+        elif bool(re.search('BaiduPCS-Go', url_code, re.IGNORECASE)):
+            go_md5 = re.findall(r'-md5=(\S+)', url_code)[0]
+            go_md5s = re.findall(r'-slicemd5=(\S+)', url_code)[0]
+            go_len = re.findall(r'-length=(\S+)', url_code)[0]
+            # go_name = re.findall(r'-crc32=\d+\s(.+)', url_code)[0].replace('"', '').replace('/', '\\').strip()
+            go_name = re.findall(r'"(.*)"', url_code)[0].replace('"', '').replace('/', '\\').strip()
+            rapid_data = [go_md5, go_md5s, go_len, go_name]
+        else:
+            rapid_data = []
+        # 执行转存文件
+        transfer_files_reason = self.transfer_files_rapid(rapid_data, dir_name)
+        self.check_transfer_files_reason(transfer_files_reason, url_code)
+
+    # 检查转存文件结果
+    def check_transfer_files_reason(self, transfer_files_reason, url_code):
+        if transfer_files_reason in self.ERROR_CODES:
+            self.insert_logs(f'{self.ERROR_CODES[transfer_files_reason]}：{url_code}')
+        else:
+            self.insert_logs(f'转存失败，错误代码（{transfer_files_reason}）：{url_code}')
+
     # 主函数
     def main(self):
         # 获取和初始化数据
@@ -302,57 +367,7 @@ class BaiduPanFilesTransfers:
 
             # 执行转存
             for url_code in link_list:
-                # 判断连接类型
-                link_type = check_link_type(url_code)
-                # 处理 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 123w 格式链接
-                if link_type == '/s/':
-                    link_url_org, pass_code_org = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
-                    [link_url, pass_code] = [link_url_org.strip()[:47], pass_code_org.strip()[:4]]
-                    # 执行检查链接有效性
-                    check_links_reason = self.check_links(link_url, pass_code)
-                    if isinstance(check_links_reason, list):
-                        # 执行转存文件
-                        transfer_files_reason = self.transfer_files(check_links_reason, dir_name)
-                        if transfer_files_reason in self.ERROR_CODES:
-                            self.insert_logs(f'{self.ERROR_CODES[transfer_files_reason]}：{url_code}')
-                        else:
-                            self.insert_logs(f'转存失败，错误代码（{transfer_files_reason}）：{url_code}')
-                    elif check_links_reason in self.ERROR_CODES:
-                        self.insert_logs(f'{self.ERROR_CODES[check_links_reason]}：{url_code}')
-                    else:
-                        self.insert_logs(f'访问链接返回错误代码（{check_links_reason}）：{url_code}')
-                # 处理秒传格式链接
-                elif link_type == 'rapid':
-                    # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
-                    if url_code.count('#') > 2:
-                        rapid_data = url_code.split('#', maxsplit=3)
-                    elif url_code.count('#') == 2:
-                        rapid_data = url_code.split('#', maxsplit=2)
-                        rapid_data.insert(1, '')
-                    # 处理游侠 v1标准(bdlink=)
-                    elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
-                        rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode("utf-8").strip().split('#', maxsplit=3)
-                    # 处理PanDL标准(bdpan://)
-                    elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
-                        bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode("utf-8").strip().split('|')
-                        rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
-                    # 处理PCS-Go标准(BaiduPCS-Go)
-                    elif bool(re.search('BaiduPCS-Go', url_code, re.IGNORECASE)):
-                        go_md5 = re.findall(r'-md5=(\S+)', url_code)[0]
-                        go_md5s = re.findall(r'-slicemd5=(\S+)', url_code)[0]
-                        go_len = re.findall(r'-length=(\S+)', url_code)[0]
-                        # go_name = re.findall(r'-crc32=\d+\s(.+)', url_code)[0].replace('"', '').replace('/', '\\').strip()
-                        go_name = re.findall(r'"(.*)"', url_code)[0].replace('"', '').replace('/', '\\').strip()
-                        rapid_data = [go_md5, go_md5s, go_len, go_name]
-                    else:
-                        rapid_data = []
-                    transfer_files_reason = self.transfer_files_rapid(rapid_data, dir_name)
-                    if transfer_files_reason in self.ERROR_CODES:
-                        self.insert_logs(f'{self.ERROR_CODES[transfer_files_reason]}：{url_code}')
-                    else:
-                        self.insert_logs(f'转存失败，错误代码（{transfer_files_reason}）：{url_code}')
-                elif link_type == 'unknown':
-                    self.insert_logs(f'不支持链接：{url_code}')
+                self.process_link(url_code, dir_name)
                 task_count += 1
                 self.label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
         except Exception as e:
