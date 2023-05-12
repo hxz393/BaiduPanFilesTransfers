@@ -96,7 +96,7 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 1.调整程序UI，现在可以随意调整窗口大小;
 2.使用 f-string 替代字符串拼接；
-3.优化代码；
+3.优化代码,重新封装函数；
 4.改正中文文本格式。
 
 
