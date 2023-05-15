@@ -7,7 +7,7 @@ import zlib
 import os
 import sys
 import re
-from tkinter import Tk, Entry, Label, Text, Scrollbar, Button, Checkbutton, W, S, N, E, END, NONE
+from tkinter import Tk, Entry, Label, Text, Scrollbar, Button, Checkbutton, W, S, N, E, END, NONE, BooleanVar
 
 import requests
 import urllib3
@@ -50,8 +50,8 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     软件名：BaiduPanFilesTransfers
-    版本：2.0
-    更新时间：2023.05.13
+    版本：2.1
+    更新时间：2023.05.16
     打包命令：pyinstaller -F -w -i bpftUI.ico bpftUI.py
     """
 
@@ -96,8 +96,6 @@ class BaiduPanFilesTransfers:
         self.session = requests.Session()
         urllib3.disable_warnings()
         self.bdstoken = None
-        # 设为 False 来使用 IDE 中配置的代理
-        # self.session.trust_env = False
 
         # 实例化 TK
         self.root = Tk()
@@ -124,9 +122,13 @@ class BaiduPanFilesTransfers:
         self.text_logs = self.create_text_scrollbar(10)
         self.bottom_run = Button(self.root, text='4.点击运行', command=lambda: thread_it(self.main, ), width=10, height=1, relief='solid')
         self.bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
-        self.label_state = Label(self.root, text='检查新版', font=('Arial', 10, 'underline'), foreground="#0000ff", cursor='heart')
+        self.label_state = Label(self.root, text='使用帮助', font=('Arial', 10, 'underline'), foreground="#0000ff", cursor='heart')
         self.label_state.grid(row=9, sticky=E, padx=4)
         self.label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers", new=0))
+        # 添加 trust_env 复选框
+        self.trust_env_var = BooleanVar()
+        self.trust_env_checkbutton = Checkbutton(self.root, text='使用系统代理', font=('Arial', 10,), variable=self.trust_env_var)
+        self.trust_env_checkbutton.grid(row=9, sticky=W, padx=84)
 
         # 读取配置
         if os.path.exists('config.ini'):
@@ -333,6 +335,7 @@ class BaiduPanFilesTransfers:
         cookie = "".join(self.entry_cookie.get().split())
         target_directory_name = "".join(self.entry_folder_name.get().split())
         link_list = [sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
+        self.session.trust_env = self.trust_env_var.get()
         completed_task_count = 0
         total_task_count = len(link_list)
         write_config(cookie)
@@ -344,6 +347,7 @@ class BaiduPanFilesTransfers:
 
         # 开始运行函数
         try:
+            print(self.session.trust_env)
             # 检查链接数是否超限
             self.check_condition(total_task_count > 1000, 'error', '转存链接数一次不能超过 1000，请减少链接数。')
 

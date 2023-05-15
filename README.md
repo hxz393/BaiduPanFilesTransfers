@@ -62,7 +62,7 @@
 
 ## 版本说明
 
-软件重构后的 2.0 版本已发布，没经过充分测试，可能有无法预料的 BUG，欢迎提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 反馈。同时 1.13 版本依然可用（截至 2023.05.12），但后续不再更新 1.X 版本。
+软件重构后的 2.X 版本已发布，没经过充分测试，可能有无法预料的 BUG，欢迎提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 反馈。同时 1.13 版本依然可用（截至 2023.05.12），但后续不再更新 1.X 版本。
 
 
 
@@ -74,7 +74,7 @@
 
 # 软件使用
 
-软件使用分为下面 4 个步骤。
+软件使用分为下面几个步骤。
 
 ## 获取 Cookies
 
@@ -136,6 +136,7 @@ bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1M
 
 ```sh
 965FEAFCC6DC216CB56128B531694C9D#495B4FB5879AE0B22A31826D33D86D80#802846691#梦姬标准.7z
+4159f28726f88ba7aab8cbb6a8afbae1#201442718#patch.rar
 ```
 
 **Go 格式：**
@@ -159,6 +160,12 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 转存执行时没有暂停功能，可以直接点击软件窗口右上角关闭软件来终止运行。
 
 
+
+## 使用系统代理
+
+软件默认会绕过网络系统代理，但不能绕过网络全局代理。
+
+如果处于特殊网络环境下，需要配置网络系统代理模式，才能正常访问百度网盘，勾选上 “使用系统代理” 勾选框后，再执行转存。
 
 
 
@@ -247,11 +254,11 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 更新内容：
 
-1. 
+1. 添加 “使用系统代理” 勾选框。
 
 修复内容：
 
-1. 修复因为删除 `User-Agent` 参数，导致读取配置文件出错，无法打开软件。
+1. 修复因为删除 `User-Agent` 参数，导致读取配置文件出错，打开软件报错。
 2. 修改部分变量和函数名，使代码更规范。
 
 
