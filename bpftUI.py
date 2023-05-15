@@ -7,7 +7,7 @@ import zlib
 import os
 import sys
 import re
-from tkinter import Tk, Entry, Label, Text, Scrollbar, Button, W, S, N, E, END, NONE
+from tkinter import Tk, Entry, Label, Text, Scrollbar, Button, Checkbutton, W, S, N, E, END, NONE
 
 import requests
 import urllib3
@@ -52,12 +52,12 @@ class BaiduPanFilesTransfers:
     软件名：BaiduPanFilesTransfers
     版本：2.0
     更新时间：2023.05.13
-    打包命令：pyinstaller -F -w bpftUI.py
+    打包命令：pyinstaller -F -w -i bpftUI.ico bpftUI.py
     """
 
     # 请求变量
     BASE_URL = 'https://pan.baidu.com'
-    REQUEST_HEADER = {
+    request_header = {
         'Host': 'pan.baidu.com',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
@@ -111,7 +111,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("百度网盘链接批量转存工具 2.0 by assassing")
+        self.root.wm_title("百度网盘批量转存工具 2.0 by assassing")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -131,7 +131,8 @@ class BaiduPanFilesTransfers:
         # 读取配置
         if os.path.exists('config.ini'):
             with open('config.ini') as config_read:
-                config_cookie, config_user_agent = config_read.readlines()
+                config_list = config_read.readlines()
+                config_cookie = config_list[0] if config_list else ''
             self.entry_cookie.insert(0, config_cookie)
 
     # 建立标签和输入框函数
@@ -154,47 +155,47 @@ class BaiduPanFilesTransfers:
         return text
 
     # 建立状态标签变化函数
-    def label_state_change(self, state, task_count=0, task_total_count=0):
+    def label_state_change(self, state, completed_task_count=0, total_task_count=0):
         self.label_state.config(font=('Arial', 9), foreground="#000000", cursor="arrow")
         self.label_state.unbind("<Button-1>")
 
         if state == 'error':
             self.label_state['text'] = '发生错误，错误日志如下：'
         elif state == 'running':
-            self.label_state['text'] = f'下面为转存结果，进度：{task_count}/{task_total_count}'
+            self.label_state['text'] = f'下面为转存结果，进度：{completed_task_count}/{total_task_count}'
 
     # 获取bdstoken函数
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_bdstoken(self):
         url = f'{self.BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
-        response = self.session.get(url=url, headers=self.REQUEST_HEADER, timeout=20, allow_redirects=True, verify=False)
+        response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=True, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
 
     # 获取目录列表函数
     @retry(stop_max_attempt_number=5, wait_fixed=1000)
     def get_dir_list(self):
         url = f'{self.BASE_URL}/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken={self.bdstoken}'
-        response = self.session.get(url=url, headers=self.REQUEST_HEADER, timeout=15, allow_redirects=False, verify=False)
+        response = self.session.get(url=url, headers=self.request_header, timeout=15, allow_redirects=False, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
 
     # 新建目录函数
     @retry(stop_max_attempt_number=5, wait_fixed=1000)
-    def create_dir(self, dir_name):
+    def create_dir(self, target_directory_name):
         url = f'{self.BASE_URL}/api/create?a=commit&bdstoken={self.bdstoken}'
-        post_data = {'path': dir_name, 'isdir': '1', 'block_list': '[]', }
-        response = self.session.post(url=url, headers=self.REQUEST_HEADER, data=post_data, timeout=15, allow_redirects=False, verify=False)
+        post_data = {'path': target_directory_name, 'isdir': '1', 'block_list': '[]', }
+        response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
         return response.json()['errno']
 
     # 验证链接函数
     @retry(stop_max_attempt_number=12, wait_fixed=1700)
-    def check_links(self, link_url, pass_code):
+    def verify_links(self, link_url, pass_code):
         if pass_code:
             bdclnd = self.verify_pass_code(link_url, pass_code)
             if isinstance(bdclnd, int):
                 return bdclnd
             self.update_cookie(bdclnd)
 
-        response = self.session.get(url=link_url, headers=self.REQUEST_HEADER, timeout=15, allow_redirects=True, verify=False).content.decode("utf-8")
+        response = self.session.get(url=link_url, headers=self.request_header, timeout=15, allow_redirects=True, verify=False).content.decode("utf-8")
 
         shareid_list = re.findall('"shareid":(\\d+?),"', response)
         user_id_list = re.findall('"share_uk":"(\\d+?)","', response)
@@ -215,39 +216,39 @@ class BaiduPanFilesTransfers:
     def verify_pass_code(self, link_url, pass_code):
         check_url = f'{self.BASE_URL}/share/verify?surl={link_url[25:48]}&bdstoken={self.bdstoken}&t={str(int(round(time.time() * 1000)))}&channel=chunlei&web=1&clienttype=0'
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-        response = self.session.post(url=check_url, headers=self.REQUEST_HEADER, data=post_data, timeout=10, allow_redirects=False, verify=False)
+        response = self.session.post(url=check_url, headers=self.request_header, data=post_data, timeout=10, allow_redirects=False, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['randsk']
 
     # 更新 cookie 函数
     def update_cookie(self, bdclnd):
-        if 'BDCLND=' in self.REQUEST_HEADER['Cookie']:
-            self.REQUEST_HEADER['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', self.REQUEST_HEADER['Cookie'])
+        if 'BDCLND=' in self.request_header['Cookie']:
+            self.request_header['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', self.request_header['Cookie'])
         else:
-            self.REQUEST_HEADER['Cookie'] += f';BDCLND={bdclnd}'
+            self.request_header['Cookie'] += f';BDCLND={bdclnd}'
 
     # 转存文件函数
     @retry(stop_max_attempt_number=20, wait_fixed=1853)
-    def transfer_files(self, check_links_reason, dir_name):
-        url = f'{self.BASE_URL}/share/transfer?shareid={check_links_reason[0]}&from={check_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
-        post_data = {'fsidlist': f'[{",".join(i for i in check_links_reason[2])}]', 'path': f'/{dir_name}', }
-        response = self.session.post(url=url, headers=self.REQUEST_HEADER, data=post_data, timeout=15, allow_redirects=False, verify=False)
+    def transfer_files(self, verify_links_reason, target_directory_name):
+        url = f'{self.BASE_URL}/share/transfer?shareid={verify_links_reason[0]}&from={verify_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
+        post_data = {'fsidlist': f'[{",".join(i for i in verify_links_reason[2])}]', 'path': f'/{target_directory_name}', }
+        response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
         return response.json()['errno']
 
     # 转存秒传链接函数
     @retry(stop_max_attempt_number=10, wait_fixed=1000)
-    def transfer_files_rapid(self, rapid_data, dir_name):
-        header = self.REQUEST_HEADER.copy()
+    def transfer_files_rapid(self, rapid_data, target_directory_name):
+        header = self.request_header.copy()
         header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
         url = f'{self.BASE_URL}/api/create&bdstoken={self.bdstoken}'
-        # post_data = {'path': dir_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
-        post_data = f'&block_list=["{rapid_data[0]}"]&path=/{dir_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
+        # post_data = {'path': target_directory_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
+        post_data = f'&block_list=["{rapid_data[0]}"]&path=/{target_directory_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
         response = self.session.post(url=url, headers=header, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
         if response.json()['errno'] == 404:
-            post_data = f'&block_list=["{rapid_data[0].lower()}"]&path=/{dir_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
+            post_data = f'&block_list=["{rapid_data[0].lower()}"]&path=/{target_directory_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
             response = self.session.post(url=url, headers=header, data=post_data, timeout=15, allow_redirects=False, verify=False)
         elif response.json()['errno'] == 2:
             time.sleep(1)
-            return self.transfer_files_rapid(rapid_data, dir_name)
+            return self.transfer_files_rapid(rapid_data, target_directory_name)
         return response.json()['errno']
 
     # 检查状态函数
@@ -262,35 +263,35 @@ class BaiduPanFilesTransfers:
         self.text_logs.insert(END, message + '\n')
 
     # 处理链接函数
-    def process_link(self, url_code, dir_name):
+    def handle_file_transfer(self, url_code, target_directory_name):
         # 判断连接类型
         link_type = check_link_type(url_code)
         # 处理 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 123w 格式链接
         if link_type == '/s/':
-            self.process_s_link(url_code, dir_name)
+            self.process_s_link(url_code, target_directory_name)
         # 处理秒传格式链接
         elif link_type == 'rapid':
-            self.process_rapid_link(url_code, dir_name)
+            self.process_rapid_link(url_code, target_directory_name)
         elif link_type == 'unknown':
             self.insert_logs(f'不支持的链接：{url_code}')
 
     # 转存 /s/ 类型链接函数
-    def process_s_link(self, url_code, dir_name):
+    def process_s_link(self, url_code, target_directory_name):
         link_url_org, pass_code_org = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
         [link_url, pass_code] = [link_url_org.strip()[:47], pass_code_org.strip()[:4]]
         # 执行检查链接有效性
-        check_links_reason = self.check_links(link_url, pass_code)
-        if isinstance(check_links_reason, list):
+        verify_links_reason = self.verify_links(link_url, pass_code)
+        if isinstance(verify_links_reason, list):
             # 执行转存文件
-            transfer_files_reason = self.transfer_files(check_links_reason, dir_name)
+            transfer_files_reason = self.transfer_files(verify_links_reason, target_directory_name)
             self.check_transfer_files_reason(transfer_files_reason, url_code)
-        elif check_links_reason in self.ERROR_CODES:
-            self.insert_logs(f'{self.ERROR_CODES[check_links_reason]}：{url_code}')
+        elif verify_links_reason in self.ERROR_CODES:
+            self.insert_logs(f'{self.ERROR_CODES[verify_links_reason]}：{url_code}')
         else:
-            self.insert_logs(f'访问链接返回错误代码（{check_links_reason}）：{url_code}')
+            self.insert_logs(f'访问链接返回错误代码（{verify_links_reason}）：{url_code}')
 
     # 转存 rapid 类型链接函数
-    def process_rapid_link(self, url_code, dir_name):
+    def process_rapid_link(self, url_code, target_directory_name):
         # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
         if url_code.count('#') > 2:
             rapid_data = url_code.split('#', maxsplit=3)
@@ -315,7 +316,7 @@ class BaiduPanFilesTransfers:
         else:
             rapid_data = []
         # 执行转存文件
-        transfer_files_reason = self.transfer_files_rapid(rapid_data, dir_name)
+        transfer_files_reason = self.transfer_files_rapid(rapid_data, target_directory_name)
         self.check_transfer_files_reason(transfer_files_reason, url_code)
 
     # 检查转存文件结果
@@ -330,13 +331,13 @@ class BaiduPanFilesTransfers:
         # 获取和初始化数据
         self.text_logs.delete(1.0, END)
         cookie = "".join(self.entry_cookie.get().split())
-        dir_name = "".join(self.entry_folder_name.get().split())
+        target_directory_name = "".join(self.entry_folder_name.get().split())
         link_list = [sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
-        task_count = 0
-        task_total_count = len(link_list)
+        completed_task_count = 0
+        total_task_count = len(link_list)
         write_config(cookie)
 
-        self.REQUEST_HEADER['Cookie'] = cookie
+        self.request_header['Cookie'] = cookie
         self.bottom_run['state'] = 'disabled'
         self.bottom_run['relief'] = 'groove'
         self.bottom_run['text'] = '运行中...'
@@ -344,7 +345,7 @@ class BaiduPanFilesTransfers:
         # 开始运行函数
         try:
             # 检查链接数是否超限
-            self.check_condition(task_total_count > 1000, 'error', '转存链接数一次不能超过 1000，请减少链接数。')
+            self.check_condition(total_task_count > 1000, 'error', '转存链接数一次不能超过 1000，请减少链接数。')
 
             # 检查 cookie 输入是否正确
             self.check_condition(any([ord(word) not in range(256) for word in cookie]) or cookie.find('BAIDUID=') == -1, 'error', '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
@@ -358,16 +359,17 @@ class BaiduPanFilesTransfers:
             self.check_condition(type(dir_list_json) != list, 'error', '没获取到网盘目录列表，请检查 cookie 和网络后重试。')
 
             # 执行新建目录
-            if dir_name and dir_name not in [dir_json['server_filename'] for dir_json in dir_list_json]:
-                create_dir_reason = self.create_dir(dir_name)
+            if target_directory_name and target_directory_name not in [dir_json['server_filename'] for dir_json in dir_list_json]:
+                create_dir_reason = self.create_dir(target_directory_name)
                 self.check_condition(create_dir_reason != 0, 'error', '转存目录名带非法字符，请改正目录名后重试。')
 
             # 执行转存
             for url_code in link_list:
-                self.process_link(url_code, dir_name)
-                task_count += 1
-                self.label_state_change(state='running', task_count=task_count, task_total_count=task_total_count)
+                self.handle_file_transfer(url_code, target_directory_name)
+                completed_task_count += 1
+                self.label_state_change(state='running', completed_task_count=completed_task_count, total_task_count=total_task_count)
 
+        # 故障处理
         except Exception as e:
             self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：')
             self.insert_logs(f'{str(e)}')
