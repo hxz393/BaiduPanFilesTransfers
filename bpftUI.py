@@ -110,7 +110,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("百度网盘批量转存工具 2.0 by assassing")
+        self.root.wm_title("百度网盘批量转存工具 2.1 by assassing")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
