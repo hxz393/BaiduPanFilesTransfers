@@ -18,6 +18,7 @@
 
 - 方式一：到 [release](https://github.com/hxz393/BaiduPanFilesTransfers/releases) 页面下载最新版的 `exe` 文件，文件名类似 `BPFTv2.0.exe`，下载完毕可直接打开使用。
 - 方式二：百度网盘分流下载地址：https://pan.baidu.com/s/1h445UmgNNFFIPO0elmVfgQ?pwd=2i9j
+- 方式三：百度网盘秒传链接：7013f39c3bdcba349ef59bd67aa0286b#13786282#BPFTv2.1.zip
 
 
 
