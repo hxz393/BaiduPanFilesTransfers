@@ -78,11 +78,11 @@
 
 ## 获取 Cookies
 
-使用 `Chrome` 或类似浏览器访问[百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（NetWork） `选项卡。
+使用 `Chrome` 或类似浏览器访问[百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（NetWork）` 选项卡。
 
 如下图所示，目前应该空空如也：
 ![向导图1](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-1.png)
-按 `F5` 刷新页面，下面出现很多条记录。单击名为 `main` 开头的记录，右边会出现菜单，显示标头（Headers）、响应（Response)等内容。
+按 `F5` 刷新页面，下面出现很多条记录。单击名为 `main` 开头的记录，右边会出现菜单，显示标头（Headers）、响应（Response）等内容。
 
 在标头页面往下翻，找到请求标头中以 `Cookie:` 开头的行，后面有一串以 `XF` 开头的内容，这就是需要找的 `Cookies`。把它们全部选中，右键选择复制，粘贴到软件对应输入框内。如下图所示：
 ![向导图2](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-2.png)

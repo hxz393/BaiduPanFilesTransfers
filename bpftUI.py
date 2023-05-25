@@ -82,6 +82,7 @@ class BaiduPanFilesTransfers:
         -62: '链接错误尝试次数过多，请手动转存或稍后再试',
         105: '链接错误，链接格式不正确',
         -4: '转存失败，无效登录。请退出账号在其他地方的登录',
+        -6: '转存失败，请用浏览器无痕模式获取 Cookie',
         4: '转存失败，目录中已有同名文件或文件夹存在',
         -8: '转存失败，目录中已有同名文件或文件夹存在',
         12: '转存失败，转存文件数超过限制',
@@ -347,7 +348,6 @@ class BaiduPanFilesTransfers:
 
         # 开始运行函数
         try:
-            print(self.session.trust_env)
             # 检查链接数是否超限
             self.check_condition(total_task_count > 1000, 'error', '转存链接数一次不能超过 1000，请减少链接数。')
 
