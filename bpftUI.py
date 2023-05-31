@@ -90,7 +90,7 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     软件名：BaiduPanFilesTransfers
-    版本：2.2.0
+    版本：2.2.1
     更新时间：2023.05.31
     打包命令：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
     """
@@ -128,7 +128,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.2.0")
+        self.root.wm_title("BaiduPanFilesTransfers 2.2.1")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
