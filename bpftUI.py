@@ -63,6 +63,7 @@ def sanitize_link(url_code):
     return url_code
 
 
+# 字节码转字符串
 def decode_with_multiple_encodings(encoded_data):
     encodings = ['utf-8', 'gbk', 'gb2312', 'big5', 'gb18030', 'shift_jis', 'euc-jp', 'euc-kr', 'iso-2022-kr']
 
@@ -86,7 +87,7 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     软件名：BaiduPanFilesTransfers
-    版本：2.1.1
+    版本：2.2.0
     更新时间：2023.05.31
     打包命令：pyinstaller -F -w -i bpftUI.ico bpftUI.py
     """
@@ -124,7 +125,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.1.1")
+        self.root.wm_title("BaiduPanFilesTransfers 2.2.0")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -315,17 +316,31 @@ class BaiduPanFilesTransfers:
         elif url_code.count('#') == 2:
             rapid_data = url_code.split('#', maxsplit=2)
             rapid_data.insert(1, '')
-        # 处理游侠 v1标准(bdlink=)
-        elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
-            bytes_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])
-            rapid_data = decode_with_multiple_encodings(bytes_data).strip().split('#', maxsplit=3)
+        # 处理游侠标准(bdlink=)
+        elif 'bdlink=' in url_code.lower():
+            decoded_string_list = decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
+            if len(decoded_string_list) == 1:
+                rapid_data = decoded_string_list[0].strip().split('#', maxsplit=3)
+            elif len(decoded_string_list) > 1:
+                for i in decoded_string_list:
+                    self.process_rapid_link(i, target_directory_name)
+                return
+            else:
+                rapid_data = []
         # 处理PanDL标准(bdpan://)
-        elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
-            bytes_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0])
-            bdpan_data = decode_with_multiple_encodings(bytes_data).strip().split('|')
-            rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
+        elif 'bdpan://' in url_code.lower():
+            decoded_string_list = decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
+            if len(decoded_string_list) == 1:
+                bdpan_data = decoded_string_list[0].strip().split('|')
+                rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
+            elif len(decoded_string_list) > 1:
+                for i in decoded_string_list:
+                    self.process_rapid_link(i, target_directory_name)
+                return
+            else:
+                rapid_data = []
         # 处理PCS-Go标准(BaiduPCS-Go)
-        elif bool(re.search('BaiduPCS-Go', url_code, re.IGNORECASE)):
+        elif 'baidupcs-go' in url_code.lower():
             go_md5 = re.findall(r'-md5=(\S+)', url_code)[0]
             go_md5s = re.findall(r'-slicemd5=(\S+)', url_code)[0]
             go_len = re.findall(r'-length=(\S+)', url_code)[0]
@@ -335,6 +350,7 @@ class BaiduPanFilesTransfers:
         else:
             rapid_data = []
         # 执行转存文件
+        print(rapid_data)
         transfer_files_reason = self.transfer_files_rapid(rapid_data, target_directory_name)
         self.check_transfer_files_reason(transfer_files_reason, url_code)
 

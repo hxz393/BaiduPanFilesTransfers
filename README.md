@@ -18,6 +18,7 @@
 
 - 方式一：到 [release](https://github.com/hxz393/BaiduPanFilesTransfers/releases) 页面下载最新版的 `exe` 文件，文件名类似 `BPFTv2.x.exe`，下载完毕可直接打开使用。
 - 方式二：百度网盘分流下载地址：https://pan.baidu.com/s/1h445UmgNNFFIPO0elmVfgQ?pwd=2i9j
+- 方式三：百度网盘秒传链接：7013f39c3bdcba349ef59bd67aa0286b#13786282#BPFTv2.1.zip
 
 
 
@@ -250,7 +251,11 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
 
-## 版本 2.1.1（2023.05.31）
+## 版本 2.2.0（2023.05.31）
+
+更新内容：
+
+1. 添加对解码后多个链接的秒传链接支持。
 
 修复内容：
 
@@ -296,10 +301,3 @@ bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GX
 
 1. 更换秒传转存请求接口，解决报错误代码 `9019` 问题;
 
-
-
-## 版本 1.12.1（2023.01.08）
-
-修复内容：
-
-1. 修复秒传目录或文件名带 `&` 时触发 BUG。
