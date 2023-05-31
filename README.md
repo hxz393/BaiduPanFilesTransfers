@@ -18,7 +18,6 @@
 
 - 方式一：到 [release](https://github.com/hxz393/BaiduPanFilesTransfers/releases) 页面下载最新版的 `exe` 文件，文件名类似 `BPFTv2.x.exe`，下载完毕可直接打开使用。
 - 方式二：百度网盘分流下载地址：https://pan.baidu.com/s/1h445UmgNNFFIPO0elmVfgQ?pwd=2i9j
-- 方式三：百度网盘秒传链接：7013f39c3bdcba349ef59bd67aa0286b#13786282#BPFTv2.1.zip
 
 
 
@@ -51,13 +50,15 @@
    cd /root/BaiduPanFilesTransfers
    ```
 
+   如果使用 `PyCharm` 作为 IDE，可以直接在自带的控制台输入下面打包命令。
+
 3. 使用 `pyinstaller` 命令编译打包成可执行文件：
 
    ```sh
-   pyinstaller -F -w -i bpftUI.ico bpftUI.py
+   pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
    ```
 
-   如果过程没有报错，可执行文件会生成到 `dist` 目录下面。
+   如果过程没有报错，可执行文件 `BaiduPanFilesTransfers.exe` 会生成到 `dist` 目录下面。
 
 
 
@@ -126,13 +127,6 @@ https://pan.baidu.com/s/1EFCrmlh0rhnWy8pi9uhkyA
 https://pan.baidu.com/share/init?surl=W7U9g47xiDez_5ItgNIs0w
 ```
 
-**游侠 v1 标准：**
-
-```sh
-https://pan.baidu.com/#bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
-bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
-```
-
 **梦姬标准：**
 
 ```sh
@@ -140,16 +134,23 @@ bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1M
 4159f28726f88ba7aab8cbb6a8afbae1#201442718#patch.rar
 ```
 
-**Go 格式：**
+**游侠 v1 标准：**
 
 ```sh
-BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a -slicemd5=5b2c842f421143a9a49938dc157c52e6 -crc32=3179342807 \"/音乐/Yes/1969. Yes.zip\"
+https://pan.baidu.com/#bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
+bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
 ```
 
 **PanDL 标准：**
 
 ```sh
 bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GXOFDlsI/lhorlrZAg5pel5paHLnppcHw2NDAxODQxNTd8ZDNjOTBmOTI3ZjUxYzIyMmRjMTc1NDM1YTY0OWMyYTJ8OTk4NTE0NDE3Y2I5Y2I0MTQ0MGRlZTFiMmMyNTYwMzY=`
+```
+
+**Go 格式：**
+
+```sh
+BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a -slicemd5=5b2c842f421143a9a49938dc157c52e6 -crc32=3179342807 \"/音乐/Yes/1969. Yes.zip\"
 ```
 
 
