@@ -13,6 +13,28 @@ import requests
 import urllib3
 from retrying import retry
 
+# 静态变量
+BASE_URL = 'https://pan.baidu.com'
+ERROR_CODES = {
+    1: '链接失效，没获取到 shareid',
+    2: '链接失效，没获取到 user_id',
+    3: '链接失效，没获取到 fs_id',
+    '百度网盘-链接不存在': '链接失效，文件已经被删除或取消分享',
+    '百度网盘 请输入提取码': '链接错误，缺少提取码',
+    -9: '链接错误，提取码错误或验证已过期',
+    -62: '链接错误尝试次数过多，请手动转存或稍后再试',
+    105: '链接错误，链接格式不正确',
+    -4: '转存失败，无效登录。请退出账号在其他地方的登录',
+    -6: '转存失败，请用浏览器无痕模式获取 Cookie',
+    4: '转存失败，目录中已有同名文件或文件夹存在',
+    -8: '转存失败，目录中已有同名文件或文件夹存在',
+    12: '转存失败，转存文件数超过限制',
+    -7: '转存失败，文件名有非法字符',
+    404: '转存失败，秒传无效',
+    -10: '转存失败，容量不足',
+    0: '转存成功',
+}
+
 
 # 检测链接种类
 def check_link_type(link_list_line):
@@ -41,6 +63,20 @@ def sanitize_link(url_code):
     return url_code
 
 
+def decode_with_multiple_encodings(encoded_data):
+    encodings = ['utf-8', 'gbk', 'gb2312', 'big5', 'gb18030', 'shift_jis', 'euc-jp', 'euc-kr', 'iso-2022-kr']
+
+    for encoding in encodings:
+        try:
+            decoded_string = encoded_data.decode(encoding)
+            return decoded_string
+        except UnicodeDecodeError:
+            continue
+
+    # 如果所有编码都尝试失败，则返回空字符串或其他适当默认值
+    return ''
+
+
 # 定义多线程运行主函数
 def thread_it(func, *args):
     t = threading.Thread(target=func, args=args)
@@ -50,13 +86,12 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     软件名：BaiduPanFilesTransfers
-    版本：2.1
-    更新时间：2023.05.16
+    版本：2.1.1
+    更新时间：2023.05.31
     打包命令：pyinstaller -F -w -i bpftUI.ico bpftUI.py
     """
 
     # 请求变量
-    BASE_URL = 'https://pan.baidu.com'
     request_header = {
         'Host': 'pan.baidu.com',
         'Connection': 'keep-alive',
@@ -69,27 +104,6 @@ class BaiduPanFilesTransfers:
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
-    }
-
-    # 错误代码和消息的字典
-    ERROR_CODES = {
-        1: '链接失效，没获取到 shareid',
-        2: '链接失效，没获取到 user_id',
-        3: '链接失效，没获取到 fs_id',
-        '百度网盘-链接不存在': '链接失效，文件已经被删除或取消分享',
-        '百度网盘 请输入提取码': '链接错误，缺少提取码',
-        -9: '链接错误，提取码错误或验证已过期',
-        -62: '链接错误尝试次数过多，请手动转存或稍后再试',
-        105: '链接错误，链接格式不正确',
-        -4: '转存失败，无效登录。请退出账号在其他地方的登录',
-        -6: '转存失败，请用浏览器无痕模式获取 Cookie',
-        4: '转存失败，目录中已有同名文件或文件夹存在',
-        -8: '转存失败，目录中已有同名文件或文件夹存在',
-        12: '转存失败，转存文件数超过限制',
-        -7: '转存失败，文件名有非法字符',
-        404: '转存失败，秒传无效',
-        -10: '转存失败，容量不足',
-        0: '转存成功',
     }
 
     def __init__(self):
@@ -110,7 +124,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("百度网盘批量转存工具 2.1 by assassing")
+        self.root.wm_title("BaiduPanFilesTransfers 2.1.1")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -170,21 +184,21 @@ class BaiduPanFilesTransfers:
     # 获取bdstoken函数
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_bdstoken(self):
-        url = f'{self.BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
+        url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
         response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=True, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
 
     # 获取目录列表函数
     @retry(stop_max_attempt_number=5, wait_fixed=1000)
     def get_dir_list(self):
-        url = f'{self.BASE_URL}/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken={self.bdstoken}'
+        url = f'{BASE_URL}/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken={self.bdstoken}'
         response = self.session.get(url=url, headers=self.request_header, timeout=15, allow_redirects=False, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
 
     # 新建目录函数
     @retry(stop_max_attempt_number=5, wait_fixed=1000)
     def create_dir(self, target_directory_name):
-        url = f'{self.BASE_URL}/api/create?a=commit&bdstoken={self.bdstoken}'
+        url = f'{BASE_URL}/api/create?a=commit&bdstoken={self.bdstoken}'
         post_data = {'path': target_directory_name, 'isdir': '1', 'block_list': '[]', }
         response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
         return response.json()['errno']
@@ -217,7 +231,7 @@ class BaiduPanFilesTransfers:
     # 验证提取码函数
     @retry(stop_max_attempt_number=6, wait_fixed=1700)
     def verify_pass_code(self, link_url, pass_code):
-        check_url = f'{self.BASE_URL}/share/verify?surl={link_url[25:48]}&bdstoken={self.bdstoken}&t={str(int(round(time.time() * 1000)))}&channel=chunlei&web=1&clienttype=0'
+        check_url = f'{BASE_URL}/share/verify?surl={link_url[25:48]}&bdstoken={self.bdstoken}&t={str(int(round(time.time() * 1000)))}&channel=chunlei&web=1&clienttype=0'
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
         response = self.session.post(url=check_url, headers=self.request_header, data=post_data, timeout=10, allow_redirects=False, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['randsk']
@@ -232,7 +246,7 @@ class BaiduPanFilesTransfers:
     # 转存文件函数
     @retry(stop_max_attempt_number=20, wait_fixed=1853)
     def transfer_files(self, verify_links_reason, target_directory_name):
-        url = f'{self.BASE_URL}/share/transfer?shareid={verify_links_reason[0]}&from={verify_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
+        url = f'{BASE_URL}/share/transfer?shareid={verify_links_reason[0]}&from={verify_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
         post_data = {'fsidlist': f'[{",".join(i for i in verify_links_reason[2])}]', 'path': f'/{target_directory_name}', }
         response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
         return response.json()['errno']
@@ -242,7 +256,7 @@ class BaiduPanFilesTransfers:
     def transfer_files_rapid(self, rapid_data, target_directory_name):
         header = self.request_header.copy()
         header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
-        url = f'{self.BASE_URL}/api/create&bdstoken={self.bdstoken}'
+        url = f'{BASE_URL}/api/create&bdstoken={self.bdstoken}'
         # post_data = {'path': target_directory_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
         post_data = f'&block_list=["{rapid_data[0]}"]&path=/{target_directory_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
         response = self.session.post(url=url, headers=header, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
@@ -288,8 +302,8 @@ class BaiduPanFilesTransfers:
             # 执行转存文件
             transfer_files_reason = self.transfer_files(verify_links_reason, target_directory_name)
             self.check_transfer_files_reason(transfer_files_reason, url_code)
-        elif verify_links_reason in self.ERROR_CODES:
-            self.insert_logs(f'{self.ERROR_CODES[verify_links_reason]}：{url_code}')
+        elif verify_links_reason in ERROR_CODES:
+            self.insert_logs(f'{ERROR_CODES[verify_links_reason]}：{url_code}')
         else:
             self.insert_logs(f'访问链接返回错误代码（{verify_links_reason}）：{url_code}')
 
@@ -303,10 +317,12 @@ class BaiduPanFilesTransfers:
             rapid_data.insert(1, '')
         # 处理游侠 v1标准(bdlink=)
         elif bool(re.search('bdlink=', url_code, re.IGNORECASE)):
-            rapid_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0]).decode("utf-8").strip().split('#', maxsplit=3)
+            bytes_data = base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])
+            rapid_data = decode_with_multiple_encodings(bytes_data).strip().split('#', maxsplit=3)
         # 处理PanDL标准(bdpan://)
         elif bool(re.search('bdpan://', url_code, re.IGNORECASE)):
-            bdpan_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0]).decode("utf-8").strip().split('|')
+            bytes_data = base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0])
+            bdpan_data = decode_with_multiple_encodings(bytes_data).strip().split('|')
             rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
         # 处理PCS-Go标准(BaiduPCS-Go)
         elif bool(re.search('BaiduPCS-Go', url_code, re.IGNORECASE)):
@@ -324,8 +340,8 @@ class BaiduPanFilesTransfers:
 
     # 检查转存文件结果
     def check_transfer_files_reason(self, transfer_files_reason, url_code):
-        if transfer_files_reason in self.ERROR_CODES:
-            self.insert_logs(f'{self.ERROR_CODES[transfer_files_reason]}：{url_code}')
+        if transfer_files_reason in ERROR_CODES:
+            self.insert_logs(f'{ERROR_CODES[transfer_files_reason]}：{url_code}')
         else:
             self.insert_logs(f'转存失败，错误代码（{transfer_files_reason}）：{url_code}')
 
@@ -375,8 +391,7 @@ class BaiduPanFilesTransfers:
 
         # 故障处理
         except Exception as e:
-            self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：')
-            self.insert_logs(f'{str(e)}')
+            self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{str(e)}')
             self.label_state_change(state='error')
 
         # 恢复按钮状态
