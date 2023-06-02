@@ -2,6 +2,7 @@ import base64
 import tempfile
 import threading
 import time
+import random
 import webbrowser
 import zlib
 import os
@@ -11,6 +12,7 @@ from tkinter import Tk, Entry, Label, Text, Scrollbar, Button, Checkbutton, W, S
 
 import requests
 import urllib3
+from urllib.parse import quote
 from retrying import retry
 
 # 静态变量
@@ -77,7 +79,6 @@ def decode_with_multiple_encodings(encoded_data):
         except UnicodeDecodeError:
             continue
 
-    # 如果所有编码都尝试失败，则返回空字符串或其他适当默认值
     return ''
 
 
@@ -90,8 +91,8 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     软件名：BaiduPanFilesTransfers
-    版本：2.2.1
-    更新时间：2023.05.31
+    版本：2.2.2
+    更新时间：2023.06.02
     打包命令：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
     """
 
@@ -128,7 +129,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.2.1")
+        self.root.wm_title("BaiduPanFilesTransfers 2.2.2")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -248,7 +249,7 @@ class BaiduPanFilesTransfers:
             self.request_header['Cookie'] += f';BDCLND={bdclnd}'
 
     # 转存文件函数
-    @retry(stop_max_attempt_number=20, wait_fixed=1853)
+    @retry(stop_max_attempt_number=9, wait_fixed=1553)
     def transfer_files(self, verify_links_reason, target_directory_name):
         url = f'{BASE_URL}/share/transfer?shareid={verify_links_reason[0]}&from={verify_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
         post_data = {'fsidlist': f'[{",".join(i for i in verify_links_reason[2])}]', 'path': f'/{target_directory_name}', }
@@ -256,21 +257,25 @@ class BaiduPanFilesTransfers:
         return response.json()['errno']
 
     # 转存秒传链接函数
-    @retry(stop_max_attempt_number=10, wait_fixed=1000)
+    @retry(stop_max_attempt_number=6, wait_fixed=1000)
     def transfer_files_rapid(self, rapid_data, target_directory_name):
         header = self.request_header.copy()
         header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
-        url = f'{BASE_URL}/api/create&bdstoken={self.bdstoken}'
-        # post_data = {'path': target_directory_name + '/' + rapid_data[3], 'content-md5': rapid_data[0], 'slice-md5': rapid_data[1], 'content-length': rapid_data[2]}
-        post_data = f'&block_list=["{rapid_data[0]}"]&path=/{target_directory_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
-        response = self.session.post(url=url, headers=header, data=post_data.encode("utf-8"), timeout=15, allow_redirects=False, verify=False)
-        if response.json()['errno'] == 404:
-            post_data = f'&block_list=["{rapid_data[0].lower()}"]&path=/{target_directory_name.replace("&", "%26")}/{rapid_data[3].replace("&", "%26")}&size={rapid_data[2]}&isdir=0&rtype=0'
+        url = f'{BASE_URL}/api/rapidupload?bdstoken={self.bdstoken}'
+        response_json = {'errno': None}
+
+        for _ in range(6):
+            rapid_data[0] = ''.join(random.choice([c.upper(), c.lower()]) for c in rapid_data[0])
+            post_data = f'content-md5={rapid_data[0]}&slice-md5={rapid_data[1]}&path=/{quote(target_directory_name)}/{quote(rapid_data[3])}&content-length={rapid_data[2]}&isdir=0&rtype=0'
             response = self.session.post(url=url, headers=header, data=post_data, timeout=15, allow_redirects=False, verify=False)
-        elif response.json()['errno'] == 2:
-            time.sleep(1)
-            return self.transfer_files_rapid(rapid_data, target_directory_name)
-        return response.json()['errno']
+            response_json = response.json()
+
+            if response_json['errno'] not in [404, 2]:
+                break
+            else:
+                time.sleep(1)
+
+        return response_json['errno']
 
     # 检查状态函数
     def check_condition(self, condition, state, message):
@@ -310,7 +315,7 @@ class BaiduPanFilesTransfers:
             self.insert_logs(f'{ERROR_CODES[verify_links_reason]}：{url_code}')
         else:
             self.insert_logs(f'访问链接返回错误代码（{verify_links_reason}）：{url_code}')
-#todo 优化
+
     # 转存 rapid 类型链接函数
     def process_rapid_link(self, url_code, target_directory_name):
         rapid_data = []
@@ -318,16 +323,16 @@ class BaiduPanFilesTransfers:
             # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
             if url_code.count('#') > 2:
                 rapid_data = url_code.split('#', maxsplit=3)
-            elif url_code.count('#') == 2:
-                rapid_data = url_code.split('#', maxsplit=2)
-                rapid_data.insert(1, '')
+            # elif url_code.count('#') == 2:
+            #     rapid_data = url_code.split('#', maxsplit=2)
+            #     rapid_data.insert(1, '')
             elif url_code.count('|') > 2:
                 bdpan_data = url_code.split('|', maxsplit=3)
                 rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
-            elif url_code.count('|') == 2:
-                bdpan_data = url_code.split('|', maxsplit=2)
-                bdpan_data.insert(1, '')
-                rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
+            # elif url_code.count('|') == 2:
+            #     bdpan_data = url_code.split('|', maxsplit=2)
+            #     bdpan_data.insert(1, '')
+            #     rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
             # 处理游侠标准(bdlink=)
             elif 'bdlink=' in url_code.lower():
                 decoded_string_list = decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
@@ -348,8 +353,8 @@ class BaiduPanFilesTransfers:
                 # go_name = re.findall(r'-crc32=\d+\s(.+)', url_code)[0].replace('"', '').replace('/', '\\').strip()
                 go_name = re.findall(r'"(.*)"', url_code)[0].replace('"', '').replace('/', '\\').strip()
                 rapid_data = [go_md5, go_md5s, go_len, go_name]
-        except:
-            self.insert_logs(f'链接解码失败：{url_code}')
+        except Exception as e:
+            self.insert_logs(f'{url_code}链接解码失败：{e}')
             return
 
         if rapid_data:
@@ -358,8 +363,6 @@ class BaiduPanFilesTransfers:
             self.check_transfer_files_reason(transfer_files_reason, url_code)
         else:
             self.check_transfer_files_reason(404, url_code)
-
-
 
     # 检查转存文件结果
     def check_transfer_files_reason(self, transfer_files_reason, url_code):

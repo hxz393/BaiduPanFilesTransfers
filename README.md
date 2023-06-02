@@ -6,7 +6,7 @@
 
 软件最新版截图：
 
-![百度网盘批量转存软件 2.0 版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.0.jpg)
+![百度网盘批量转存软件 2.0 版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.2.2.jpg)
 
 ## 下载地址
 
@@ -127,27 +127,26 @@ https://pan.baidu.com/s/1EFCrmlh0rhnWy8pi9uhkyA
 https://pan.baidu.com/share/init?surl=W7U9g47xiDez_5ItgNIs0w
 ```
 
-**梦姬标准：**
+**秒传格式：**
 
 ```sh
 965FEAFCC6DC216CB56128B531694C9D#495B4FB5879AE0B22A31826D33D86D80#802846691#梦姬标准.7z
-4159f28726f88ba7aab8cbb6a8afbae1#201442718#patch.rar
 ```
 
-**游侠 v1 标准：**
+**游侠格式：**
 
 ```sh
 https://pan.baidu.com/#bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
 bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
 ```
 
-**PanDL 标准：**
+**PanDL 格式：**
 
 ```sh
 bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GXOFDlsI/lhorlrZAg5pel5paHLnppcHw2NDAxODQxNTd8ZDNjOTBmOTI3ZjUxYzIyMmRjMTc1NDM1YTY0OWMyYTJ8OTk4NTE0NDE3Y2I5Y2I0MTQ0MGRlZTFiMmMyNTYwMzY=`
 ```
 
-**Go 格式：**
+**BaiduPCS-Go 格式：**
 
 ```sh
 BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a -slicemd5=5b2c842f421143a9a49938dc157c52e6 -crc32=3179342807 \"/音乐/Yes/1969. Yes.zip\"
@@ -174,6 +173,14 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 # 常见问题
 
 使用软件遇见错误时，先查看下面总结的一些常见问题和解决方案。再查看所有 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 中是否有同样问题。如果都没有帮助，再提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) ，我一般当天或隔天会回复。
+
+## 转存失败，秒传无效
+
+**原因**：2023.6.2 以后，原来用网页版秒传链接脚本生成的秒传链接（短链接），已全数失效。
+
+解决：目前没有解决办法。如有新消息请联系我。
+
+
 
 ## 转存失败，错误代码 XX
 
@@ -251,6 +258,14 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
+
+## 版本 2.2.2（2023.06.02）
+
+修复内容：
+
+1. 秒传转存换回旧接口。
+
+
 
 ## 版本 2.2.1（2023.05.31）
 
