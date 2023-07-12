@@ -148,7 +148,7 @@ class BaiduPanFilesTransfers:
         self.label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
         # 添加 trust_env 复选框
         self.trust_env_var = BooleanVar()
-        self.trust_env_checkbutton = Checkbutton(self.root, text='使用系统代理', font=('Arial', 10,), variable=self.trust_env_var)
+        self.trust_env_checkbutton = Checkbutton(self.root, text='使用系统代理', variable=self.trust_env_var)
         self.trust_env_checkbutton.grid(row=9, sticky=W, padx=84)
 
         # 读取配置
@@ -171,7 +171,7 @@ class BaiduPanFilesTransfers:
         text = Text(self.root, height=5, wrap=NONE)
         text.grid(row=row, column=0, sticky=W + E + N + S, padx=(4, 1), pady=(5, 5))
         scrollbar = Scrollbar(self.root, width=5)
-        scrollbar.grid(row=row, column=1, sticky=S + N, rowspan=2)
+        scrollbar.grid(row=row, column=1, sticky=S + N, rowspan=1)
         scrollbar.configure(command=text.yview)
         text.configure(yscrollcommand=scrollbar.set)
         self.root.grid_rowconfigure(row, weight=1)
