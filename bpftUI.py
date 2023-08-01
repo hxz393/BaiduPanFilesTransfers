@@ -4,6 +4,7 @@ import random
 import re
 import sys
 import tempfile
+import traceback
 import threading
 import time
 import webbrowser
@@ -418,7 +419,7 @@ class BaiduPanFilesTransfers:
 
         # 故障处理
         except Exception as e:
-            self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{str(e)}')
+            self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{e}\n{traceback.format_exc()}')
             self.label_state_change(state='error')
 
         # 恢复按钮状态
