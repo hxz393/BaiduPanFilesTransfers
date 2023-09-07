@@ -18,11 +18,12 @@ from retrying import retry
 requests.packages.urllib3.disable_warnings()
 
 # 静态变量
+CLIENT_ID = 'PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM'
 BASE_URL = 'https://pan.baidu.com'
 ERROR_CODES = {
-    1: '链接失效，没获取到 shareid',
-    2: '链接失效，没获取到 user_id',
-    3: '链接失效，没获取到 fs_id',
+    -1: '链接失效，没获取到 shareid',
+    -2: '链接失效，没获取到 user_id',
+    -3: '链接失效，没获取到 fs_id',
     '百度网盘-链接不存在': '链接失效，文件已经被删除或取消分享',
     '百度网盘 请输入提取码': '链接错误，缺少提取码',
     -9: '链接错误，提取码错误或验证已过期',
@@ -54,9 +55,9 @@ def check_link_type(link_list_line):
 
 
 # 写配置文件函数
-def write_config(cookie):
+def write_config(config):
     with open('config.ini', 'w') as config_write:
-        config_write.write(cookie)
+        config_write.write(config)
 
 
 # 处理链接格式函数
@@ -92,10 +93,10 @@ def thread_it(func, *args):
 
 class BaiduPanFilesTransfers:
     """
-    软件名：BaiduPanFilesTransfers
-    版本：2.2.2
-    更新时间：2023.06.02
-    打包命令：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
+    名称：BaiduPanFilesTransfers
+    版本：2.3.0
+    作者：assassing（https://github.com/hxz393)
+    打包：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
     """
 
     # 请求变量
@@ -110,13 +111,14 @@ class BaiduPanFilesTransfers:
         'Referer': 'https://pan.baidu.com',
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
     }
 
     def __init__(self):
         # 会话配置
         self.session = requests.Session()
         self.bdstoken = None
+        self.access_token = None
 
         # 实例化 TK
         self.root = Tk()
@@ -131,20 +133,21 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.2.2")
+        self.root.wm_title("BaiduPanFilesTransfers 2.3.0")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
 
         # 定义窗口元素
-        self.entry_cookie = self.create_label_entry(1, '1.下面填入百度 Cookies，不带引号：')
+        self.entry_cookie = self.create_label_entry(1, '1.下面填入百度网盘 Cookies，不带引号：')
+        self.entry_access_token = self.create_label_entry(3, '（可选）如果要转存秒存链接，下面填入百度网盘 access_token：')
         self.entry_folder_name = self.create_label_entry(5, '2.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
         Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码 或 秒传格式。').grid(row=7, sticky=W)
         self.text_links = self.create_text_scrollbar(8)
         self.text_logs = self.create_text_scrollbar(10)
         self.bottom_run = Button(self.root, text='4.点击运行', command=lambda: thread_it(self.main, ), width=10, height=1, relief='solid')
         self.bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
-        self.label_state = Label(self.root, text='使用帮助', font=('Arial', 10, 'underline'), foreground="#0000ff", cursor='heart')
+        self.label_state = Label(self.root, text='使用帮助', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
         self.label_state.grid(row=9, sticky=E, padx=4)
         self.label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
         # 添加 trust_env 复选框
@@ -157,7 +160,11 @@ class BaiduPanFilesTransfers:
             with open('config.ini') as config_read:
                 config_list = config_read.readlines()
                 config_cookie = config_list[0] if config_list else ''
+                config_access_token = config_list[1] if len(config_list) > 1 else ''
+                config_target_directory_name = config_list[2] if len(config_list) > 2 else ''
             self.entry_cookie.insert(0, config_cookie)
+            self.entry_access_token.insert(0, config_access_token)
+            self.entry_folder_name.insert(0, config_target_directory_name)
 
     # 建立标签和输入框函数
     def create_label_entry(self, row, label_text):
@@ -191,7 +198,7 @@ class BaiduPanFilesTransfers:
     # 获取bdstoken函数
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_bdstoken(self):
-        url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=250528&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
+        url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=38824127&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
         response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=True, verify=False)
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
 
@@ -227,11 +234,11 @@ class BaiduPanFilesTransfers:
         info_title_list = re.findall('<title>(.+)</title>', response)
 
         if not shareid_list:
-            return 1
+            return -1
         elif not user_id_list:
-            return 2
+            return -2
         elif not fs_id_list:
-            return info_title_list[0] if info_title_list else 3
+            return info_title_list[0] if info_title_list else -3
         else:
             return [shareid_list[0], user_id_list[0], fs_id_list]
 
@@ -263,19 +270,19 @@ class BaiduPanFilesTransfers:
     def transfer_files_rapid(self, rapid_data, target_directory_name):
         header = self.request_header.copy()
         header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
-        url = f'{BASE_URL}/api/rapidupload?bdstoken={self.bdstoken}'
+        url = f'{BASE_URL}/rest/2.0/xpan/file?method=create&access_token={self.access_token}&bdstoken={self.bdstoken}'
         response_json = {'errno': None}
 
-        for _ in range(6):
+        for _ in range(15):
             rapid_data[0] = ''.join(random.choice([c.upper(), c.lower()]) for c in rapid_data[0])
-            post_data = f'content-md5={rapid_data[0]}&slice-md5={rapid_data[1]}&path=/{quote(target_directory_name)}/{quote(rapid_data[3])}&content-length={rapid_data[2]}&isdir=0&rtype=0'
+            post_data = f'&block_list=["{rapid_data[0]}"]&path=/{quote(target_directory_name)}/{quote(rapid_data[3])}&size={rapid_data[2]}&isdir=0&rtype=0'
             response = self.session.post(url=url, headers=header, data=post_data, timeout=15, allow_redirects=False, verify=False)
             response_json = response.json()
 
             if response_json['errno'] not in [404, 2]:
                 break
             else:
-                time.sleep(1)
+                time.sleep(0.1)
 
         return response_json['errno']
 
@@ -325,16 +332,16 @@ class BaiduPanFilesTransfers:
             # 处理梦姬标准(4FFB5BC751CC3B7A354436F85FF865EE#797B1FFF9526F8B5759663EC0460F40E#21247774#秒传.rar)
             if url_code.count('#') > 2:
                 rapid_data = url_code.split('#', maxsplit=3)
-            # elif url_code.count('#') == 2:
-            #     rapid_data = url_code.split('#', maxsplit=2)
-            #     rapid_data.insert(1, '')
+            elif url_code.count('#') == 2:
+                rapid_data = url_code.split('#', maxsplit=2)
+                rapid_data.insert(1, '')
             elif url_code.count('|') > 2:
                 bdpan_data = url_code.split('|', maxsplit=3)
                 rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
-            # elif url_code.count('|') == 2:
-            #     bdpan_data = url_code.split('|', maxsplit=2)
-            #     bdpan_data.insert(1, '')
-            #     rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
+            elif url_code.count('|') == 2:
+                bdpan_data = url_code.split('|', maxsplit=2)
+                bdpan_data.insert(1, '')
+                rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
             # 处理游侠标准(bdlink=)
             elif 'bdlink=' in url_code.lower():
                 decoded_string_list = decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
@@ -378,12 +385,13 @@ class BaiduPanFilesTransfers:
         # 获取和初始化数据
         self.text_logs.delete(1.0, END)
         cookie = "".join(self.entry_cookie.get().split())
+        self.access_token = "".join(self.entry_access_token.get().split())
         target_directory_name = "".join(self.entry_folder_name.get().split())
         link_list = [sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
         self.session.trust_env = self.trust_env_var.get()
         completed_task_count = 0
         total_task_count = len(link_list)
-        write_config(cookie)
+        write_config(f'{cookie}\n{self.access_token}\n{target_directory_name}')
 
         self.request_header['Cookie'] = cookie
         self.bottom_run['state'] = 'disabled'
