@@ -6,7 +6,7 @@
 
 软件最新版截图：
 
-![百度网盘批量转存软件 2.0 版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.2.2.jpg)
+![百度网盘批量转存软件 2.3 版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.3.0.jpg)
 
 ## 下载地址
 
@@ -64,7 +64,7 @@
 
 ## 版本说明
 
-软件重构后的 2.X 版本已发布，没经过充分测试，可能有无法预料的 BUG，欢迎提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 反馈。同时 1.13 版本依然可用（截至 2023.05.12），但后续不再更新 1.X 版本。
+百度秒传接口改动频繁，测试无法面面俱到。有问题或 BUG，欢迎提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 反馈。我看到会及时回复和修复。
 
 
 
@@ -78,16 +78,36 @@
 
 软件使用分为下面几个步骤。
 
-## 获取 Cookies
+## 获取 Cookies（必须）
 
-使用 `Chrome` 或类似浏览器访问[百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（NetWork）` 选项卡。
+使用 `Chrome` 或类似浏览器（最好用无痕式窗口模式）登录[百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（NetWork）` 选项卡。
 
 如下图所示，目前应该空空如也：
 ![向导图1](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-1.png)
-按 `F5` 刷新页面，下面出现很多条记录。单击名为 `main` 开头的记录，右边会出现菜单，显示标头（Headers）、响应（Response）等内容。
+按 `F5` 刷新页面，下面出现很多条记录，如下图。单击名为 `main` 开头的记录，右边会出现菜单，显示标头（Headers）、响应（Response)等内容。
 
-在标头页面往下翻，找到请求标头中以 `Cookie:` 开头的行，后面有一串以 `XF` 开头的内容，这就是需要找的 `Cookies`。把它们全部选中，右键选择复制，粘贴到软件对应输入框内。如下图所示：
+在标头页面往下翻，找到请求标头中以 `Cookie:` 开头的行，后面有一串以 `XF` 开头的内容，这就是需要找的 `Cookies`：
 ![向导图2](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-2.png)
+
+把它们全部选中，右键选择复制，粘贴到软件对应输入框内。
+
+
+
+## 获取 access_token（选填）
+
+百度网盘的 access_token 用于转存秒传链接时使用，如果没有秒传链接转存需要，可以跳过。
+
+打开百度网盘应用授权页面：[https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM&redirect_uri=oob&scope=netdisk](https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM&redirect_uri=oob&scope=netdisk)
+
+如果已登录帐号，页面会显示如下。否则请先登录帐号：
+
+![向导图4](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
+
+点击授权按钮后，稍等片刻页面会自动跳转。这时在地址栏 url 上可以找到 access_token。如下图所示：
+
+![向导图5](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
+
+在 access_token= 到 &session_secret 之间的字符串便是我们需要的 access_token。将其复制粘贴到软件对应输入框内来使用。
 
 
 
@@ -174,14 +194,6 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 使用软件遇见错误时，先查看下面总结的一些常见问题和解决方案。再查看所有 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 中是否有同样问题。如果都没有帮助，再提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) ，我一般当天或隔天会回复。
 
-## 转存失败，秒传无效
-
-**原因**：2023.6.2 以后，原来用网页版秒传链接脚本生成的秒传链接（短链接），已全数失效。
-
-解决：目前没有解决办法。如有新消息请联系我。
-
-
-
 ## 转存失败，错误代码 XX
 
 如果软件突然不能使用。
@@ -259,6 +271,14 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
 
+## 版本 2.3.0（2023.09.08）
+
+修复内容：
+
+1. 修复秒传转存接口。
+
+
+
 ## 版本 2.2.2（2023.06.02）
 
 修复内容：
@@ -290,19 +310,6 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 1. 修复因为删除 `User-Agent` 参数，导致读取配置文件出错，打开软件报错。
 2. 修改部分变量和函数名，使代码更规范。
-
-
-
-## 版本 2.0（2023.05.12）
-
-更新内容：
-
-1. 调整程序 UI，支持随意调整窗口大小。
-
-修复内容：
-
-1. 改正错误的文本格式和标点符号。
-2. 优化代码，重新封装函数。
 
 
 
