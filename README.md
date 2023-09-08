@@ -78,7 +78,7 @@
 
 软件使用分为下面几个步骤。
 
-## 获取 Cookies（必须）
+## 获取 Cookies
 
 使用 `Chrome` 或类似浏览器（最好用无痕式窗口模式）登录[百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（NetWork）` 选项卡。
 
@@ -97,26 +97,19 @@
 
 百度网盘的 access_token 用于转存秒传链接时使用，如果没有秒传链接转存需要，可以跳过。
 
-打开百度网盘应用授权页面：[https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM&redirect_uri=oob&scope=netdisk](https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM&redirect_uri=oob&scope=netdisk)
+打开百度网盘应用授权页面（请复制粘贴到浏览器访问）：`https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM&redirect_uri=oob&scope=netdisk`
 
 如果已登录帐号，页面会显示如下。否则请先登录帐号：
 
 ![向导图4](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
 
-点击授权按钮后，稍等片刻页面会自动跳转。这时在地址栏 url 上可以找到 access_token。如下图所示：
+点击授权按钮后，稍等片刻页面会自动跳转。如已授权，则访问授权页面会直接跳转到下面页面。这时在地址栏 url 上可以找到 access_token：
 
 ![向导图5](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
 
 在 access_token= 到 &session_secret 之间的字符串便是我们需要的 access_token。将其复制粘贴到软件对应输入框内来使用。
 
-
-
-## 获取 User-Agent（1.x 版本）
-
-只有 1.x 版本需要手动填入 `User-Agent`。
-
-接上操作往下下翻到最底部，能看到 `User-Agent` 项目。同样把它复制粘贴到软件对应输入框便行了。软件会自动保存当前配置，下次无需重复获取。示例图如下：
-![向导图3](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-3.png)
+access_token 的有效期为 30 天，到期需要重新授权获取。解除授权可到个人中心操作：https://passport.baidu.com/v6/appAuthority
 
 
 
@@ -128,7 +121,7 @@
 
 保存位置（目录）不能包含大多数英文特殊符号，例如：`>`、`|`、`*`、`?`、`:`、`/` 等。如果输入的特殊符号不被允许，软件会检测到并中断运行。
 
-如果保存路径加文件名一起长度超过 255 个字符，用百度网盘客户端下载文件时会失败。应尽量使用有意义的英文加数字作为保存目录名。
+如果保存路径加文件名一起路径长度超过 255 个字符，用百度网盘客户端下载文件时会失败。应尽量使用有意义的英文加数字作为保存目录名。
 
 
 
@@ -265,8 +258,6 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 **解决**：最好在网页端确认下，是虚报，还是真有同名但实际上不同的文件。视情况手动处理。
 
  
-
-
 
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
