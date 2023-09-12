@@ -95,8 +95,9 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     名称：BaiduPanFilesTransfers
-    版本：2.3.0
+    版本：2.3.1
     作者：assassing（https://github.com/hxz393)
+    参考：https://pan.baidu.com/union/doc/rksg0sa17
     打包：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
     """
 
@@ -134,7 +135,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.3.0")
+        self.root.wm_title("BaiduPanFilesTransfers 2.3.1")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -276,11 +277,13 @@ class BaiduPanFilesTransfers:
 
         for _ in range(15):
             rapid_data[0] = ''.join(random.choice([c.upper(), c.lower()]) for c in rapid_data[0])
-            post_data = f'&block_list=["{rapid_data[0]}"]&path=/{quote(target_directory_name)}/{quote(rapid_data[3])}&size={rapid_data[2]}&isdir=0&rtype=0'
+            post_data = f'&block_list=["{rapid_data[0]}"]&path=/{quote(target_directory_name)}/{quote(rapid_data[3])}&size={rapid_data[2]}&isdir=0&rtype=2'
             response = self.session.post(url=url, headers=header, data=post_data, timeout=15, allow_redirects=False, verify=False)
             response_json = response.json()
 
-            if response_json['errno'] not in [404, 2]:
+            if response_json['errno'] in [31039]:
+                rapid_data[3] += '1'
+            elif response_json['errno'] not in [404, 2]:
                 break
             else:
                 time.sleep(0.1)
