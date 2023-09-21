@@ -66,7 +66,7 @@ def sanitize_link(url_code):
     # 处理 http 链接
     url_code = url_code.replace("http://", "https://")
     # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
-    url_code = url_code.replace("?pwd=", " ")
+    url_code = url_code.replace("?pwd=", " ").replace("&pwd=", " ")
     # 处理旧格式链接
     url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
     return url_code
@@ -95,7 +95,7 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     名称：BaiduPanFilesTransfers
-    版本：2.3.1
+    版本：2.3.2
     作者：assassing（https://github.com/hxz393)
     参考：https://pan.baidu.com/union/doc/rksg0sa17
     打包：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
@@ -114,6 +114,7 @@ class BaiduPanFilesTransfers:
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        'Content-Type': 'application/x-www-form-urlencoded',
     }
 
     def __init__(self):
@@ -135,7 +136,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.3.1")
+        self.root.wm_title("BaiduPanFilesTransfers 2.3.2")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -275,7 +276,7 @@ class BaiduPanFilesTransfers:
         url = f'{BASE_URL}/rest/2.0/xpan/file?method=create&access_token={self.access_token}&bdstoken={self.bdstoken}'
         response_json = {'errno': None}
 
-        for _ in range(15):
+        for _ in range(10):
             rapid_data[0] = ''.join(random.choice([c.upper(), c.lower()]) for c in rapid_data[0])
             post_data = f'&block_list=["{rapid_data[0]}"]&path=/{quote(target_directory_name)}/{quote(rapid_data[3])}&size={rapid_data[2]}&isdir=0&rtype=2'
             response = self.session.post(url=url, headers=header, data=post_data, timeout=15, allow_redirects=False, verify=False)
