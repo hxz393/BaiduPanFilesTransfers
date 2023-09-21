@@ -187,13 +187,23 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 使用软件遇见错误时，先查看下面总结的一些常见问题和解决方案。再查看所有 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 中是否有同样问题。如果都没有帮助，再提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) ，我一般当天或隔天会回复。
 
+## 转存成功，但实际上没有转存
+
+转存普通链接时出现的问题，初步发现于 ==2023.09.20==。
+
+**原因**：百度网盘 cookie 调整，不能再使用原先保存的 cookie。
+
+**解决**：重新在浏览器获取新的 cookie，即可正常工作。
+
+
+
 ## 转存失败，错误代码 2 或 404
 
-转存秒传链接时常见错误。
+转存秒传链接时常见错误，秒传方式要完蛋的前兆。
 
 **原因**：似乎被百度当成万用报错码。
 
-**解决**：目前再次尝试转存可成功。如果还是不行，可以试试网页端的转存脚本：[Greasy Fork](https://greasyfork.org/zh-CN/scripts/468633)
+**解决**：目前再次尝试转存可成功。如果还不行，可以试试网页端的转存脚本：[Greasy Fork](https://greasyfork.org/zh-CN/scripts/468633)
 
 
 
