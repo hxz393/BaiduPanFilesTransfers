@@ -36,6 +36,7 @@ ERROR_CODES = {
     12: '转存失败，转存文件数超过限制',
     -7: '转存失败，秒传文件名有非法字符',
     9019: '转存失败，请输入有效 access_token',
+    20010: '转存失败，应用授权失败',
     404: '转存失败，秒传无效',
     31190: '转存失败，秒传未生效',
     31039: '转存失败，秒传文件名冲突',
@@ -95,7 +96,7 @@ def thread_it(func, *args):
 class BaiduPanFilesTransfers:
     """
     名称：BaiduPanFilesTransfers
-    版本：2.3.2
+    版本：2.3.3
     作者：assassing（https://github.com/hxz393)
     参考：https://pan.baidu.com/union/doc/rksg0sa17
     打包：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
@@ -114,7 +115,6 @@ class BaiduPanFilesTransfers:
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-        'Content-Type': 'application/x-www-form-urlencoded',
     }
 
     def __init__(self):
@@ -136,7 +136,7 @@ class BaiduPanFilesTransfers:
         self.root.iconbitmap(default=self.ICON_PATH)
 
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.3.2")
+        self.root.wm_title("BaiduPanFilesTransfers 2.3.3")
         self.root.wm_geometry('410x480+240+240')
         self.root.minsize(410, 480)
         self.root.wm_attributes("-alpha", 0.88)
@@ -273,6 +273,7 @@ class BaiduPanFilesTransfers:
     def transfer_files_rapid(self, rapid_data, target_directory_name):
         header = self.request_header.copy()
         header['User-Agent'] = 'netdisk;2.2.51.6;netdisk;10.0.63;PC;android-android;QTP/1.0.32.2'
+        header['Content-Type'] = 'application/x-www-form-urlencoded'
         url = f'{BASE_URL}/rest/2.0/xpan/file?method=create&access_token={self.access_token}&bdstoken={self.bdstoken}'
         response_json = {'errno': None}
 
