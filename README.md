@@ -1,16 +1,16 @@
 # 软件介绍
 
-百度网盘批量转存软件，基于 `Python 3.10` + `Tkinter` 构建。可用于批量转存网络上分享的百度网盘链接到自己的百度网盘上。
+百度网盘批量转存软件，基于 `Python 3.6` + `Tkinter` 构建。可用于批量转存网络上分享的百度网盘链接到自己的百度网盘上。
 
 介绍页面请访问：[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
 软件最新版截图：
 
-![百度网盘批量转存软件 2.3 版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.3.0.jpg)
+![百度网盘批量转存软件最新版本截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.4.0.jpg)
 
 ## 下载地址
 
-软件开发编译环境为 `Win10 x64` 专业版，版本号 `22H2`。只要是 `Win10` 64 位操作系统的用户可以直接下载打开使用。
+软件开发编译环境为 `Win10 x64` 专业版，版本号 `22H2`。只要是 `Win7` 以上操作系统的用户可以直接下载打开使用。
 
 其他操作系统理论上可以手动编译成可执行文件，编译流程参见下面自行打包小节。
 
@@ -55,16 +55,10 @@
 3. 使用 `pyinstaller` 命令编译打包成可执行文件：
 
    ```sh
-   pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
+   pyinstaller -F -w -i BaiduPanFilesTransfers.ico -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
    ```
 
    如果过程没有报错，可执行文件 `BaiduPanFilesTransfers.exe` 会生成到 `dist` 目录下面。
-
-
-
-## 版本说明
-
-百度秒传接口改动频繁，测试无法面面俱到。有问题或 BUG，欢迎提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 反馈。我看到会及时回复和修复。
 
 
 
@@ -84,32 +78,12 @@
 
 如下图所示，目前应该空空如也：
 ![向导图1](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-1.png)
-按 `F5` 刷新页面，下面出现很多条记录，如下图。单击名为 `main` 开头的记录，右边会出现菜单，显示标头（Headers）、响应（Response)等内容。
+按 `F5` 刷新页面，下面出现很多条记录，如下图。单击名为 `main` 开头的记录，右边会出现菜单，显示`标头(Headers)`、`响应(Response) ` 等内容。
 
 在标头页面往下翻，找到请求标头中以 `Cookie:` 开头的行，后面有一串以 `XF` 开头的内容，这就是需要找的 `Cookies`：
 ![向导图2](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-2.png)
 
 把它们全部选中，右键选择复制，粘贴到软件对应输入框内。
-
-
-
-## 获取 access_token（选填）
-
-百度网盘的 access_token 用于转存秒传链接时使用，如果没有秒传链接转存需要，可以跳过。
-
-打开百度网盘应用授权页面（请复制粘贴到浏览器访问）：`https://openapi.baidu.com/oauth/2.0/authorize?response_type=token&client_id=PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM&redirect_uri=oob&scope=netdisk`
-
-如果已登录帐号，页面会显示如下。否则请先登录帐号：
-
-![向导图4](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
-
-点击授权按钮后，稍等片刻页面会自动跳转。如已授权，则访问授权页面会直接跳转到下面页面。这时在地址栏 url 上可以找到 access_token：
-
-![向导图5](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
-
-在 access_token= 到 &session_secret 之间的字符串便是我们需要的 access_token。将其复制粘贴到软件对应输入框内来使用。
-
-access_token 的有效期为 30 天，到期需要重新授权获取。解除授权可到个人中心操作：https://passport.baidu.com/v6/appAuthority
 
 
 
@@ -129,7 +103,7 @@ access_token 的有效期为 30 天，到期需要重新授权获取。解除授
 
 软件已经尽可能地适配常见百度网盘链接格式。如果软件运行时提示 ”不支持的链接“，请检查输入链接是否符合下面格式规范。
 
-**标准链接：**
+链接示例：
 
 ```sh
 https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 6img
@@ -138,31 +112,6 @@ https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 提取码：6img
 https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 提取:6img
 https://pan.baidu.com/s/1EFCrmlh0rhnWy8pi9uhkyA
 https://pan.baidu.com/share/init?surl=W7U9g47xiDez_5ItgNIs0w
-```
-
-**秒传格式：**
-
-```sh
-965FEAFCC6DC216CB56128B531694C9D#495B4FB5879AE0B22A31826D33D86D80#802846691#梦姬标准.7z
-```
-
-**游侠格式：**
-
-```sh
-https://pan.baidu.com/#bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
-bdlink=QkQyMTUxNjJENzE5NDc4QkNBRDJGMTMyNTlFMTEzNzAjRkJBMTEzQTY1M0QxN0Q1NjM3QUQ1MEEzRTgwMkE2QTIjMzcxOTgxOTIzI1pha3VybyAyMDAxMjYuN3oK
-```
-
-**PanDL 格式：**
-
-```sh
-bdpan://44K344Or44Kv44Gu5p6c5a6fICsg44Go44KJ44Gu44GC44Gq44CA5o+P44GN5LiL44KN44GXOFDlsI/lhorlrZAg5pel5paHLnppcHw2NDAxODQxNTd8ZDNjOTBmOTI3ZjUxYzIyMmRjMTc1NDM1YTY0OWMyYTJ8OTk4NTE0NDE3Y2I5Y2I0MTQ0MGRlZTFiMmMyNTYwMzY=`
-```
-
-**BaiduPCS-Go 格式：**
-
-```sh
-BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a -slicemd5=5b2c842f421143a9a49938dc157c52e6 -crc32=3179342807 \"/音乐/Yes/1969. Yes.zip\"
 ```
 
 
@@ -175,17 +124,25 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 
 
-## 使用系统代理
+## 使用系统代理（选项）
 
 软件默认会绕过网络系统代理，但不能绕过网络全局代理。
 
-如果处于特殊网络环境下，需要配置网络系统代理模式，才能正常访问百度网盘，勾选上 “使用系统代理” 勾选框后，再执行转存。
+如果处于特殊网络环境下，需要配置网络系统代理模式，才能正常访问百度网盘，勾选上「系统代理」框后，再执行转存。
+
+
+
+## 使用安全转存（选项）
+
+没有适合命名，功能暂叫做「安全转存」，主要是处理重名的转存文件。
+
+勾选以后，每个链接将单独保存在数字为命名的子目录中。例如转存目录输入`test`，则第一个链接保存在 `test\1` 中，第二个链接保存在 `test\2` 中，依次类推。这样避免重名文件转存到同一目录下，报错 “文件已存在”。
 
 
 
 # 常见问题
 
-使用软件遇见错误时，先查看下面总结的一些常见问题和解决方案。再查看所有 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 中是否有同样问题。如果都没有帮助，再提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) ，我一般当天或隔天会回复。
+使用软件遇见错误时，先查看下面总结的一些常见问题和解决方案。再查看所有 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) 中是否有同样问题。如果都没有帮助，再提交 [Issue](https://github.com/hxz393/BaiduPanFilesTransfers/issues) ，一般当天或隔天会回复。
 
 ## 转存成功，但实际上没有转存
 
@@ -197,13 +154,13 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 
 
-## 转存失败，错误代码 2 或 404
+## 转存失败，错误代码（31500）
 
-转存秒传链接时常见错误，秒传方式要完蛋的前兆。
+旧版本转存秒传链接时的错误。
 
-**原因**：似乎被百度当成万用报错码。
+**原因**：秒传已不能使用。
 
-**解决**：目前再次尝试转存可成功。如果还不行，可以试试网页端的转存脚本：[Greasy Fork](https://greasyfork.org/zh-CN/scripts/468633)
+**解决**：在新版本中，相关代码已剔除。
 
 
 
@@ -237,7 +194,7 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 ## 转存次数到达 1000 上限
 
-连续转存 1000 个链接，再多 1 个都会报错。报错码千奇百怪。甚至网页端都无法再转存，提示 “数据错误,请稍后重试” 。
+连续转存 1000 个链接，再多 1 个都会报错。报错码千奇百怪。甚至网页端都无法再转存，提示 “数据错误，请稍后重试” 。
 
 **原因**：百度网盘基于 IP 地址层面的封锁，禁止用户大量转存。
 
@@ -265,7 +222,7 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 **原因**：操作系统太旧，无法支持 `Python 3.10` 。
 
-**解决**：升级系统，或者参考 “自行打包” 方法。
+**解决**：升级系统，使用 `2.4.0` 版本或者参考 “自行打包” 方法。
 
 
 
@@ -281,6 +238,21 @@ BaiduPCS-Go rapidupload -length=418024594 -md5=31f141fee63d038a46db179367315f3a 
 
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
+
+## 版本 2.4.0（2023.12.21）
+
+更新内容：
+
+1. 添加安全转存功能。
+
+修复内容：
+
+1. 剔除秒传转存相关代码；
+2. 向下降级到 `python 3.6` 版本，`Win7` 系统也能使用了；
+3. 修复图标模糊问题；
+4. 代码结构优化调整。
+
+
 
 ## 版本 2.3.3（2023.11.02）
 

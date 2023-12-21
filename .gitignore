@@ -1,10 +1,8 @@
-﻿/bpftUI.spec
+﻿.idea
 __pycache__
 build
 dist
-.idea
-test.py
-/test.py
-/config.ini
-/bpftUI ico.png
+/venv*
 /*.spec
+/config.ini
+/test.py
