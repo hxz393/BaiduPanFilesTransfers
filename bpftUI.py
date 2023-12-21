@@ -1,3 +1,10 @@
+"""
+名称：BaiduPanFilesTransfers
+版本：2.4.0
+作者：assassing（https://github.com/hxz393)
+打包：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
+"""
+
 import base64
 import os
 import random
@@ -18,7 +25,6 @@ from retrying import retry
 requests.packages.urllib3.disable_warnings()
 
 # 静态变量
-CLIENT_ID = 'PMzkf1TT0hoWvfNFViVmGRiGZ7HdDKjM'
 BASE_URL = 'https://pan.baidu.com'
 ERROR_CODES = {
     -1: '链接失效，没获取到 shareid',
@@ -35,139 +41,84 @@ ERROR_CODES = {
     -8: '转存失败，目录中已有同名文件或文件夹存在',
     12: '转存失败，转存文件数超过限制',
     -7: '转存失败，秒传文件名有非法字符',
-    9019: '转存失败，请输入有效 access_token',
-    20010: '转存失败，应用授权失败',
     404: '转存失败，秒传无效',
-    31190: '转存失败，秒传未生效',
-    31039: '转存失败，秒传文件名冲突',
     -10: '转存失败，容量不足',
     20: '转存失败，容量不足',
     0: '转存成功',
 }
-
-
-# 检测链接种类
-def check_link_type(link_list_line):
-    link_type = 'unknown'
-    if link_list_line[:24] == 'https://pan.baidu.com/s/':
-        link_type = '/s/'
-    elif re.search(r'(bdlink=|bdpan://|BaiduPCS-Go|#.*#)', link_list_line, re.IGNORECASE):
-        link_type = 'rapid'
-    return link_type
-
-
-# 写配置文件函数
-def write_config(config):
-    with open('config.ini', 'w') as config_write:
-        config_write.write(config)
-
-
-# 处理链接格式函数
-def sanitize_link(url_code):
-    # 处理 http 链接
-    url_code = url_code.replace("http://", "https://")
-    # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
-    url_code = url_code.replace("?pwd=", " ").replace("&pwd=", " ")
-    # 处理旧格式链接
-    url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
-    return url_code
-
-
-# 字节码转字符串
-def decode_with_multiple_encodings(encoded_data):
-    encodings = ['utf-8', 'gbk', 'gb2312', 'big5', 'gb18030', 'shift_jis', 'euc-jp', 'euc-kr', 'iso-2022-kr']
-
-    for encoding in encodings:
-        try:
-            decoded_string = encoded_data.strip().decode(encoding)
-            return decoded_string
-        except UnicodeDecodeError:
-            continue
-
-    return ''
-
-
-# 定义多线程运行主函数
-def thread_it(func, *args):
-    t = threading.Thread(target=func, args=args)
-    t.start()
+# noinspection LongLine
+ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyOBWmI8ZMZ5T6Ax2xpgKKCs5kGtT9KA5B/GFxAUpBES1TZ0Z0kWQZLMZ9O6+um1tIdl6+d+79vvPdd25eDmNR9EgSo3ccWx3NmJ4xlkggipinvBJLotn/RdQrsU16i9aXY5Z9HsonzNr9Jy06354F8r7cxJh6A2OImspoZq3PJ2rrckxab7dJ9k6YtJ9DgSWmHmZlLXsnTXJdz3xpr2vu3AMznvXOY7unWwyeNeX5bQ/ffesIEmQPFsZ5Ufn+t2htCqB2+xWkLzpAfA3Mes+jtxftr9y5s5uL9Byv2bLc/rrvl+vBMRS7WmCe9Rn83qu4cjGEuppOdJ0fQfeFEApyjuDYwV4MDYyNj49PrAQwbbZurXG2Zt3VLR+fppoRWOZUw/FmLYKB+7Cn7QFpSH15G3qv3cGDsV/xzZkBVBQfRklBY3+21RNnEN0uo1Qx2XLoMur3noNBLEd+bj2u9YRgiluHWLUbBk05mvydGA09wGtJ1cSVQa8ufawXi1fr1Ct9sZoifNFyCTu2nYROKET6ks0YvnEfmemfhvfz5rhxsXMIYz+P441Xq6AV8sOQVSuOSULueUnIQ13tKTT4z0JWv4cXZhXgxJeX8X3PTXz4gR8HG9sxGPwRP917CLt1E0TVsgh+UPPOCwKfjZLi3ejqCuBFowsC70RyUimOH+/E8PBddHT0ku7Bjet3YU1fDxWfFYbAZ/XxvP0QAcnJJQgEbiMjYz2UvYKYmHeQkJAPo3E5Fi9eQ2fdQ0qKm7SMMDguo43j7CU8b3ssSVnw+8/g6NF2zJy5lHTbv1BYSP+g9ybi410R7gmd8ZEo2l6i9ZDCpaa60d9/C2Vlu6BW2//2ajQONDR8hcbGr2mdGeFDKlXmAsY+maZSWSto/5sg2LFq1Q4MDIRQVLSd+l8KUcyE01mFwcFROBwb/vJaJ+nblYylhSdKp3Oqid9FmJAkB0pLPejrG0Fb2yU0N59FMDiKrVubIctOxfs7x9n2UR/yszOg1dpE0tbSGbep9ycpKWXYuNGPmppW5OVtpl6y/yD9Dumb/uv9J9KilTtRTRWh/ekdbaOUOzjOWk05KdJzJELTGfvuOcaqp5zqqUOpVTyK90+HRLty'
+MAIN_TITLE = 'BaiduPanFilesTransfers'
+MAIN_VERSION = '2.4.0'
+CONFIG_PATH = 'config.ini'
 
 
 class BaiduPanFilesTransfers:
     """
-    名称：BaiduPanFilesTransfers
-    版本：2.3.3
-    作者：assassing（https://github.com/hxz393)
-    参考：https://pan.baidu.com/union/doc/rksg0sa17
-    打包：pyinstaller -F -w -i bpftUI.ico -n BaiduPanFilesTransfers bpftUI.py
+    本程序旨在提供一个简单 GUI 界面，用于批量转存百度网盘文件。代码尽可能地压缩。
     """
 
-    # 请求变量
-    request_header = {
-        'Host': 'pan.baidu.com',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'Sec-Fetch-Site': 'same-site',
-        'Sec-Fetch-Mode': 'navigate',
-        'Referer': 'https://pan.baidu.com',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-    }
-
     def __init__(self):
-        # 会话配置
-        self.session = requests.Session()
-        self.bdstoken = None
-        self.access_token = None
-
         # 实例化 TK
         self.root = Tk()
-
         # 运行时替换图标
-        # noinspection LongLine
-        self.ICON = zlib.decompress(base64.b64decode(
-            'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyOBWmI8ZMZ5T6Ax2xpgKKCs5kGtT9KA5B/GFxAUpBES1TZ0Z0kWQZLMZ9O6+um1tIdl6+d+79vvPdd25eDmNR9EgSo3ccWx3NmJ4xlkggipinvBJLotn/RdQrsU16i9aXY5Z9HsonzNr9Jy06354F8r7cxJh6A2OImspoZq3PJ2rrckxab7dJ9k6YtJ9DgSWmHmZlLXsnTXJdz3xpr2vu3AMznvXOY7unWwyeNeX5bQ/ffesIEmQPFsZ5Ufn+t2htCqB2+xWkLzpAfA3Mes+jtxftr9y5s5uL9Byv2bLc/rrvl+vBMRS7WmCe9Rn83qu4cjGEuppOdJ0fQfeFEApyjuDYwV4MDYyNj49PrAQwbbZurXG2Zt3VLR+fppoRWOZUw/FmLYKB+7Cn7QFpSH15G3qv3cGDsV/xzZkBVBQfRklBY3+21RNnEN0uo1Qx2XLoMur3noNBLEd+bj2u9YRgiluHWLUbBk05mvydGA09wGtJ1cSVQa8ufawXi1fr1Ct9sZoifNFyCTu2nYROKET6ks0YvnEfmemfhvfz5rhxsXMIYz+P441Xq6AV8sOQVSuOSULueUnIQ13tKTT4z0JWv4cXZhXgxJeX8X3PTXz4gR8HG9sxGPwRP917CLt1E0TVsgh+UPPOCwKfjZLi3ejqCuBFowsC70RyUimOH+/E8PBddHT0ku7Bjet3YU1fDxWfFYbAZ/XxvP0QAcnJJQgEbiMjYz2UvYKYmHeQkJAPo3E5Fi9eQ2fdQ0qKm7SMMDguo43j7CU8b3ssSVnw+8/g6NF2zJy5lHTbv1BYSP+g9ybi410R7gmd8ZEo2l6i9ZDCpaa60d9/C2Vlu6BW2//2ajQONDR8hcbGr2mdGeFDKlXmAsY+maZSWSto/5sg2LFq1Q4MDIRQVLSd+l8KUcyE01mFwcFROBwb/vJaJ+nblYylhSdKp3Oqid9FmJAkB0pLPejrG0Fb2yU0N59FMDiKrVubIctOxfs7x9n2UR/yszOg1dpE0tbSGbep9ycpKWXYuNGPmppW5OVtpl6y/yD9Dumb/uv9J9KilTtRTRWh/ekdbaOUOzjOWk05KdJzJELTGfvuOcaqp5zqqUOpVTyK90+HRLty'))
         _, self.ICON_PATH = tempfile.mkstemp()
         with open(self.ICON_PATH, 'wb') as icon_file:
-            icon_file.write(self.ICON)
+            icon_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
         self.root.iconbitmap(default=self.ICON_PATH)
-
         # 主窗口配置
-        self.root.wm_title("BaiduPanFilesTransfers 2.3.3")
-        self.root.wm_geometry('410x480+240+240')
-        self.root.minsize(410, 480)
+        self.root.wm_title(f"{MAIN_TITLE} {MAIN_VERSION}")
+        self.root.wm_geometry('400x480+240+240')
+        self.root.minsize(400, 480)
         self.root.wm_attributes("-alpha", 0.88)
 
         # 定义窗口元素
-        self.entry_cookie = self.create_label_entry(1, '1.下面填入百度网盘 Cookies，不带引号：')
-        self.entry_access_token = self.create_label_entry(3, '（可选）如果要转存秒存链接，下面填入百度网盘 access_token：')
-        self.entry_folder_name = self.create_label_entry(5, '2.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
-        Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码 或 秒传格式。').grid(row=7, sticky=W)
-        self.text_links = self.create_text_scrollbar(8)
-        self.text_logs = self.create_text_scrollbar(10)
-        self.bottom_run = Button(self.root, text='4.点击运行', command=lambda: thread_it(self.main, ), width=10, height=1, relief='solid')
-        self.bottom_run.grid(row=9, pady=6, sticky=W, padx=4)
-        self.label_state = Label(self.root, text='使用帮助', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
-        self.label_state.grid(row=9, sticky=E, padx=4)
-        self.label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
-        # 添加 trust_env 复选框
+        self.init_row = 1
+        # Cookie 标签和输入框
+        self.entry_cookie = self.create_label_entry(self.init_row, '1.下面填入百度网盘 Cookies，不带引号：')
+        # 保存文件夹名称标签和输入框
+        self.entry_folder_name = self.create_label_entry(self.init_row+2, '2.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
+        # 链接标签和输入框
+        Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码').grid(row=self.init_row+4, sticky=W)
+        self.text_links = self.create_text_scrollbar(self.init_row+5)
+        # 运行按钮
+        self.bottom_run = Button(self.root, text='4.点击运行', command=lambda: self.thread_it(self.main, ), width=10, height=1, relief='solid')
+        self.bottom_run.grid(row=self.init_row+6, pady=6, sticky=W, padx=4)
+        # 结果文本框
+        self.text_logs = self.create_text_scrollbar(self.init_row+7)
+        # 系统代理复选框
         self.trust_env_var = BooleanVar()
-        self.trust_env_checkbutton = Checkbutton(self.root, text='使用系统代理', variable=self.trust_env_var)
-        self.trust_env_checkbutton.grid(row=9, sticky=W, padx=84)
+        self.trust_env_checkbutton = Checkbutton(self.root, text='系统代理', variable=self.trust_env_var)
+        self.trust_env_checkbutton.grid(row=self.init_row+6, sticky=E, padx=4)
+        # 安全转存复选框
+        self.safe_mode_var = BooleanVar()
+        self.safe_mode_checkbutton = Checkbutton(self.root, text='安全转存', variable=self.safe_mode_var)
+        self.safe_mode_checkbutton.grid(row=self.init_row+6, sticky=E, padx=84)
+        # 状态标签
+        self.label_state = Label(self.root, text='使用帮助', font=('Arial', 9, 'underline'), foreground="#0000ff", cursor='heart')
+        self.label_state.grid(row=self.init_row+8, sticky=E, padx=4)
+        self.label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
 
-        # 读取配置
-        if os.path.exists('config.ini'):
-            with open('config.ini') as config_read:
-                config_list = config_read.readlines()
-                config_cookie = config_list[0] if config_list else ''
-                config_access_token = config_list[1] if len(config_list) > 1 else ''
-                config_target_directory_name = config_list[2] if len(config_list) > 2 else ''
-            self.entry_cookie.insert(0, config_cookie)
-            self.entry_access_token.insert(0, config_access_token)
-            self.entry_folder_name.insert(0, config_target_directory_name)
+        # 读取配置文件，填充输入框
+        self.read_config()
+        # 会话配置
+        self.session = requests.Session()
+        self.bdstoken = None
+        self.request_header = {
+            'Host': 'pan.baidu.com',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Sec-Fetch-Site': 'same-site',
+            'Sec-Fetch-Mode': 'navigate',
+            'Referer': 'https://pan.baidu.com',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        }
+
+
 
     # 建立标签和输入框函数
     def create_label_entry(self, row, label_text):
@@ -196,7 +147,57 @@ class BaiduPanFilesTransfers:
         if state == 'error':
             self.label_state['text'] = '发生错误，错误日志如下：'
         elif state == 'running':
-            self.label_state['text'] = f'下面为转存结果，进度：{completed_task_count}/{total_task_count}'
+            self.label_state['text'] = f'进度：{completed_task_count}/{total_task_count}'
+
+    def check_link_type(self, link_list_line):
+        link_type = 'unknown'
+        if link_list_line[:24] == 'https://pan.baidu.com/s/':
+            link_type = '/s/'
+        elif re.search(r'(bdlink=|bdpan://|BaiduPCS-Go|#.*#)', link_list_line, re.IGNORECASE):
+            link_type = 'rapid'
+        return link_type
+
+    # 读取配置
+    def read_config(self):
+        if os.path.exists(CONFIG_PATH):
+            with open(CONFIG_PATH) as config_read:
+                config_list = config_read.readlines()
+                config_cookie = config_list[0] if config_list else ''
+                config_target_directory_name = config_list[1] if len(config_list) > 1 else ''
+            self.entry_cookie.insert(0, config_cookie)
+            self.entry_folder_name.insert(0, config_target_directory_name)
+
+    def write_config(self, config):
+        with open(CONFIG_PATH, 'w') as f:
+            f.write(config)
+
+    # 处理链接格式函数
+    def sanitize_link(self, url_code):
+        # 处理 http 链接
+        url_code = url_code.replace("http://", "https://")
+        # 处理(https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg?pwd=123w)格式链接
+        url_code = url_code.replace("?pwd=", " ").replace("&pwd=", " ")
+        # 处理旧格式链接
+        url_code = url_code.replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
+        return url_code
+
+    # 字节码转字符串
+    def decode_with_multiple_encodings(self, encoded_data):
+        encodings = ['utf-8', 'gbk', 'gb2312', 'big5', 'gb18030', 'shift_jis', 'euc-jp', 'euc-kr', 'iso-2022-kr']
+
+        for encoding in encodings:
+            try:
+                decoded_string = encoded_data.strip().decode(encoding)
+                return decoded_string
+            except UnicodeDecodeError:
+                continue
+
+        return ''
+
+    # 定义多线程运行主函数
+    def thread_it(self, func, *args):
+        t = threading.Thread(target=func, args=args)
+        t.start()
 
     # 获取bdstoken函数
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
@@ -306,7 +307,7 @@ class BaiduPanFilesTransfers:
     # 处理链接函数
     def handle_file_transfer(self, url_code, target_directory_name):
         # 判断连接类型
-        link_type = check_link_type(url_code)
+        link_type = self.check_link_type(url_code)
         # 处理 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 123w 格式链接
         if link_type == '/s/':
             self.process_s_link(url_code, target_directory_name)
@@ -350,13 +351,13 @@ class BaiduPanFilesTransfers:
                 rapid_data = [bdpan_data[2], bdpan_data[3], bdpan_data[1], bdpan_data[0]]
             # 处理游侠标准(bdlink=)
             elif 'bdlink=' in url_code.lower():
-                decoded_string_list = decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
+                decoded_string_list = self.decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdlink=(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
                 for i in decoded_string_list:
                     self.process_rapid_link(i, target_directory_name)
                 return
             # 处理PanDL标准(bdpan://)
             elif 'bdpan://' in url_code.lower():
-                decoded_string_list = decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
+                decoded_string_list = self.decode_with_multiple_encodings(base64.b64decode(re.findall(r'bdpan://(.+)', url_code)[0])).replace('\r\n', '\n').split('\n')
                 for i in decoded_string_list:
                     self.process_rapid_link(i, target_directory_name)
                 return
@@ -391,13 +392,13 @@ class BaiduPanFilesTransfers:
         # 获取和初始化数据
         self.text_logs.delete(1.0, END)
         cookie = "".join(self.entry_cookie.get().split())
-        self.access_token = "".join(self.entry_access_token.get().split())
+        self.access_token = ""
         target_directory_name = "".join(self.entry_folder_name.get().split())
-        link_list = [sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
+        link_list = [self.sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
         self.session.trust_env = self.trust_env_var.get()
         completed_task_count = 0
         total_task_count = len(link_list)
-        write_config(f'{cookie}\n{self.access_token}\n{target_directory_name}')
+        self.write_config(f'{cookie}\n{target_directory_name}')
 
         self.request_header['Cookie'] = cookie
         self.bottom_run['state'] = 'disabled'
