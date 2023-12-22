@@ -193,7 +193,6 @@ class BaiduPanFilesTransfers:
             self.insert_logs(message)
             sys.exit()
 
-    # 插入日志函数
     def insert_logs(self, message: str) -> None:
         """在结果文本框末尾插入内容"""
         self.text_logs.insert(END, message + '\n')
@@ -227,7 +226,7 @@ class BaiduPanFilesTransfers:
     def get_bdstoken(self) -> Union[str, int]:
         """获取bdstoken"""
         url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=38824127&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
-        response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=True, verify=False)
+        response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=False, verify=False)
         response.raise_for_status()
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
 
@@ -260,7 +259,7 @@ class BaiduPanFilesTransfers:
     @retry(stop_max_attempt_number=3, wait_fixed=1100)
     def request_link(self, url: str) -> str:
         """请求网盘链接，获取响应"""
-        response = self.session.get(url=url, headers=self.request_header, timeout=15, allow_redirects=True, verify=False)
+        response = self.session.get(url=url, headers=self.request_header, timeout=15, allow_redirects=False, verify=False)
         response.raise_for_status()
         return response.content.decode("utf-8")
 
