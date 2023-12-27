@@ -65,13 +65,13 @@ class BaiduPanFilesTransfers:
         self.init_session()
         self.read_config()
 
-    def init_ui_elements(self):
+    def init_ui_elements(self) -> None:
         """初始化UI元素"""
         self.root = Tk()
         self.setup_window()
         self.add_ui_elements()
 
-    def setup_window(self):
+    def setup_window(self) -> None:
         """主窗口配置"""
         _, icon_path = tempfile.mkstemp()
         with open(icon_path, 'wb') as icon_file:
@@ -82,7 +82,7 @@ class BaiduPanFilesTransfers:
         self.root.minsize(400, 480)
         self.root.attributes("-alpha", 0.88)
 
-    def add_ui_elements(self):
+    def add_ui_elements(self) -> None:
         """定义窗口元素和元素布局"""
         self.init_row = 1
         # Cookie 标签和输入框
@@ -142,7 +142,7 @@ class BaiduPanFilesTransfers:
         elif state == 'running':
             self.label_state['text'] = f'进度：{completed_task_count}/{total_task_count}'
 
-    def init_session(self):
+    def init_session(self) -> None:
         """初始化会话"""
         self.session = requests.Session()
         self.bdstoken = None
@@ -371,6 +371,7 @@ class BaiduPanFilesTransfers:
         # 恢复按钮状态
         finally:
             self.bottom_run.config(state='normal', relief='solid', text='4.点击运行')
+            self.session.close()
 
     # 启动Tkinter
     def run(self) -> None:
