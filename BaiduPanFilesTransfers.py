@@ -178,7 +178,6 @@ class BaiduPanFilesTransfers:
     def thread_it(func: Any, *args: Any) -> None:
         """多线程防止主界面卡死"""
         t = threading.Thread(target=func, args=args)
-        t.setDaemon(True)
         t.start()
 
     @staticmethod
@@ -331,7 +330,7 @@ class BaiduPanFilesTransfers:
     def check_input(self) -> None:
         """输入检查，如链接数限制和 cookie 格式"""
         self.check_condition(self.total_task_count > 1000, f'转存链接数一次不能超过 1000，请减少链接数。当前连接数：{self.total_task_count}')
-        self.check_condition(any([ord(word) not in range(256) for word in self.cookie]) or self.cookie.find('BAIDUID=') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
+        self.check_condition(any([ord(word) not in range(256) for word in self.cookie]) or self.cookie.find('BAIDUID') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
 
     def handle_bdstoken(self) -> None:
         """获取 bdstoken 相关逻辑"""
