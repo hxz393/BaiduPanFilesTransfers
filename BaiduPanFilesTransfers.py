@@ -183,7 +183,7 @@ class BaiduPanFilesTransfers:
     @staticmethod
     def sanitize_link(url_code: str) -> str:
         """预处理链接格式，整理成标准格式。例如http转为https，去除提取码，去除链接中的空格等"""
-        return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1")
+        return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1").lstrip()
 
     def check_condition(self, condition: bool, message: str) -> None:
         """输入或返回检查，如果条件condition为True，则直接终止流程。用于主函数。单个链接处理出错直接调用insert_logs函数，不中断运行"""
