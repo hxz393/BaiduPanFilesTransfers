@@ -316,7 +316,7 @@ class BaiduPanFilesTransfers:
         """初始化变量和配置"""
         self.cookie = "".join(self.entry_cookie.get().split())
         self.folder_name = "".join(self.entry_folder_name.get().split())
-        self.link_list = [self.sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]
+        self.link_list = list(dict.fromkeys([self.sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
         self.request_header['Cookie'] = self.cookie
         self.session.trust_env = self.trust_env_var.get()
