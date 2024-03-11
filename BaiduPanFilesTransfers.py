@@ -197,7 +197,7 @@ class BaiduPanFilesTransfers:
         self.text_logs.insert(END, message + '\n')
 
     def update_cookie(self, bdclnd: str) -> None:
-        """更新 cookie，用于处理带提取码链接。每次请求都会生产新的bdclnd，需要更新到cookie中"""
+        """更新cookie，用于处理带提取码链接。每次请求都会生产新的bdclnd，需要更新到cookie中"""
         if 'BDCLND=' in self.request_header['Cookie']:
             self.request_header['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', self.request_header['Cookie'])
         else:
@@ -330,7 +330,7 @@ class BaiduPanFilesTransfers:
     def check_input(self) -> None:
         """输入检查，如链接数限制和 cookie 格式"""
         self.check_condition(self.total_task_count > 1000, f'转存链接数一次不能超过 1000，请减少链接数。当前连接数：{self.total_task_count}')
-        self.check_condition(any([ord(word) not in range(256) for word in self.cookie]) or self.cookie.find('BAIDUID') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
+        self.check_condition(not self.cookie.isascii() or self.cookie.find('BAIDUID') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
 
     def handle_bdstoken(self) -> None:
         """获取 bdstoken 相关逻辑"""
@@ -367,7 +367,7 @@ class BaiduPanFilesTransfers:
         except Exception as e:
             self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{e}\n{traceback.format_exc()}')
             self.label_state_change(state='error')
-        # 恢复按钮状态
+        # 恢复按钮状态，关闭会话
         finally:
             self.bottom_run.config(state='normal', relief='solid', text='4.点击运行')
             self.session.close()
