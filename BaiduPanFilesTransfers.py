@@ -142,6 +142,27 @@ class BaiduPanFilesTransfers:
         elif state == 'running':
             self.label_state['text'] = f'进度：{completed_task_count}/{total_task_count}'
 
+    def run_state_change(self, state: str) -> None:
+        """运行状态变化函数"""
+        if state == 'running':
+            self.running = True
+            self.paused = False
+            self.bottom_run.config(text='4.点击暂停', fg="red", command=self.pause)
+        elif state == 'paused':
+            self.paused = True
+            self.bottom_run.config(text='4.点击继续', fg="black", command=self.resume)
+        else:
+            self.running = False
+            self.bottom_run.config(text='4.点击运行', fg="black", command=lambda: self.thread_it(self.main, ))
+
+    def pause(self) -> None:
+        """暂停程序执行。"""
+        self.run_state_change('paused')
+
+    def resume(self) -> None:
+        """恢复程序执行。"""
+        self.run_state_change('running')
+
     def init_session(self) -> None:
         """初始化会话"""
         self.session = requests.Session()
@@ -324,7 +345,7 @@ class BaiduPanFilesTransfers:
         self.completed_task_count = 0
         # 清空结果文本框，禁用按钮，写入配置
         self.text_logs.delete(1.0, END)
-        self.bottom_run.config(state='disabled', relief='groove', text='运行中...')
+        self.run_state_change('running')
         self.write_config(f'{self.cookie}\n{self.folder_name}')
 
     def check_input(self) -> None:
@@ -347,11 +368,17 @@ class BaiduPanFilesTransfers:
         """执行转存"""
         for url_code in self.link_list:
             self.completed_task_count += 1
-            if url_code.startswith('https://pan.baidu.com/s/'):
-                self.process_link(url_code, self.folder_name)
-            else:
-                self.insert_logs(f'不支持的链接：{url_code}')
             self.label_state_change(state='running', completed_task_count=self.completed_task_count, total_task_count=self.total_task_count)
+            if self.running and not self.paused:
+                if url_code.startswith('https://pan.baidu.com/s/'):
+                    # self.process_link(url_code, self.folder_name)
+                    print(url_code)
+                    time.sleep(1)
+                else:
+                    self.insert_logs(f'不支持的链接：{url_code}')
+            else:
+                while self.paused:
+                    time.sleep(1)
 
     def main(self) -> None:
         """主函数"""
@@ -369,7 +396,7 @@ class BaiduPanFilesTransfers:
             self.label_state_change(state='error')
         # 恢复按钮状态，关闭会话
         finally:
-            self.bottom_run.config(state='normal', relief='solid', text='4.点击运行')
+            self.run_state_change('stopped')
             self.session.close()
 
     # 启动Tkinter
