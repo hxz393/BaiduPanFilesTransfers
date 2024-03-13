@@ -61,15 +61,12 @@ class BaiduPanFilesTransfers:
     """
 
     def __init__(self):
-        self.init_ui_elements()
-        self.init_session()
-        self.read_config()
-
-    def init_ui_elements(self) -> None:
         """初始化UI元素"""
         self.root = Tk()
         self.setup_window()
         self.add_ui_elements()
+        self.init_session()
+        self.read_config()
 
     def setup_window(self) -> None:
         """主窗口配置"""
@@ -92,7 +89,7 @@ class BaiduPanFilesTransfers:
         # 链接标签和输入框
         Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）').grid(row=self.init_row + 4, sticky=W)
         self.text_links = self.create_text_scrollbar(self.init_row + 5)
-        # 创建一个Frame作为容器，存放按钮一行
+        # 创建一个 Frame 作为容器，存放按钮一行
         self.frame = Frame(self.root)
         self.frame.grid(row=self.init_row + 6, pady=6, sticky=W, padx=4)
         # 运行按钮
@@ -107,9 +104,9 @@ class BaiduPanFilesTransfers:
         self.safe_mode_checkbutton = Checkbutton(self.frame, text='安全转存', variable=self.safe_mode_var)
         self.safe_mode_checkbutton.grid(row=0, column=2)
         # 状态标签
-        self.label_state = Label(self.root, text='使用帮助', font=('', 10, 'underline'), foreground="#0000ff", cursor='heart')
-        self.label_state.grid(row=self.init_row + 6, sticky=E)
-        self.label_state.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
+        self.label_status = Label(self.root, text='使用帮助', font=('', 10, 'underline'), foreground="#0000ff", cursor='heart')
+        self.label_status.grid(row=self.init_row + 6, sticky=E)
+        self.label_status.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
         # 结果文本框
         self.text_logs = self.create_text_scrollbar(self.init_row + 7)
 
@@ -132,37 +129,6 @@ class BaiduPanFilesTransfers:
         self.root.grid_rowconfigure(row, weight=1)
         return text
 
-    def label_state_change(self, state: str, completed_task_count: int = 0, total_task_count: int = 0) -> None:
-        """状态标签变化函数"""
-        self.label_state.config(font=('', 10), foreground="#000000", cursor="arrow")
-        self.label_state.unbind("<Button-1>")
-
-        if state == 'error':
-            self.label_state.config(foreground="#FF0000", text='发生错误，日志如下：')
-        elif state == 'running':
-            self.label_state['text'] = f'进度：{completed_task_count}/{total_task_count}'
-
-    def run_state_change(self, state: str) -> None:
-        """运行状态变化函数"""
-        if state == 'running':
-            self.running = True
-            self.paused = False
-            self.bottom_run.config(text='4.点击暂停', fg="red", command=self.pause)
-        elif state == 'paused':
-            self.paused = True
-            self.bottom_run.config(text='4.点击继续', fg="black", command=self.resume)
-        else:
-            self.running = False
-            self.bottom_run.config(text='4.点击运行', fg="black", command=lambda: self.thread_it(self.main, ))
-
-    def pause(self) -> None:
-        """暂停程序执行。"""
-        self.run_state_change('paused')
-
-    def resume(self) -> None:
-        """恢复程序执行。"""
-        self.run_state_change('running')
-
     def init_session(self) -> None:
         """初始化会话"""
         self.session = requests.Session()
@@ -182,7 +148,7 @@ class BaiduPanFilesTransfers:
         }
 
     def read_config(self) -> None:
-        """读取配置文件，并填充输入框"""
+        """读取配置文件，并填入输入框"""
         if os.path.exists(CONFIG_PATH):
             with open(CONFIG_PATH) as f:
                 config_list = f.readlines()
@@ -201,15 +167,39 @@ class BaiduPanFilesTransfers:
         t = threading.Thread(target=func, args=args)
         t.start()
 
+    def handle_status_change(self, status: str, completed_task_count: int = 0, total_task_count: int = 0) -> None:
+        """运行状态变化更新函数"""
+        if status == 'running':
+            self.running = True
+            self.bottom_run.config(text='4.点击暂停', fg="red", command=self.pause)
+        elif status == 'paused':
+            self.running = False
+            self.bottom_run.config(text='4.点击继续', fg="green", command=self.resume)
+        elif status == 'updated':
+            self.label_status.config(text=f'转存进度：{completed_task_count}/{total_task_count}')
+        elif status == 'error':
+            self.label_status.config(fg="red", text='发生错误，日志如下：')
+        else:
+            self.running = False
+            self.bottom_run.config(text='4.点击运行', fg="black", command=lambda: self.thread_it(self.main, ))
+
+    def pause(self) -> None:
+        """暂停程序执行。"""
+        self.handle_status_change('paused')
+
+    def resume(self) -> None:
+        """恢复程序执行。"""
+        self.handle_status_change('running')
+
     @staticmethod
     def sanitize_link(url_code: str) -> str:
-        """预处理链接格式，整理成标准格式。例如http转为https，去除提取码，去除链接中的空格等"""
+        """预处理链接格式，整理成标准格式。例如 http 转为 https，去除提取码，去除链接中的空格等"""
         return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1").lstrip()
 
     def check_condition(self, condition: bool, message: str) -> None:
-        """输入或返回检查，如果条件condition为True，则直接终止流程。用于主函数。单个链接处理出错直接调用insert_logs函数，不中断运行"""
+        """输入或返回检查，如果条件 condition 为 True，则直接终止流程。用于主函数。单个链接处理出错直接调用 insert_logs 函数，不中断运行"""
         if condition:
-            self.label_state_change(state='error')
+            self.handle_status_change('error')
             self.insert_logs(message)
             sys.exit()
 
@@ -218,7 +208,7 @@ class BaiduPanFilesTransfers:
         self.text_logs.insert(END, message + '\n')
 
     def update_cookie(self, bdclnd: str) -> None:
-        """更新cookie，用于处理带提取码链接。每次请求都会生产新的bdclnd，需要更新到cookie中"""
+        """更新 cookie，用于处理带提取码链接。每次请求都会生产新的 bdclnd，需要更新到 cookie 中"""
         if 'BDCLND=' in self.request_header['Cookie']:
             self.request_header['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', self.request_header['Cookie'])
         else:
@@ -227,10 +217,10 @@ class BaiduPanFilesTransfers:
     @staticmethod
     def parse_response(response: str) -> Union[list, str, int]:
         """解析响应内容并提取数据"""
-        shareid_list = re.findall('"shareid":(\\d+?),"', response)
-        user_id_list = re.findall('"share_uk":"(\\d+?)","', response)
-        fs_id_list = re.findall('"fs_id":(\\d+?),"', response)
-        info_title_list = re.findall('<title>(.+)</title>', response)
+        shareid_list = re.findall(r'"shareid":(\d+?),"', response)
+        user_id_list = re.findall(r'"share_uk":"(\d+?)","', response)
+        fs_id_list = re.findall(r'"fs_id":(\d+?),"', response)
+        info_title_list = re.findall(r'<title>(.+)</title>', response)
 
         # 返回包含三个参数的列表，或者错误代码
         if not shareid_list:
@@ -242,15 +232,15 @@ class BaiduPanFilesTransfers:
         else:
             return [shareid_list[0], user_id_list[0], fs_id_list]
 
-    @retry(stop_max_attempt_number=2, wait_fixed=1000)
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_bdstoken(self) -> Union[str, int]:
-        """获取bdstoken"""
+        """获取 bdstoken"""
         url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=38824127&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
         response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=False, verify=False)
         response.raise_for_status()
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
 
-    @retry(stop_max_attempt_number=2, wait_fixed=1000)
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_dir_list(self) -> Union[list, int]:
         """获取用户网盘中目录列表"""
         url = f'{BASE_URL}/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken={self.bdstoken}'
@@ -258,7 +248,7 @@ class BaiduPanFilesTransfers:
         response.raise_for_status()
         return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
 
-    @retry(stop_max_attempt_number=2, wait_fixed=1000)
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def create_dir(self, folder_name: str) -> int:
         """新建目录"""
         url = f'{BASE_URL}/api/create?a=commit&bdstoken={self.bdstoken}'
@@ -267,7 +257,7 @@ class BaiduPanFilesTransfers:
         response.raise_for_status()
         return response.json()['errno']
 
-    @retry(stop_max_attempt_number=3, wait_fixed=1700)
+    @retry(stop_max_attempt_number=3, wait_fixed=1489)
     def verify_pass_code(self, link_url: str, pass_code: str) -> Union[str, int]:
         """验证提取码"""
         url = f'{BASE_URL}/share/verify?surl={link_url[25:48]}&bdstoken={self.bdstoken}&t={str(int(round(time.time() * 1000)))}&channel=chunlei&web=1&clienttype=0'
@@ -283,7 +273,7 @@ class BaiduPanFilesTransfers:
         response.raise_for_status()
         return response.content.decode("utf-8")
 
-    @retry(stop_max_attempt_number=5, wait_fixed=1553)
+    @retry(stop_max_attempt_number=5, wait_fixed=1351)
     def transfer_file(self, verify_links_reason: list, folder_name: str) -> int:
         """转存文件"""
         url = f'{BASE_URL}/share/transfer?shareid={verify_links_reason[0]}&from={verify_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
@@ -311,13 +301,6 @@ class BaiduPanFilesTransfers:
         response = self.request_link(link_url)
         return self.parse_response(response)
 
-    def log_result(self, reason: Union[str, int], url_code: str) -> None:
-        """根据不同的结果记录日志"""
-        if reason in ERROR_CODES:
-            self.insert_logs(f'{ERROR_CODES[reason]}：{url_code}')
-        else:
-            self.insert_logs(f'转存失败，错误代码（{reason}）：{url_code}')
-
     def process_link(self, url_code: str, folder_name: str) -> None:
         """转存标准链接"""
         # 分割链接和提取码，检查链接有效性
@@ -330,11 +313,11 @@ class BaiduPanFilesTransfers:
                 folder_name = f'{folder_name}/{self.completed_task_count}'
                 self.create_dir(folder_name)
             reason = self.transfer_file(reason, folder_name)
-        # 检查转存结果
-        self.log_result(reason, url_code)
+        # 展示转存结果
+        self.insert_logs(f'{ERROR_CODES[reason]}：{url_code}' if reason in ERROR_CODES else f'转存失败，错误代码（{reason}）：{url_code}')
 
     def initialize_variables(self) -> None:
-        """初始化变量和配置"""
+        """初始化配置和界面"""
         self.cookie = "".join(self.entry_cookie.get().split())
         self.folder_name = "".join(self.entry_folder_name.get().split())
         self.link_list = list(dict.fromkeys([self.sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]))
@@ -344,8 +327,10 @@ class BaiduPanFilesTransfers:
         self.safe_mode = self.safe_mode_var.get()
         self.completed_task_count = 0
         # 清空结果文本框，禁用按钮，写入配置
+        self.label_status.config(font=('', 10), fg="black", cursor="arrow")
+        self.label_status.unbind("<Button-1>")
         self.text_logs.delete(1.0, END)
-        self.run_state_change('running')
+        self.handle_status_change('running')
         self.write_config(f'{self.cookie}\n{self.folder_name}')
 
     def check_input(self) -> None:
@@ -367,25 +352,22 @@ class BaiduPanFilesTransfers:
     def handle_process_links(self) -> None:
         """执行转存"""
         for url_code in self.link_list:
+            self.insert_logs(f'不支持的链接：{url_code}') if not url_code.startswith('https://pan.baidu.com/s/') else self.handle_link_respecting_pause(url_code)
             self.completed_task_count += 1
-            self.label_state_change(state='running', completed_task_count=self.completed_task_count, total_task_count=self.total_task_count)
-            if self.running and not self.paused:
-                if url_code.startswith('https://pan.baidu.com/s/'):
-                    # self.process_link(url_code, self.folder_name)
-                    print(url_code)
-                    time.sleep(1)
-                else:
-                    self.insert_logs(f'不支持的链接：{url_code}')
-            else:
-                while self.paused:
-                    time.sleep(1)
+            self.handle_status_change(status='updated', completed_task_count=self.completed_task_count, total_task_count=self.total_task_count)
+
+    def handle_link_respecting_pause(self, url_code: str) -> None:
+        """加入暂停检测逻辑，并尝试处理链接"""
+        while not self.running:
+            time.sleep(1)
+        self.process_link(url_code, self.folder_name)
 
     def main(self) -> None:
         """主函数"""
         # 初始化变量，检查用户输入
         self.initialize_variables()
         self.check_input()
-        # 获取bdstoken，新建目录，执行转存
+        # 获取 bdstoken，新建目录，执行转存
         try:
             self.handle_bdstoken()
             self.handle_create_dir()
@@ -393,13 +375,12 @@ class BaiduPanFilesTransfers:
         # 故障处理
         except Exception as e:
             self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{e}\n{traceback.format_exc()}')
-            self.label_state_change(state='error')
+            self.handle_status_change('error')
         # 恢复按钮状态，关闭会话
         finally:
-            self.run_state_change('stopped')
+            self.handle_status_change('stopped')
             self.session.close()
 
-    # 启动Tkinter
     def run(self) -> None:
         """运行程序"""
         self.root.mainloop()
