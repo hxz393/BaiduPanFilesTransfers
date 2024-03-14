@@ -26,7 +26,7 @@ from retrying import retry
 
 requests.packages.urllib3.disable_warnings()
 
-# 静态变量
+# 全局变量
 BASE_URL = 'https://pan.baidu.com'
 ERROR_CODES = {
     -1: '链接失效，没获取到 shareid',
@@ -50,9 +50,13 @@ ERROR_CODES = {
 }
 # noinspection LongLine
 ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyOBWmI8ZMZ5T6Ax2xpgKKCs5kGtT9KA5B/GFxAUpBES1TZ0Z0kWQZLMZ9O6+um1tIdl6+d+79vvPdd25eDmNR9EgSo3ccWx3NmJ4xlkggipinvBJLotn/RdQrsU16i9aXY5Z9HsonzNr9Jy06354F8r7cxJh6A2OImspoZq3PJ2rrckxab7dJ9k6YtJ9DgSWmHmZlLXsnTXJdz3xpr2vu3AMznvXOY7unWwyeNeX5bQ/ffesIEmQPFsZ5Ufn+t2htCqB2+xWkLzpAfA3Mes+jtxftr9y5s5uL9Byv2bLc/rrvl+vBMRS7WmCe9Rn83qu4cjGEuppOdJ0fQfeFEApyjuDYwV4MDYyNj49PrAQwbbZurXG2Zt3VLR+fppoRWOZUw/FmLYKB+7Cn7QFpSH15G3qv3cGDsV/xzZkBVBQfRklBY3+21RNnEN0uo1Qx2XLoMur3noNBLEd+bj2u9YRgiluHWLUbBk05mvydGA09wGtJ1cSVQa8ufawXi1fr1Ct9sZoifNFyCTu2nYROKET6ks0YvnEfmemfhvfz5rhxsXMIYz+P441Xq6AV8sOQVSuOSULueUnIQ13tKTT4z0JWv4cXZhXgxJeX8X3PTXz4gR8HG9sxGPwRP917CLt1E0TVsgh+UPPOCwKfjZLi3ejqCuBFowsC70RyUimOH+/E8PBddHT0ku7Bjet3YU1fDxWfFYbAZ/XxvP0QAcnJJQgEbiMjYz2UvYKYmHeQkJAPo3E5Fi9eQ2fdQ0qKm7SMMDguo43j7CU8b3ssSVnw+8/g6NF2zJy5lHTbv1BYSP+g9ybi410R7gmd8ZEo2l6i9ZDCpaa60d9/C2Vlu6BW2//2ajQONDR8hcbGr2mdGeFDKlXmAsY+maZSWSto/5sg2LFq1Q4MDIRQVLSd+l8KUcyE01mFwcFROBwb/vJaJ+nblYylhSdKp3Oqid9FmJAkB0pLPejrG0Fb2yU0N59FMDiKrVubIctOxfs7x9n2UR/yszOg1dpE0tbSGbep9ycpKWXYuNGPmppW5OVtpl6y/yD9Dumb/uv9J9KilTtRTRWh/ekdbaOUOzjOWk05KdJzJELTGfvuOcaqp5zqqUOpVTyK90+HRLty'
+APP_WIDTH = 400
+APP_HEIGHT = 480
+APP_ALPHA = 0.88
 MAIN_TITLE = 'BaiduPanFilesTransfers'
 MAIN_VERSION = '2.5.0'
 CONFIG_PATH = 'config.ini'
+DELAY_SECONDS = 0.1
 
 
 class BaiduPanFilesTransfers:
@@ -61,10 +65,9 @@ class BaiduPanFilesTransfers:
     """
 
     def __init__(self):
-        """初始化UI元素"""
-        self.root = Tk()
+        """初始化 UI 元素"""
         self.setup_window()
-        self.add_ui_elements()
+        self.setup_ui()
         self.init_session()
         self.read_config()
 
@@ -73,13 +76,14 @@ class BaiduPanFilesTransfers:
         _, icon_path = tempfile.mkstemp()
         with open(icon_path, 'wb') as icon_file:
             icon_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
+        self.root = Tk()
         self.root.iconbitmap(default=icon_path)
         self.root.title(f"{MAIN_TITLE} {MAIN_VERSION}")
-        self.root.geometry('400x480+240+240')
-        self.root.minsize(400, 480)
-        self.root.attributes("-alpha", 0.88)
+        self.root.geometry(f'{APP_WIDTH}x{APP_HEIGHT}')
+        self.root.minsize(APP_WIDTH, APP_HEIGHT)
+        self.root.attributes("-alpha", APP_ALPHA)
 
-    def add_ui_elements(self) -> None:
+    def setup_ui(self) -> None:
         """定义窗口元素和元素布局"""
         self.init_row = 1
         # Cookie 标签和输入框
@@ -104,7 +108,7 @@ class BaiduPanFilesTransfers:
         self.safe_mode_checkbutton = Checkbutton(self.frame, text='安全转存', variable=self.safe_mode_var)
         self.safe_mode_checkbutton.grid(row=0, column=2)
         # 状态标签
-        self.label_status = Label(self.root, text='使用帮助', font=('', 10, 'underline'), foreground="#0000ff", cursor='heart')
+        self.label_status = Label(self.root, text='使用帮助', font=('', 10, 'underline'), fg="blue", cursor='heart')
         self.label_status.grid(row=self.init_row + 6, sticky=E)
         self.label_status.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
         # 结果文本框
@@ -124,8 +128,8 @@ class BaiduPanFilesTransfers:
         text.grid(row=row, column=0, sticky=W + E + N + S, padx=(4, 1), pady=(5, 5))
         scrollbar = Scrollbar(self.root, width=5)
         scrollbar.grid(row=row, column=1, sticky=S + N, rowspan=1)
-        scrollbar.configure(command=text.yview)
-        text.configure(yscrollcommand=scrollbar.set)
+        scrollbar.config(command=text.yview)
+        text.config(yscrollcommand=scrollbar.set)
         self.root.grid_rowconfigure(row, weight=1)
         return text
 
@@ -167,29 +171,24 @@ class BaiduPanFilesTransfers:
         t = threading.Thread(target=func, args=args)
         t.start()
 
-    def handle_status_change(self, status: str, completed_task_count: int = 0, total_task_count: int = 0) -> None:
+    def change_status(self, status: str) -> None:
         """运行状态变化更新函数"""
         if status == 'running':
             self.running = True
-            self.bottom_run.config(text='4.点击暂停', fg="red", command=self.pause)
+            self.bottom_run.config(text='4.点击暂停', fg="red", command=lambda: self.change_status('paused'))
         elif status == 'paused':
             self.running = False
-            self.bottom_run.config(text='4.点击继续', fg="green", command=self.resume)
-        elif status == 'updated':
-            self.label_status.config(text=f'转存进度：{completed_task_count}/{total_task_count}')
+            self.bottom_run.config(text='4.点击继续', fg="green", command=lambda: self.change_status('running'))
+        elif status == 'init':
+            self.label_status.config(font=('', 10), fg="black", cursor="arrow")
+            self.text_logs.delete(1.0, END)
+        elif status == 'update':
+            self.label_status.config(text=f'转存进度：{self.completed_task_count}/{self.total_task_count}')
         elif status == 'error':
-            self.label_status.config(fg="red", text='发生错误，日志如下：')
+            self.label_status.config(text='发生错误：', fg="red")
         else:
             self.running = False
             self.bottom_run.config(text='4.点击运行', fg="black", command=lambda: self.thread_it(self.main, ))
-
-    def pause(self) -> None:
-        """暂停程序执行。"""
-        self.handle_status_change('paused')
-
-    def resume(self) -> None:
-        """恢复程序执行。"""
-        self.handle_status_change('running')
 
     @staticmethod
     def sanitize_link(url_code: str) -> str:
@@ -199,13 +198,13 @@ class BaiduPanFilesTransfers:
     def check_condition(self, condition: bool, message: str) -> None:
         """输入或返回检查，如果条件 condition 为 True，则直接终止流程。用于主函数。单个链接处理出错直接调用 insert_logs 函数，不中断运行"""
         if condition:
-            self.handle_status_change('error')
+            self.change_status('error')
             self.insert_logs(message)
             sys.exit()
 
     def insert_logs(self, message: str) -> None:
         """在结果文本框末尾插入内容"""
-        self.text_logs.insert(END, message + '\n')
+        self.text_logs.insert(END, f'{message}\n')
 
     def update_cookie(self, bdclnd: str) -> None:
         """更新 cookie，用于处理带提取码链接。每次请求都会生产新的 bdclnd，需要更新到 cookie 中"""
@@ -285,8 +284,8 @@ class BaiduPanFilesTransfers:
     @staticmethod
     def parse_url_and_code(url_code: str) -> Tuple[str, str]:
         """解析 URL 和提取码"""
-        url, passwd = re.sub(r'提取码*[：:](.*)', r'\1', url_code.lstrip()).split(' ', maxsplit=1)
-        return url.strip()[:47], passwd.strip()[:4]
+        url, passwd = re.sub(r'提取码*[：:](.*)', r'\1', url_code).split(' ', maxsplit=1)
+        return url.strip()[:47], passwd.strip()[-4:]
 
     def verify_link(self, link_url: str, pass_code: str) -> Union[list, str, int]:
         """验证链接有效性"""
@@ -298,43 +297,47 @@ class BaiduPanFilesTransfers:
             self.update_cookie(bdclnd)
 
         # 请求网盘链接，获取必要参数
-        response = self.request_link(link_url)
-        return self.parse_response(response)
+        return self.parse_response(self.request_link(link_url))
 
     def process_link(self, url_code: str, folder_name: str) -> None:
-        """转存标准链接"""
-        # 分割链接和提取码，检查链接有效性
-        link_url, pass_code = self.parse_url_and_code(url_code)
-        reason = self.verify_link(link_url, pass_code)
-        # 返回结果为列表时，执行转存文件。否则提示错误
+        """验证和转存链接，输出最终结果"""
+        # 检查链接有效性
+        reason = self.verify_link(*self.parse_url_and_code(url_code))
+        # 返回结果为列表时，执行转存文件，输出转存链接结果；否则跳过转存，输出检查链接结果
         if isinstance(reason, list):
-            # 安全转存模式
+            # 如果开启安全转存模式，对每个转存链接建立目录
             if self.safe_mode:
                 folder_name = f'{folder_name}/{self.completed_task_count}'
                 self.create_dir(folder_name)
             reason = self.transfer_file(reason, folder_name)
-        # 展示转存结果
+        # 展示结果
         self.insert_logs(f'{ERROR_CODES[reason]}：{url_code}' if reason in ERROR_CODES else f'转存失败，错误代码（{reason}）：{url_code}')
 
-    def initialize_variables(self) -> None:
-        """初始化配置和界面"""
+    def pause_detection(self, url_code: str) -> None:
+        """加入暂停检测逻辑，并尝试处理链接"""
+        while not self.running:
+            time.sleep(DELAY_SECONDS)
+        self.process_link(url_code, self.folder_name)
+        time.sleep(DELAY_SECONDS)
+
+    def prepare_run(self) -> None:
+        """初始化变量，准备运行"""
         self.cookie = "".join(self.entry_cookie.get().split())
         self.folder_name = "".join(self.entry_folder_name.get().split())
-        self.link_list = list(dict.fromkeys([self.sanitize_link(link + ' ') for link in self.text_links.get(1.0, END).split('\n') if link]))
+        self.link_list = list(dict.fromkeys([self.sanitize_link(f'{link} ') for link in self.text_links.get(1.0, END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
         self.request_header['Cookie'] = self.cookie
         self.session.trust_env = self.trust_env_var.get()
         self.safe_mode = self.safe_mode_var.get()
         self.completed_task_count = 0
-        # 清空结果文本框，禁用按钮，写入配置
-        self.label_status.config(font=('', 10), fg="black", cursor="arrow")
-        self.label_status.unbind("<Button-1>")
-        self.text_logs.delete(1.0, END)
-        self.handle_status_change('running')
+        # 初始化 ui，写入配置
+        self.change_status('init')
+        self.change_status('running')
         self.write_config(f'{self.cookie}\n{self.folder_name}')
 
-    def check_input(self) -> None:
+    def handle_input(self) -> None:
         """输入检查，如链接数限制和 cookie 格式"""
+        self.check_condition(self.total_task_count == 0, '无有效链接。')
         self.check_condition(self.total_task_count > 1000, f'转存链接数一次不能超过 1000，请减少链接数。当前连接数：{self.total_task_count}')
         self.check_condition(not self.cookie.isascii() or self.cookie.find('BAIDUID') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
 
@@ -346,40 +349,29 @@ class BaiduPanFilesTransfers:
     def handle_create_dir(self) -> None:
         """新建目录。如果目录已存在则不新建，否则会建立一个带时间戳的目录"""
         if self.folder_name and self.folder_name not in [dir_json['server_filename'] for dir_json in self.get_dir_list()]:
-            create_dir_reason = self.create_dir(self.folder_name)
-            self.check_condition(create_dir_reason != 0, f'转存目录名带非法字符，请改正目录名后重试。错误代码：{create_dir_reason}')
+            self.check_condition(self.create_dir(self.folder_name) != 0, '转存目录名带非法字符，请改正目录名后重试。')
 
     def handle_process_links(self) -> None:
         """执行转存"""
         for url_code in self.link_list:
-            self.insert_logs(f'不支持的链接：{url_code}') if not url_code.startswith('https://pan.baidu.com/s/') else self.handle_link_respecting_pause(url_code)
+            self.insert_logs(f'不支持的链接：{url_code}') if not url_code.startswith('https://pan.baidu.com/s/') else self.pause_detection(url_code)
             self.completed_task_count += 1
-            self.handle_status_change(status='updated', completed_task_count=self.completed_task_count, total_task_count=self.total_task_count)
-
-    def handle_link_respecting_pause(self, url_code: str) -> None:
-        """加入暂停检测逻辑，并尝试处理链接"""
-        while not self.running:
-            time.sleep(1)
-        self.process_link(url_code, self.folder_name)
+            self.change_status('update')
 
     def main(self) -> None:
         """主函数"""
-        # 初始化变量，检查用户输入
-        self.initialize_variables()
-        self.check_input()
-        # 获取 bdstoken，新建目录，执行转存
         try:
+            self.prepare_run()
+            self.handle_input()
             self.handle_bdstoken()
             self.handle_create_dir()
             self.handle_process_links()
-        # 故障处理
         except Exception as e:
             self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{e}\n{traceback.format_exc()}')
-            self.handle_status_change('error')
-        # 恢复按钮状态，关闭会话
+            self.change_status('error')
         finally:
-            self.handle_status_change('stopped')
             self.session.close()
+            self.change_status('stopped')
 
     def run(self) -> None:
         """运行程序"""
