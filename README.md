@@ -77,11 +77,7 @@
 按 `F5` 刷新页面，下面会新增多条记录，点击以 `main` 开头的记录，右边会出现菜单，显示 `标头(Headers)`、`响应(Response) ` 等内容。在标头页面往下翻，找到请求标头中以 `Cookie:` 开头的行，后面有一串以 `XF` 开头的内容，这就是需要找的 `Cookies`。把它们全部选中，右键选择复制，粘贴到软件对应输入框内：
 ![向导图2](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-2.png)
 
-**==注意一定获取 `main` 页面下的 Cookies==**，其他页面的 Cookie 不完整，会出现各种转存失败问题。如果登录后不是跳转到 `main` 页面，或者你找不到 `main` 页面，请直接点击链接：
-
-[主页]: https://pan.baidu.com/disk/main	"main 页面"
-
-
+**注意一定获取 `main` 页面下的 Cookies**，其他页面的 Cookie 不完整，会出现各种转存失败问题。如果登录后不是跳转到 `main` 页面，或者你找不到 `main` 页面，请直接点击链接：[main 页面](https://pan.baidu.com/disk/main)
 
 ## 输入保存位置
 
