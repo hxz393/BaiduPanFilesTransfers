@@ -8,6 +8,7 @@
 :copyright: Copyright 2024, hxz393. 保留所有权利。
 """
 
+import atexit
 import base64
 import os
 import re
@@ -18,10 +19,10 @@ import time
 import traceback
 import webbrowser
 import zlib
-from tkinter import Tk, Entry, Label, Text, Frame, Scrollbar, Button, Checkbutton, W, S, N, E, END, NONE, BooleanVar
 from typing import Any, Union, Tuple
 
 import requests
+import ttkbootstrap as ttk
 from retrying import retry
 
 requests.packages.urllib3.disable_warnings()
@@ -36,7 +37,7 @@ ERROR_CODES = {
     -6: '转存失败，请用浏览器无痕模式获取 Cookie',
     -7: '转存失败，转存文件夹名有非法字符，请改正目录名后重试',
     -8: '转存失败，目录中已有同名文件或文件夹存在',
-    -9: '链接错误，提取码错误或验证已过期',
+    -9: '链接错误，提取码错误或分享已过期',
     -10: '转存失败，容量不足',
     -62: '链接错误尝试次数过多，请手动转存或稍后再试',
     '百度网盘-链接不存在': '链接失效，文件已经被删除或取消分享',
@@ -50,13 +51,13 @@ ERROR_CODES = {
 }
 # noinspection LongLine
 ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyOBWmI8ZMZ5T6Ax2xpgKKCs5kGtT9KA5B/GFxAUpBES1TZ0Z0kWQZLMZ9O6+um1tIdl6+d+79vvPdd25eDmNR9EgSo3ccWx3NmJ4xlkggipinvBJLotn/RdQrsU16i9aXY5Z9HsonzNr9Jy06354F8r7cxJh6A2OImspoZq3PJ2rrckxab7dJ9k6YtJ9DgSWmHmZlLXsnTXJdz3xpr2vu3AMznvXOY7unWwyeNeX5bQ/ffesIEmQPFsZ5Ufn+t2htCqB2+xWkLzpAfA3Mes+jtxftr9y5s5uL9Byv2bLc/rrvl+vBMRS7WmCe9Rn83qu4cjGEuppOdJ0fQfeFEApyjuDYwV4MDYyNj49PrAQwbbZurXG2Zt3VLR+fppoRWOZUw/FmLYKB+7Cn7QFpSH15G3qv3cGDsV/xzZkBVBQfRklBY3+21RNnEN0uo1Qx2XLoMur3noNBLEd+bj2u9YRgiluHWLUbBk05mvydGA09wGtJ1cSVQa8ufawXi1fr1Ct9sZoifNFyCTu2nYROKET6ks0YvnEfmemfhvfz5rhxsXMIYz+P441Xq6AV8sOQVSuOSULueUnIQ13tKTT4z0JWv4cXZhXgxJeX8X3PTXz4gR8HG9sxGPwRP917CLt1E0TVsgh+UPPOCwKfjZLi3ejqCuBFowsC70RyUimOH+/E8PBddHT0ku7Bjet3YU1fDxWfFYbAZ/XxvP0QAcnJJQgEbiMjYz2UvYKYmHeQkJAPo3E5Fi9eQ2fdQ0qKm7SMMDguo43j7CU8b3ssSVnw+8/g6NF2zJy5lHTbv1BYSP+g9ybi410R7gmd8ZEo2l6i9ZDCpaa60d9/C2Vlu6BW2//2ajQONDR8hcbGr2mdGeFDKlXmAsY+maZSWSto/5sg2LFq1Q4MDIRQVLSd+l8KUcyE01mFwcFROBwb/vJaJ+nblYylhSdKp3Oqid9FmJAkB0pLPejrG0Fb2yU0N59FMDiKrVubIctOxfs7x9n2UR/yszOg1dpE0tbSGbep9ycpKWXYuNGPmppW5OVtpl6y/yD9Dumb/uv9J9KilTtRTRWh/ekdbaOUOzjOWk05KdJzJELTGfvuOcaqp5zqqUOpVTyK90+HRLty'
-APP_WIDTH = 400
+APP_WIDTH = 480
 APP_HEIGHT = 480
-APP_ALPHA = 0.88
 MAIN_TITLE = 'BaiduPanFilesTransfers'
 MAIN_VERSION = '2.6.0'
 CONFIG_PATH = 'config.ini'
 DELAY_SECONDS = 0.1
+PADDING = (10, 0)
 
 
 class BaiduPanFilesTransfers:
@@ -73,15 +74,15 @@ class BaiduPanFilesTransfers:
 
     def setup_window(self) -> None:
         """主窗口配置"""
-        _, icon_path = tempfile.mkstemp()
-        with open(icon_path, 'wb') as icon_file:
-            icon_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
-        self.root = Tk()
-        self.root.iconbitmap(default=icon_path)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ico') as temp_file:
+            temp_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
+        atexit.register(os.remove, temp_file.name)
+        self.root = ttk.Window()
+        self.root.iconbitmap(temp_file.name)
         self.root.title(f"{MAIN_TITLE} {MAIN_VERSION}")
         self.root.geometry(f'{APP_WIDTH}x{APP_HEIGHT}')
         self.root.minsize(APP_WIDTH, APP_HEIGHT)
-        self.root.attributes("-alpha", APP_ALPHA)
+        self.root.style.theme_use('yeti')
 
     def setup_ui(self) -> None:
         """定义窗口元素和元素布局"""
@@ -91,43 +92,50 @@ class BaiduPanFilesTransfers:
         # 保存文件夹名称标签和输入框
         self.entry_folder_name = self.create_label_entry(self.init_row + 2, '2.下面填入文件保存位置（默认根目录），不能包含<,>,|,*,?,,/：')
         # 链接标签和输入框
-        Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）').grid(row=self.init_row + 4, sticky=W)
+        ttk.Label(self.root, text='3.下面粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）').grid(row=self.init_row + 4, sticky=ttk.W, padx=PADDING, pady=PADDING)
         self.text_links = self.create_text_scrollbar(self.init_row + 5)
         # 创建一个 Frame 作为容器，存放按钮一行
-        self.frame = Frame(self.root)
-        self.frame.grid(row=self.init_row + 6, pady=6, sticky=W, padx=4)
-        # 运行按钮
-        self.bottom_run = Button(self.frame, text='4.点击运行', command=lambda: self.thread_it(self.main, ), width=10, relief='solid')
-        self.bottom_run.grid(row=0, column=0)
+        self.frame = ttk.Frame(self.root)
+        self.frame.grid(row=self.init_row + 6, pady=PADDING, sticky=ttk.W, padx=PADDING)
+        # 批量转存按钮
+        self.bottom_save = ttk.Button(self.frame, text='批量转存', command=lambda: self.thread_it(self.main, ), width=10)
+        self.bottom_save.grid(row=0, column=0, padx=(0, 5))
+        # 批量分享按钮
+        self.bottom_share = ttk.Button(self.frame, text='批量分享', command=lambda: self.thread_it(self.main, ), width=10)
+        self.bottom_share.grid(row=0, column=1, padx=(0, 5))
         # 系统代理复选框
-        self.trust_env_var = BooleanVar()
-        self.trust_env_checkbutton = Checkbutton(self.frame, text='系统代理', variable=self.trust_env_var)
-        self.trust_env_checkbutton.grid(row=0, column=1)
+        self.var_trust_env = ttk.BooleanVar()
+        self.checkbutton_trust_env = ttk.Checkbutton(self.frame, text='系统代理', variable=self.var_trust_env)
+        self.checkbutton_trust_env.grid(row=0, column=2, padx=(0, 5))
         # 安全转存复选框
-        self.safe_mode_var = BooleanVar()
-        self.safe_mode_checkbutton = Checkbutton(self.frame, text='安全转存', variable=self.safe_mode_var)
-        self.safe_mode_checkbutton.grid(row=0, column=2)
+        self.var_safe_mode = ttk.BooleanVar()
+        self.checkbutton_safe_mode = ttk.Checkbutton(self.frame, text='安全转存', variable=self.var_safe_mode)
+        self.checkbutton_safe_mode.grid(row=0, column=3)
         # 状态标签
-        self.label_status = Label(self.root, text='使用帮助', font=('', 10, 'underline'), fg="blue", cursor='heart')
-        self.label_status.grid(row=self.init_row + 6, sticky=E)
+        # noinspection PyArgumentList
+        self.label_status = ttk.Label(self.root, text='使用帮助', font=('', 10, 'underline'), bootstyle='primary', cursor='heart')
+        self.label_status.grid(row=self.init_row + 6, sticky=ttk.E, padx=PADDING, pady=PADDING)
         self.label_status.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/hxz393/BaiduPanFilesTransfers"))
         # 结果文本框
         self.text_logs = self.create_text_scrollbar(self.init_row + 7)
+        # 创建一个空的 Frame
+        self.frame_empty = ttk.Frame(self.root)
+        self.frame_empty.grid(row=self.init_row + 8, pady=PADDING, sticky=ttk.W, padx=PADDING)
 
-    def create_label_entry(self, row: int, label_text: str) -> Entry:
+    def create_label_entry(self, row: int, label_text: str) -> ttk.Entry:
         """建立标签和输入框函数"""
-        Label(self.root, text=label_text).grid(row=row, column=0, sticky=W)
-        entry = Entry(self.root)
-        entry.grid(row=row + 1, column=0, sticky=W + E, padx=(4, 1), pady=(5, 5))
+        ttk.Label(self.root, text=label_text).grid(row=row, column=0, sticky=ttk.W, padx=PADDING, pady=PADDING)
+        entry = ttk.Entry(self.root)
+        entry.grid(row=row + 1, column=0, sticky=ttk.W + ttk.E, padx=PADDING, pady=PADDING)
         self.root.grid_columnconfigure(0, weight=1)
         return entry
 
-    def create_text_scrollbar(self, row: int) -> Text:
+    def create_text_scrollbar(self, row: int) -> ttk.Text:
         """建立文本框和滚动条"""
-        text = Text(self.root, height=5, wrap=NONE)
-        text.grid(row=row, column=0, sticky=W + E + N + S, padx=(4, 1), pady=(5, 5))
-        scrollbar = Scrollbar(self.root, width=5)
-        scrollbar.grid(row=row, column=1, sticky=S + N, rowspan=1)
+        text = ttk.Text(self.root, height=5, wrap=ttk.NONE)
+        text.grid(row=row, column=0, sticky=ttk.W + ttk.E + ttk.N + ttk.S, padx=PADDING, pady=PADDING)
+        scrollbar = ttk.Scrollbar(self.root)
+        scrollbar.grid(row=row, column=1, sticky=ttk.S + ttk.N, rowspan=1)
         scrollbar.config(command=text.yview)
         text.config(yscrollcommand=scrollbar.set)
         self.root.grid_rowconfigure(row, weight=1)
@@ -171,25 +179,28 @@ class BaiduPanFilesTransfers:
         t = threading.Thread(target=func, args=args)
         t.start()
 
+    # noinspection PyArgumentList
     def change_status(self, status: str) -> None:
         """运行状态变化更新函数"""
         if status == 'running':
             self.running = True
-            self.bottom_run.config(text='4.点击暂停', fg="red", command=lambda: self.change_status('paused'))
+            self.bottom_save.configure(text='点击暂停', bootstyle='danger', command=lambda: self.change_status('paused'))
         elif status == 'paused':
             self.running = False
-            self.bottom_run.config(text='4.点击继续', fg="green", command=lambda: self.change_status('running'))
+            self.bottom_save.configure(text='点击继续', bootstyle='success', command=lambda: self.change_status('running'))
         elif status == 'init':
-            self.label_status.config(font=('', 10), fg="black", cursor="arrow")
+            self.label_status.configure(font=('', 10), bootstyle='success', cursor="arrow")
             self.label_status.unbind("<Button-1>")
-            self.text_logs.delete(1.0, END)
+            self.bottom_share.configure(state="disabled")
+            self.text_logs.delete(1.0, ttk.END)
         elif status == 'update':
-            self.label_status.config(text=f'转存进度：{self.completed_task_count}/{self.total_task_count}')
+            self.label_status.configure(text=f'转存进度：{self.completed_task_count}/{self.total_task_count}')
         elif status == 'error':
-            self.label_status.config(text='发生错误：', fg="red")
+            self.label_status.configure(text='发生错误：', bootstyle='danger')
         else:
             self.running = False
-            self.bottom_run.config(text='4.点击运行', fg="black", command=lambda: self.thread_it(self.main, ))
+            self.bottom_save.configure(text='批量转存', bootstyle='primary', command=lambda: self.thread_it(self.main, ))
+            self.bottom_share.configure(state="normal")
 
     @staticmethod
     def sanitize_link(url_code: str) -> str:
@@ -205,7 +216,7 @@ class BaiduPanFilesTransfers:
 
     def insert_logs(self, message: str) -> None:
         """在结果文本框末尾插入内容"""
-        self.text_logs.insert(END, f'{message}\n')
+        self.text_logs.insert(ttk.END, f'{message}\n')
 
     def update_cookie(self, bdclnd: str) -> None:
         """更新 cookie，用于处理带提取码链接。每次请求都会生成新的 bdclnd，需要更新到 cookie 中"""
@@ -324,11 +335,11 @@ class BaiduPanFilesTransfers:
         """初始化变量，准备运行"""
         self.cookie = "".join(self.entry_cookie.get().split())
         self.folder_name = "".join(self.entry_folder_name.get().split())
-        self.link_list = list(dict.fromkeys([self.sanitize_link(f'{link} ') for link in self.text_links.get(1.0, END).split('\n') if link]))
+        self.link_list = list(dict.fromkeys([self.sanitize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
         self.headers['Cookie'] = self.cookie
-        self.s.trust_env = self.trust_env_var.get()
-        self.safe_mode = self.safe_mode_var.get()
+        self.s.trust_env = self.var_trust_env.get()
+        self.safe_mode = self.var_safe_mode.get()
         self.completed_task_count = 0
         # 初始化 ui，写入配置
         self.change_status('init')
@@ -359,7 +370,7 @@ class BaiduPanFilesTransfers:
             self.change_status('update')
 
     def main(self) -> None:
-        """主函数"""
+        """转存主函数"""
         try:
             self.prepare_run()
             self.handle_input()
