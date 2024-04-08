@@ -42,7 +42,7 @@ ERROR_CODES = {
     '百度网盘-链接不存在': '链接失效，文件已经被删除或取消分享',
     '百度网盘 请输入提取码': '链接错误，缺少提取码',
     0: '转存成功',
-    4: '转存失败，目录中已有同名文件或文件夹存在',
+    4: '转存失败，目录中已有同名文件存在',
     12: '转存失败，转存文件数超过限制',
     20: '转存失败，容量不足',
     105: '链接错误，链接格式不正确',
@@ -54,7 +54,7 @@ APP_WIDTH = 400
 APP_HEIGHT = 480
 APP_ALPHA = 0.88
 MAIN_TITLE = 'BaiduPanFilesTransfers'
-MAIN_VERSION = '2.5.0'
+MAIN_VERSION = '2.6.0'
 CONFIG_PATH = 'config.ini'
 DELAY_SECONDS = 0.1
 
@@ -135,9 +135,9 @@ class BaiduPanFilesTransfers:
 
     def init_session(self) -> None:
         """初始化会话"""
-        self.session = requests.Session()
+        self.s = requests.Session()
         self.bdstoken = None
-        self.request_header = {
+        self.headers = {
             'Host': 'pan.baidu.com',
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
@@ -181,6 +181,7 @@ class BaiduPanFilesTransfers:
             self.bottom_run.config(text='4.点击继续', fg="green", command=lambda: self.change_status('running'))
         elif status == 'init':
             self.label_status.config(font=('', 10), fg="black", cursor="arrow")
+            self.label_status.unbind("<Button-1>")
             self.text_logs.delete(1.0, END)
         elif status == 'update':
             self.label_status.config(text=f'转存进度：{self.completed_task_count}/{self.total_task_count}')
@@ -193,7 +194,7 @@ class BaiduPanFilesTransfers:
     @staticmethod
     def sanitize_link(url_code: str) -> str:
         """预处理链接格式，整理成标准格式。例如 http 转为 https，去除提取码，去除链接中的空格等"""
-        return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("https://pan.baidu.com/share/init?surl=", "https://pan.baidu.com/s/1").lstrip()
+        return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("share/init?surl=", "s/1").lstrip()
 
     def check_condition(self, condition: bool, message: str) -> None:
         """输入或返回检查，如果条件 condition 为 True，则直接终止流程。用于主函数。单个链接处理出错直接调用 insert_logs 函数，不中断运行"""
@@ -207,11 +208,11 @@ class BaiduPanFilesTransfers:
         self.text_logs.insert(END, f'{message}\n')
 
     def update_cookie(self, bdclnd: str) -> None:
-        """更新 cookie，用于处理带提取码链接。每次请求都会生产新的 bdclnd，需要更新到 cookie 中"""
-        if 'BDCLND=' in self.request_header['Cookie']:
-            self.request_header['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', self.request_header['Cookie'])
+        """更新 cookie，用于处理带提取码链接。每次请求都会生成新的 bdclnd，需要更新到 cookie 中"""
+        if 'BDCLND=' in self.headers['Cookie']:
+            self.headers['Cookie'] = re.sub(r'BDCLND=(\S+);?', f'BDCLND={bdclnd};', self.headers['Cookie'])
         else:
-            self.request_header['Cookie'] += f';BDCLND={bdclnd}'
+            self.headers['Cookie'] += f';BDCLND={bdclnd}'
 
     @staticmethod
     def parse_response(response: str) -> Union[list, str, int]:
@@ -234,52 +235,51 @@ class BaiduPanFilesTransfers:
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_bdstoken(self) -> Union[str, int]:
         """获取 bdstoken"""
-        url = f'{BASE_URL}/api/gettemplatevariable?clienttype=0&app_id=38824127&web=1&fields=[%22bdstoken%22,%22token%22,%22uk%22,%22isdocuser%22,%22servertime%22]'
-        response = self.session.get(url=url, headers=self.request_header, timeout=20, allow_redirects=False, verify=False)
-        response.raise_for_status()
-        return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['result']['bdstoken']
+        url = f'{BASE_URL}/api/gettemplatevariable'
+        params = {'clienttype': '0', 'app_id': '38824127', 'web': '1', 'fields': '["bdstoken","token","uk","isdocuser","servertime"]'}
+        r = self.s.get(url=url, params=params, headers=self.headers, timeout=20, allow_redirects=False, verify=False)
+        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['result']['bdstoken']
 
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_dir_list(self) -> Union[list, int]:
         """获取用户网盘中目录列表"""
-        url = f'{BASE_URL}/api/list?order=time&desc=1&showempty=0&web=1&page=1&num=1000&dir=%2F&bdstoken={self.bdstoken}'
-        response = self.session.get(url=url, headers=self.request_header, timeout=15, allow_redirects=False, verify=False)
-        response.raise_for_status()
-        return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['list']
+        url = f'{BASE_URL}/api/list'
+        params = {'order': 'time', 'desc': '1', 'showempty': '0', 'web': '1', 'page': '1', 'num': '1000', 'dir': '/', 'bdstoken': self.bdstoken, }
+        r = self.s.get(url=url, params=params, headers=self.headers, timeout=15, allow_redirects=False, verify=False)
+        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['list']
 
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def create_dir(self, folder_name: str) -> int:
         """新建目录"""
-        url = f'{BASE_URL}/api/create?a=commit&bdstoken={self.bdstoken}'
-        post_data = {'path': folder_name, 'isdir': '1', 'block_list': '[]', }
-        response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
-        response.raise_for_status()
-        return response.json()['errno']
+        url = f'{BASE_URL}/api/create'
+        params = {'a': 'commit', 'bdstoken': self.bdstoken}
+        data = {'path': folder_name, 'isdir': '1', 'block_list': '[]', }
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
+        return r.json()['errno']
 
     @retry(stop_max_attempt_number=3, wait_fixed=1489)
     def verify_pass_code(self, link_url: str, pass_code: str) -> Union[str, int]:
         """验证提取码"""
-        url = f'{BASE_URL}/share/verify?surl={link_url[25:48]}&bdstoken={self.bdstoken}&t={str(int(round(time.time() * 1000)))}&channel=chunlei&web=1&clienttype=0'
-        post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-        response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=10, allow_redirects=False, verify=False)
-        response.raise_for_status()
-        return response.json()['errno'] if response.json()['errno'] != 0 else response.json()['randsk']
+        url = f'{BASE_URL}/share/verify'
+        params = {'surl': link_url[25:48], 'bdstoken': self.bdstoken, 't': str(int(round(time.time() * 1000))), 'channel': 'chunlei', 'web': '1', 'clienttype': '0', }
+        data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=10, allow_redirects=False, verify=False)
+        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['randsk']
 
     @retry(stop_max_attempt_number=3, wait_fixed=1100)
     def request_link(self, url: str) -> str:
         """请求网盘链接，获取响应"""
-        response = self.session.get(url=url, headers=self.request_header, timeout=15, allow_redirects=False, verify=False)
-        response.raise_for_status()
-        return response.content.decode("utf-8")
+        r = self.s.get(url=url, headers=self.headers, timeout=15, verify=False)
+        return r.content.decode("utf-8")
 
     @retry(stop_max_attempt_number=5, wait_fixed=1351)
     def transfer_file(self, verify_links_reason: list, folder_name: str) -> int:
         """转存文件"""
-        url = f'{BASE_URL}/share/transfer?shareid={verify_links_reason[0]}&from={verify_links_reason[1]}&bdstoken={self.bdstoken}&channel=chunlei&web=1&clienttype=0'
-        post_data = {'fsidlist': f'[{",".join(i for i in verify_links_reason[2])}]', 'path': f'/{folder_name}', }
-        response = self.session.post(url=url, headers=self.request_header, data=post_data, timeout=15, allow_redirects=False, verify=False)
-        response.raise_for_status()
-        return response.json()['errno']
+        url = f'{BASE_URL}/share/transfer'
+        params = {'shareid': verify_links_reason[0], 'from': verify_links_reason[1], 'bdstoken': self.bdstoken, 'channel': 'chunlei', 'web': '1', 'clienttype': '0', }
+        data = {'fsidlist': f'[{",".join(i for i in verify_links_reason[2])}]', 'path': f'/{folder_name}', }
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
+        return r.json()['errno']
 
     @staticmethod
     def parse_url_and_code(url_code: str) -> Tuple[str, str]:
@@ -326,8 +326,8 @@ class BaiduPanFilesTransfers:
         self.folder_name = "".join(self.entry_folder_name.get().split())
         self.link_list = list(dict.fromkeys([self.sanitize_link(f'{link} ') for link in self.text_links.get(1.0, END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
-        self.request_header['Cookie'] = self.cookie
-        self.session.trust_env = self.trust_env_var.get()
+        self.headers['Cookie'] = self.cookie
+        self.s.trust_env = self.trust_env_var.get()
         self.safe_mode = self.safe_mode_var.get()
         self.completed_task_count = 0
         # 初始化 ui，写入配置
@@ -354,7 +354,7 @@ class BaiduPanFilesTransfers:
     def handle_process_links(self) -> None:
         """执行转存"""
         for url_code in self.link_list:
-            self.insert_logs(f'不支持的链接：{url_code}') if not url_code.startswith('https://pan.baidu.com/s/') else self.pause_detection(url_code)
+            self.insert_logs(f'不支持的链接：{url_code}') if not url_code.startswith('https://pan.baidu.com/') else self.pause_detection(url_code)
             self.completed_task_count += 1
             self.change_status('update')
 
@@ -370,7 +370,7 @@ class BaiduPanFilesTransfers:
             self.insert_logs(f'运行出错，请重新运行本程序。错误信息如下：\n{e}\n{traceback.format_exc()}')
             self.change_status('error')
         finally:
-            self.session.close()
+            self.s.close()
             self.change_status('stopped')
 
     def run(self) -> None:
