@@ -1,12 +1,12 @@
 # 程序介绍
 
-百度网盘批量转存程序，基于 `Python 3.8` + `Tkinter` 构建，用于批量转存网络上分享的资源到自己的百度网盘。
+百度网盘批量转存程序，基于 `Python 3.8` + `Tkinter` 构建，主要用于批量转存网络上分享的资源到自己的百度网盘。此外还带批量分享和批量检测有效性功能。
 
 介绍页面请访问：[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
 程序主界面：
 
-![百度网盘批量转存程序主界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/%E6%88%AA%E5%9B%BE2.4.0.jpg)
+![百度网盘批量转存程序主界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/v2.6.0.jpg)
 
 ## 下载地址
 
@@ -19,7 +19,7 @@
 
 ## 手动编译
 
-手动编译需要事先安装好 `Python 3.6` 以上版本，和 `pyinstaller` 库。依赖第三方库只有 `requests` 和 `retrying`，可以使用 `pip install` 命令进行安装。
+手动编译需要事先安装好 `Python 3.6` 以上版本，和 `pyinstaller` 库。依赖第三方库有 `requests`、`ttkbootstrap` 和 `retrying`，可以使用 `pip install` 命令进行安装。
 
 编译步骤如下：
 
@@ -101,13 +101,27 @@ https://pan.baidu.com/share/init?surl=W7U9g47xiDez_5ItgNIs0w
 https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 ```
 
-## 执行转存
+## 执行批量转存
 
-所有信息输入完毕后，点击运行按钮来执行批量转存百度网盘链接。
+所有信息输入完毕后，点击「批量转存」按钮来执行批量转存百度网盘链接。
 
 转存过程中可以「暂停/恢复」，也可以直接点击程序窗口右上角关闭来终止运行。
 
 如果想加快转存速度，可多开程序，分批同时转存。总转存速度不要超过每分钟 `60` 条链接。
+
+## 执行批量分享
+
+批量分享是指分享指定目录下的文件或文件夹，每个生成一条分享链接。
+
+执行批量分享之前，同样需要先输入 `Cookies` 和要分享的目标路径，然后点击「批量分享」按钮准备执行。此时会弹出分享设置弹窗：
+
+![百度网盘批量转存程序分享设置界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
+
+设置好分享期限和四位分享码（不支持随机）后，点击确定开始执行批量分享：
+
+![百度网盘批量转存程序批量分享结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
+
+请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名。日志输入框内，会显示生成的分享链接和结果。
 
 ## 使用系统代理（选项）
 
@@ -120,6 +134,12 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 没有适合命名，功能暂叫做「安全转存」，用来处理遇到重名文件时转存失败。
 
 勾选以后，每个链接将单独保存在数字为命名的子目录中。例如转存目录输入`test`，则第一个链接保存在 `test\1` 中，第二个链接保存在 `test\2` 中，以此类推。
+
+## 使用检测模式（选项）
+
+勾选此模式后，将对输入的链接可用性进行检查，并不执行转存操作：
+
+![百度网盘批量转存程序批量检测结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-6.jpg)
 
 
 
@@ -204,11 +224,14 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
 
-## 版本 2.6.0（2024.04.08）
+## 版本 2.6.0（2024.04.09）
 
 更新内容：
 
-1. 添加对百度网盘企业版的支持。
+1. 使用 `ttkbootstrap` 美化界面；
+1. 添加对百度网盘企业版的支持；
+1. 添加批量分享功能；
+1. 添加检测模式功能。
 
 ## 版本 2.5.0（2024.03.14）
 
