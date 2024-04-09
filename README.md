@@ -117,11 +117,9 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ![百度网盘批量转存程序分享设置界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
 
-设置好分享期限和四位分享码（不支持随机）后，点击确定开始执行批量分享：
+设置好分享期限和四位分享码（不支持随机）后，点击确定开始执行批量分享，请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名。日志输入框内，会显示生成的分享链接和结果：
 
 ![百度网盘批量转存程序批量分享结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
-
-请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名。日志输入框内，会显示生成的分享链接和结果。
 
 ## 使用系统代理（选项）
 
@@ -137,9 +135,11 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ## 使用检测模式（选项）
 
-勾选此模式后，将对输入的链接可用性进行检查，并不执行转存操作：
+勾选此模式后，点击「批量转存」来运行，将对输入的链接可用性进行检查，并不执行转存操作：
 
 ![百度网盘批量转存程序批量检测结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-6.jpg)
+
+**请勿频繁对相同的链接进行检测**，会导致弹验证码。
 
 
 
