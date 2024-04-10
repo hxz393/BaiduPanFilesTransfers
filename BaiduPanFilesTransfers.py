@@ -237,34 +237,13 @@ class BaiduPanFilesTransfers:
 
     def insert_logs(self, message: str, is_alt: bool = False) -> None:
         """在文本框末尾插入内容"""
-        if is_alt:
-            self.text_links.insert('end', f'{message}\n')
-        else:
-            self.text_logs.insert('end', f'{message}\n')
+        self.text_links.insert('end', f'{message}\n') if is_alt else self.text_logs.insert('end', f'{message}\n')
 
     def update_cookie(self, bdclnd: str) -> None:
         """更新 cookie，用于处理带提取码链接。每次请求都会生成新的 bdclnd，需要更新到 cookie 中"""
         cookies_dict = dict(map(lambda item: item.split('=', 1), filter(None, self.headers['Cookie'].split(';'))))
         cookies_dict['BDCLND'] = bdclnd
         self.headers['Cookie'] = ';'.join([f'{key}={value}' for key, value in cookies_dict.items()])
-
-    @staticmethod
-    def parse_response(response: str) -> Union[list, str, int]:
-        """解析响应内容并提取数据"""
-        shareid_list = re.findall(r'"shareid":(\d+?),"', response)
-        user_id_list = re.findall(r'"share_uk":"(\d+?)","', response)
-        fs_id_list = re.findall(r'"fs_id":(\d+?),"', response)
-        info_title_list = re.findall(r'<title>(.+)</title>', response)
-
-        # 返回包含三个参数的列表，或者错误代码
-        if not shareid_list:
-            return -1
-        elif not user_id_list:
-            return -2
-        elif not fs_id_list:
-            return info_title_list[0] if info_title_list else -3
-        else:
-            return [shareid_list[0], user_id_list[0], fs_id_list]
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
     def get_bdstoken(self) -> Union[str, int]:
@@ -323,6 +302,24 @@ class BaiduPanFilesTransfers:
         data = {'period': EXP_MAP[self.expiry], 'pwd': self.password, 'eflag_disable': 'true', 'channel_list': '[]', 'schannel': '4', 'fid_list': f'[{fs_id}]'}
         r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
         return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['link']
+
+    @staticmethod
+    def parse_response(response: str) -> Union[list, str, int]:
+        """解析响应内容并提取数据"""
+        shareid_list = re.findall(r'"shareid":(\d+?),"', response)
+        user_id_list = re.findall(r'"share_uk":"(\d+?)","', response)
+        fs_id_list = re.findall(r'"fs_id":(\d+?),"', response)
+        info_title_list = re.findall(r'<title>(.+)</title>', response)
+
+        # 返回包含三个参数的列表，或者错误代码
+        if not shareid_list:
+            return -1
+        elif not user_id_list:
+            return -2
+        elif not fs_id_list:
+            return info_title_list[0] if info_title_list else -3
+        else:
+            return [shareid_list[0], user_id_list[0], fs_id_list]
 
     @staticmethod
     def parse_url_and_code(url_code: str) -> Tuple[str, str]:
@@ -504,9 +501,9 @@ class CustomDialog(ttk.Toplevel):
         ttk.Button(button_frame, text="取消", command=self.destroy, bootstyle='danger').pack(side='right', padx=5)
 
     def validate(self) -> bool:
-        """验证输入数据合法性"""
+        """验证输入提取码有效性"""
         if not re.match("^[a-zA-Z0-9]{4}$", self.var_password.get()):
-            Messagebox.show_warning(title="请重新输入", message="必须是四位数字或字母的组合", master=self)
+            Messagebox.show_warning(title="请重新输入", message="提取码必须是四位数字或字母的组合", master=self)
             return False
         self.result = (self.var_expiry.get(), self.var_password.get())
         self.destroy()
