@@ -34,7 +34,7 @@ ERROR_CODES = {
     -3: '链接失效，没获取到 fs_id',
     -4: '转存失败，无效登录。请退出账号在其他地方的登录',
     -6: '转存失败，请用浏览器无痕模式获取 Cookie',
-    -7: '转存失败，转存文件夹名有非法字符，请改正目录名后重试',
+    -7: '转存失败，转存文件夹名有非法字符，不能包含 < > | * ? / :，请改正目录名后重试',
     -8: '转存失败，目录中已有同名文件或文件夹存在',
     -9: '链接错误，提取码错误',
     -10: '转存失败，容量不足',
@@ -50,9 +50,9 @@ ERROR_CODES = {
 }
 EXP_MAP = {"1 天": 1, "7 天": 7, "30 天": 30, "永久": 0}
 LABEL_MAP = {
-    'cookie': '1.请输入百度网盘 Cookies，不带引号：',
-    'folder_name': '2.请输入第一级目录名（留空为根目录），名称不能包含 <, >, |, *, ?, /, :',
-    'links': '3.请粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）',
+    'cookie': '1.请输入百度网盘主页完整 Cookies，不带引号：',
+    'folder_name': '2.请输入转存或分享目录名（留空为根目录）：',
+    'links': '3.请粘贴百度网盘标准链接，每行一个：',
     'options': '4.选项设置',
     'logs': '5.运行结果：',
     'save': '批量转存',
@@ -69,7 +69,7 @@ LABEL_MAP = {
 ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyOBWmI8ZMZ5T6Ax2xpgKKCs5kGtT9KA5B/GFxAUpBES1TZ0Z0kWQZLMZ9O6+um1tIdl6+d+79vvPdd25eDmNR9EgSo3ccWx3NmJ4xlkggipinvBJLotn/RdQrsU16i9aXY5Z9HsonzNr9Jy06354F8r7cxJh6A2OImspoZq3PJ2rrckxab7dJ9k6YtJ9DgSWmHmZlLXsnTXJdz3xpr2vu3AMznvXOY7unWwyeNeX5bQ/ffesIEmQPFsZ5Ufn+t2htCqB2+xWkLzpAfA3Mes+jtxftr9y5s5uL9Byv2bLc/rrvl+vBMRS7WmCe9Rn83qu4cjGEuppOdJ0fQfeFEApyjuDYwV4MDYyNj49PrAQwbbZurXG2Zt3VLR+fppoRWOZUw/FmLYKB+7Cn7QFpSH15G3qv3cGDsV/xzZkBVBQfRklBY3+21RNnEN0uo1Qx2XLoMur3noNBLEd+bj2u9YRgiluHWLUbBk05mvydGA09wGtJ1cSVQa8ufawXi1fr1Ct9sZoifNFyCTu2nYROKET6ks0YvnEfmemfhvfz5rhxsXMIYz+P441Xq6AV8sOQVSuOSULueUnIQ13tKTT4z0JWv4cXZhXgxJeX8X3PTXz4gR8HG9sxGPwRP917CLt1E0TVsgh+UPPOCwKfjZLi3ejqCuBFowsC70RyUimOH+/E8PBddHT0ku7Bjet3YU1fDxWfFYbAZ/XxvP0QAcnJJQgEbiMjYz2UvYKYmHeQkJAPo3E5Fi9eQ2fdQ0qKm7SMMDguo43j7CU8b3ssSVnw+8/g6NF2zJy5lHTbv1BYSP+g9ybi410R7gmd8ZEo2l6i9ZDCpaa60d9/C2Vlu6BW2//2ajQONDR8hcbGr2mdGeFDKlXmAsY+maZSWSto/5sg2LFq1Q4MDIRQVLSd+l8KUcyE01mFwcFROBwb/vJaJ+nblYylhSdKp3Oqid9FmJAkB0pLPejrG0Fb2yU0N59FMDiKrVubIctOxfs7x9n2UR/yszOg1dpE0tbSGbep9ycpKWXYuNGPmppW5OVtpl6y/yD9Dumb/uv9J9KilTtRTRWh/ekdbaOUOzjOWk05KdJzJELTGfvuOcaqp5zqqUOpVTyK90+HRLty'
 MW_PADDING = (10, 0)
 MAIN_TITLE = 'BaiduPanFilesTransfers'
-MAIN_VERSION = '2.6.0'
+MAIN_VERSION = '2.6.1'
 CONFIG_PATH = 'config.ini'
 DELAY_SECONDS = 0.1
 
@@ -226,10 +226,8 @@ class BaiduPanFilesTransfers:
     @staticmethod
     def normalize_link(url_code: str) -> str:
         """预处理链接至标准格式：链接+空格+提取码"""
-        normalized = url_code.replace("share/init?surl=", "s/1")
-        normalized = re.sub(r'(\?|&)pwd', ' ', normalized)
-        """清除 http(s) 前的所有字符并补全 http 为 https"""
-        normalized = re.sub(r'.*https?', 'https', normalized)
+        normalized = url_code.replace("share/init?surl=", "s/1").replace("?pwd=", " ")
+        normalized = re.sub(r'^.*?(https?://)', 'https://', normalized)
         return normalized
 
     def check_condition(self, condition: bool, message: str) -> None:
