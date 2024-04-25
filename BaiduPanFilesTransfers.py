@@ -1,5 +1,5 @@
 """
-打包命令：pyinstaller -F -w -i BaiduPanFilesTransfers.ico -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
+打包命令：pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hiddenimport=tkinter -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
 
 :title: BaiduPanFilesTransfers
 :site: https://github.com/hxz393/BaiduPanFilesTransfers
@@ -50,9 +50,9 @@ ERROR_CODES = {
 }
 EXP_MAP = {"1 天": 1, "7 天": 7, "30 天": 30, "永久": 0}
 LABEL_MAP = {
-    'cookie': '1.下面输入百度网盘 Cookies，不带引号：',
-    'folder_name': '2.下面输入目标路径（默认根目录），不能包含<,>,|,*,?,,/：',
-    'links': '3.下面粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）',
+    'cookie': '1.请输入百度网盘 Cookies，不带引号：',
+    'folder_name': '2.请输入第一级目录名（留空为根目录），名称不能包含 <, >, |, *, ?, /, :',
+    'links': '3.请粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）',
     'options': '4.选项设置',
     'logs': '5.运行结果：',
     'save': '批量转存',
