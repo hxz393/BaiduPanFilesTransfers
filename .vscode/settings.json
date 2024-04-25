@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "BaiduPanFilesTransfers": true,
+        "BaiduPanFilesTransfers.spec": true,
+    }
+}

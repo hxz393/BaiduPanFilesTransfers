@@ -1,6 +1,6 @@
 # 程序介绍
 
-百度网盘批量转存程序，基于 `Python 3.8` + `Tkinter` 构建，主要用于批量转存网络上分享的资源到自己的百度网盘。此外还带批量分享和批量检测有效性功能。
+百度网盘批量转存程序，基于 `Python 3.8` + `Tkinter` 构建，主要用于批量转存网络上分享的资源到自己的百度网盘。此外还带有批量分享和批量检测链接有效性的功能。
 
 介绍页面请访问：[小众软件](https://meta.appinn.net/t/topic/16995/39)
 
@@ -8,7 +8,7 @@
 
 ![百度网盘批量转存程序主界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/v2.6.0.jpg)
 
-## 下载地址
+## 下载及运行
 
 程序开发编译环境为 `Win10 x64` 专业版，操作系统 `Win7` 以上可直接下载运行，其他操作系统需要自行编译或配置运行环境。
 
@@ -19,11 +19,11 @@
 
 ## 手动编译
 
-手动编译需要事先安装好 `Python 3.6` 以上版本，和 `pyinstaller` 库。依赖第三方库有 `requests`、`ttkbootstrap` 和 `retrying`，可以使用 `pip install` 命令进行安装。
+手动编译需要事先安装好 `Python 3.6` 以上版本。
 
 编译步骤如下：
 
-1. 在安装有 `Git` 的主机上克隆项目。命令如下：
+1. 在安装有 `Git` 的主机上克隆本项目
 
    ```sh
    git clone https://github.com/hxz393/BaiduPanFilesTransfers.git
@@ -31,30 +31,51 @@
 
    或者在 [项目主页](https://github.com/hxz393/BaiduPanFilesTransfers) 点击绿色`<> Code` 按钮选择 `Download ZIP` 选项，[下载](https://github.com/hxz393/BaiduPanFilesTransfers/archive/refs/heads/master.zip) 源码压缩包。下载完毕后用压缩软件或命令工具解压缩。
 
-2. 使用命令切换到项目路径下面。
+2. 在命令行中切换到本项目路径
 
-   例如，在 Windows 系统下面，打开 `CMD` 命令提示符，输入：
+   例如，在 Windows 中，打开 `CMD` 命令提示符或 `PowerShell`，输入：
 
    ```sh
    cd B:\2.脚本\BaiduPanFilesTransfers
-   B:
    ```
 
-   在 Linux 系统下面，使用 `cd` 命令切换到项目路径下面：
+   在 Linux/macOS 中，路径的分隔符会不同：
 
    ```sh
    cd /root/BaiduPanFilesTransfers
    ```
 
-   如果使用 `PyCharm` 作为 IDE，可以直接在自带的控制台输入下面打包命令。
+   如果使用 `PyCharm` 作为 IDE，可以直接在自带的控制台中输入后面的打包命令。
 
-3. 使用 `pyinstaller` 命令编译打包成可执行文件：
+3. 使用 venv 创建并启用环境
 
    ```sh
-   pyinstaller -F -w -i BaiduPanFilesTransfers.ico -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
+   python -m venv BaiduPanFilesTransfers && source BaiduPanFilesTransfers/bin/activate
+   ```
+
+4. 安装项目依赖
+
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+5. 安装 Tkinter
+
+   Windows 的 Python 安装包一般会默认安装 Tkinter。macOS 用户则需要手动安装，对应 Homebrew 命令为：
+
+   ```sh
+   brew install python-tk # 也可以指定 Python 版本，如 brew install python-tk@3.12
+   ```
+
+6. 使用 `pyinstaller` 命令编译打包成可执行文件
+
+   ```sh
+   pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hiddenimport=tkinter --clean -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
    ```
 
    如果过程没有异常，可执行文件 `BaiduPanFilesTransfers.exe` 会生成到 `dist` 目录下面。
+
+7. （可选）使用 `deactivate` 命令退出当前环境
 
 ## 开源许可
 
@@ -68,7 +89,7 @@
 
 ## 获取 Cookies
 
-使用 `Chrome` 或类似浏览器（最好用无痕式窗口模式）登录 [百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（NetWork）` 选项卡。
+使用 `Chrome` 或类似浏览器（最好用无痕式窗口模式）登录 [百度网盘主页](https://pan.baidu.com/)，完全载入后按 `F12` 键调出控制台。选择 `网络（Network）` 选项卡。
 
 如下图所示，目前应该空空如也：
 ![向导图1](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-1.png)
@@ -89,7 +110,7 @@
 
 ## 输入网盘链接
 
-程序已尽可能地适配常见百度网盘链接格式。如果出现提示 「不支持的链接」或「没获取到 shareid」，请检查输入链接是否符合下面格式规范。示例：
+程序已尽可能地适配常见的百度网盘链接格式。如果出现提示 「不支持的链接」或「没获取到 shareid」，请检查输入链接是否符合下面的格式之一：
 
 ```sh
 https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 6img
@@ -105,7 +126,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 所有信息输入完毕后，点击「批量转存」按钮来执行批量转存百度网盘链接。
 
-转存过程中可以「暂停/恢复」，也可以直接点击程序窗口右上角关闭来终止运行。
+转存过程中可以「暂停/恢复」，也可以直接点击程序窗口右上角的关闭按钮来中止运行。
 
 如果想加快转存速度，可多开程序，分批同时转存。总转存速度不要超过每分钟 `60` 条链接。
 

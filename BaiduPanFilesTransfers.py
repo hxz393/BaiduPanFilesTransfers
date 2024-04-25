@@ -1,5 +1,5 @@
 """
-打包命令：pyinstaller -F -w -i BaiduPanFilesTransfers.ico -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
+打包命令：pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hiddenimport=tkinter -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
 
 :title: BaiduPanFilesTransfers
 :site: https://github.com/hxz393/BaiduPanFilesTransfers
@@ -50,9 +50,9 @@ ERROR_CODES = {
 }
 EXP_MAP = {"1 天": 1, "7 天": 7, "30 天": 30, "永久": 0}
 LABEL_MAP = {
-    'cookie': '1.下面输入百度网盘 Cookies，不带引号：',
-    'folder_name': '2.下面输入目标路径（默认根目录），不能包含<,>,|,*,?,,/：',
-    'links': '3.下面粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）',
+    'cookie': '1.请输入百度网盘 Cookies，不带引号：',
+    'folder_name': '2.请输入第一级目录名（留空为根目录），名称不能包含 <, >, |, *, ?, /, :',
+    'links': '3.请粘贴链接，每行一个。格式为：链接 提取码 或 链接（无提取码）',
     'options': '4.选项设置',
     'logs': '5.运行结果：',
     'save': '批量转存',
@@ -224,9 +224,13 @@ class BaiduPanFilesTransfers:
             self.bottom_share.config(state="normal")
 
     @staticmethod
-    def sanitize_link(url_code: str) -> str:
-        """预处理链接格式，整理成标准格式。例如 http 转为 https，去除提取码，去除链接中的空格等"""
-        return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("share/init?surl=", "s/1").lstrip()
+    def normalize_link(url_code: str) -> str:
+        """预处理链接至标准格式：链接+空格+提取码"""
+        normalized = url_code.replace("share/init?surl=", "s/1")
+        normalized = re.sub(r'(\?|&)pwd', ' ', normalized)
+        """清除 http(s) 前的所有字符并补全 http 为 https"""
+        normalized = re.sub(r'.*https?', 'https', normalized)
+        return normalized
 
     def check_condition(self, condition: bool, message: str) -> None:
         """输入或返回检查，如果条件 condition 为 True，则直接终止流程。用于主函数。单个链接处理出错直接调用 insert_logs 函数，不中断运行"""
@@ -377,7 +381,7 @@ class BaiduPanFilesTransfers:
 
     def setup_save(self) -> None:
         """准备转存，初始化界面"""
-        self.link_list = list(dict.fromkeys([self.sanitize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
+        self.link_list = list(dict.fromkeys([self.normalize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
         self.change_status('running')
 
