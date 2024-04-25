@@ -224,9 +224,13 @@ class BaiduPanFilesTransfers:
             self.bottom_share.config(state="normal")
 
     @staticmethod
-    def sanitize_link(url_code: str) -> str:
-        """预处理链接格式，整理成标准格式。例如 http 转为 https，去除提取码，去除链接中的空格等"""
-        return url_code.replace("http://", "https://").replace("?pwd=", " ").replace("&pwd=", " ").replace("share/init?surl=", "s/1").lstrip()
+    def normalize_link(url_code: str) -> str:
+        """预处理链接至标准格式：链接+空格+提取码"""
+        normalized = url_code.replace("share/init?surl=", "s/1")
+        normalized = re.sub(r'(\?|&)pwd', ' ', normalized)
+        """清除 http(s) 前的所有字符并补全 http 为 https"""
+        normalized = re.sub(r'.*https?', 'https', normalized)
+        return normalized
 
     def check_condition(self, condition: bool, message: str) -> None:
         """输入或返回检查，如果条件 condition 为 True，则直接终止流程。用于主函数。单个链接处理出错直接调用 insert_logs 函数，不中断运行"""
@@ -380,7 +384,7 @@ class BaiduPanFilesTransfers:
 
     def setup_save(self) -> None:
         """准备转存，初始化界面"""
-        self.link_list = list(dict.fromkeys([self.sanitize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
+        self.link_list = list(dict.fromkeys([self.normalize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
         self.change_status('running')
 
