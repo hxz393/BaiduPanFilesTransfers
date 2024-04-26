@@ -23,7 +23,7 @@ import ttkbootstrap as ttk
 from retrying import retry
 from ttkbootstrap.dialogs import Messagebox
 
-from src.constants import *
+from src.constants import CONFIG_PATH, ICON_BASE64
 
 
 def thread_it(func: Callable,
@@ -59,3 +59,35 @@ def read_config() -> Optional[List[str]]:
     if os.path.exists(CONFIG_PATH):
         with open(CONFIG_PATH) as f:
             return f.read().splitlines()
+
+
+def create_icon() -> str:
+    """
+    生成临时图标，在程序结束时自动删除。
+
+    :return: 返回图标文件路径
+    """
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.ico') as temp_file:
+        temp_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
+    atexit.register(os.remove, temp_file.name)
+    return temp_file.name
+
+
+def normalize_link(url_code: str) -> str:
+    """
+    预处理链接至标准格式。
+
+    :param url_code: 需要处理的的原始链接格式
+    :return: 返回标准格式：链接+空格+提取码
+    """
+    # 升级旧链接格式
+    normalized = url_code.replace("share/init?surl=", "s/1")
+    # 替换掉 ?pwd= 或 &pwd= 为空格
+    normalized = re.sub(r'[?&]pwd=', ' ', normalized)
+    # 替换掉提取码字样为空格
+    normalized = re.sub(r'提取码*[：:]', ' ', normalized)
+    # 替换 http 为 https，顺便处理掉开头没用的文字
+    normalized = re.sub(r'^.*?(https?://)', 'https://', normalized)
+    # 替换连续的空格
+    normalized = re.sub(r'\s+', ' ', normalized)
+    return normalized

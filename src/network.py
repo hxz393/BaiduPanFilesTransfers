@@ -11,7 +11,7 @@ from typing import Union, List, Any
 import requests
 from retrying import retry
 
-from src.constants import *
+from src.constants import HEADERS, BASE_URL
 
 
 class Network:
@@ -28,6 +28,8 @@ class Network:
         self.s = requests.Session()
         self.headers = HEADERS
         self.bdstoken = ''
+        # 忽略证书验证警告
+        requests.packages.urllib3.disable_warnings()
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
     def get_bdstoken(self) -> Union[str, int]:
@@ -244,7 +246,7 @@ class Network:
         生成百度网盘分享链接。
 
         :param fs_id: 文件或目录独一无二的 id
-        :param expiry: 自定义失效时常
+        :param expiry: 自定义失效时长
         :param password: 自定义提取码
         :return: 成功时返回生成的分享链接，失败时返回错误代码
         """
@@ -257,7 +259,7 @@ class Network:
             'web': '1'
         }
         data = {
-            'period': EXP_MAP[expiry],
+            'period': expiry,
             'pwd': password,
             'eflag_disable': 'true',
             'channel_list': '[]',

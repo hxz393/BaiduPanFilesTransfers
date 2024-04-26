@@ -8,28 +8,19 @@
 :copyright: Copyright 2024, hxz393. 保留所有权利。
 """
 
-import atexit
-import base64
-import os
 import re
 import sys
-import tempfile
 import time
 import traceback
 import webbrowser
-import zlib
 from typing import Union, Tuple, Callable
 
-import requests
 import ttkbootstrap as ttk
-from ttkbootstrap.dialogs import Messagebox
 
 from src.constants import *
 from src.network import Network
-from src.utils import thread_it, write_config, read_config
-
-# 忽略证书验证警告
-requests.packages.urllib3.disable_warnings()
+from src.ui import ToolTip, CustomDialog, TextEditor, RightClickMenu
+from src.utils import thread_it, write_config, read_config, create_icon, normalize_link
 
 
 class BaiduPanFilesTransfers:
@@ -45,7 +36,7 @@ class BaiduPanFilesTransfers:
         """主窗口配置"""
         self.root = ttk.Window()
         self.root.style.theme_use(COLOR_THEME)
-        self.root.iconbitmap(temp_file.name)
+        self.root.iconbitmap(create_icon())
         self.root.title(f"{MAIN_TITLE} {MAIN_VERSION}")
         self.root.update_idletasks()
         self.root.grid_columnconfigure(0, weight=1)
@@ -60,9 +51,7 @@ class BaiduPanFilesTransfers:
         # 链接标签和输入框、结果标签和日志框
         editor = TextEditor(self.root)
         self.text_links = editor.create_text(init_row + 4, LABEL_MAP['links'], LABEL_MAP['links_tip'])
-        self.text_links.bind("<Button-3>", lambda e: self.show_menu(e, self.make_menu(self.text_links)))
         self.text_logs = editor.create_text(init_row + 7, LABEL_MAP['logs'], LABEL_MAP['logs_tip'])
-        self.text_logs.bind("<Button-3>", lambda e: self.show_menu(e, self.make_menu(self.text_logs)))
         # 创建选项容器
         self.frame_options = ttk.LabelFrame(self.root, text=LABEL_MAP['options'], padding="10 10 0 9")
         self.frame_options.grid(row=init_row + 6, sticky='w', padx=MW_PADDING)
@@ -84,7 +73,8 @@ class BaiduPanFilesTransfers:
         """建立标签和输入框函数"""
         ttk.Label(self.root, text=label_text).grid(row=row, sticky='w', padx=MW_PADDING, pady=MW_PADDING)
         entry = ttk.Entry(self.root)
-        entry.bind("<Button-3>", lambda e: self.show_menu(e, self.make_menu(entry)))
+        rcm = RightClickMenu(entry)
+        entry.bind("<Button-3>", rcm.show_menu)
         entry.grid(row=row + 1, sticky='we', padx=MW_PADDING, pady=MW_PADDING)
         return entry
 
@@ -101,26 +91,6 @@ class BaiduPanFilesTransfers:
         button = ttk.Button(self.frame_bottom, text=text, width=10, padding="17 17 17 17", command=lambda: thread_it(command))
         button.grid(row=0, column=column, padx=MW_PADDING)
         return button
-
-    @staticmethod
-    def make_menu(w) -> ttk.Menu:
-        """创建右键菜单"""
-        the_menu = ttk.Menu(w, tearoff=0)
-        the_menu.add_command(label="撤销", command=lambda: w.event_generate('<<Undo>>'))
-        the_menu.add_command(label="重做", command=lambda: w.event_generate('<<Redo>>'))
-        the_menu.add_separator()
-        the_menu.add_command(label="剪切", command=lambda: w.event_generate('<<Cut>>'))
-        the_menu.add_command(label="复制", command=lambda: w.event_generate('<<Copy>>'))
-        the_menu.add_command(label="粘贴", command=lambda: w.event_generate('<<Paste>>'))
-        the_menu.add_separator()
-        the_menu.add_command(label="全选", command=lambda: w.event_generate('<<SelectAll>>'))
-        the_menu.add_command(label="删除", command=lambda: w.event_generate('<<Clear>>'))
-        return the_menu
-
-    @staticmethod
-    def show_menu(e, menu) -> None:
-        """显示右键菜单"""
-        menu.tk_popup(e.x_root, e.y_root)
 
     def init_config(self) -> None:
         """初始化配置"""
@@ -156,14 +126,6 @@ class BaiduPanFilesTransfers:
             self.running = False
             self.bottom_save.config(text='批量转存', state="normal", bootstyle='primary', command=lambda: thread_it(self.save, ))
             self.bottom_share.config(state="normal")
-
-    @staticmethod
-    def normalize_link(url_code: str) -> str:
-        """预处理链接至标准格式：链接+空格+提取码"""
-        normalized = url_code.replace("share/init?surl=", "s/1")
-        normalized = re.sub(r'[?&]pwd=', ' ', normalized)
-        normalized = re.sub(r'^.*?(https?://)', 'https://', normalized)
-        return normalized
 
     def check_condition(self, condition: bool, message: str) -> None:
         """输入或返回检查，如果条件 condition 为 True，则直接终止流程。用于主函数。单个链接处理出错直接调用 insert_logs 函数，不中断运行"""
@@ -203,7 +165,7 @@ class BaiduPanFilesTransfers:
     @staticmethod
     def parse_url_and_code(url_code: str) -> Tuple[str, str]:
         """解析 URL 和提取码"""
-        url, passwd = re.sub(r'提取码*[：:](.*)', r'\1', url_code).split(' ', maxsplit=1)
+        url, passwd = url_code.split(' ', maxsplit=1)
         return url.strip()[:47], passwd.strip()[-4:]
 
     def verify_link(self, link_url: str, pass_code: str) -> Union[list, str, int]:
@@ -256,7 +218,7 @@ class BaiduPanFilesTransfers:
 
     def setup_save(self) -> None:
         """准备转存，初始化界面"""
-        self.link_list = list(dict.fromkeys([self.normalize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
+        self.link_list = list(dict.fromkeys([normalize_link(f'{link} ') for link in self.text_links.get(1.0, ttk.END).split('\n') if link]))
         self.total_task_count = len(self.link_list)
         self.change_status('running')
 
@@ -271,7 +233,7 @@ class BaiduPanFilesTransfers:
         self.check_condition(self.total_task_count == 0, '无有效链接。')
         self.check_condition(self.total_task_count > 1000, f'转存链接数一次不能超过 1000，请减少链接数。当前连接数：{self.total_task_count}')
         self.check_condition(not self.cookie.isascii() or self.cookie.find('BAIDUID') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
-        self.check_condition(any(char in self.folder_name for char in INVALID_CHARS), '转存文件夹名有非法字符，不能包含 < > | * ? \ :，请改正目录名后重试。')
+        self.check_condition(any(char in self.folder_name for char in INVALID_CHARS), r'转存文件夹名有非法字符，不能包含 < > | * ? \ :，请改正目录名后重试。')
 
     def handle_bdstoken(self) -> None:
         """获取 bdstoken 相关逻辑"""
@@ -300,7 +262,7 @@ class BaiduPanFilesTransfers:
         for info in self.dir_list_all:
             is_dir = "/" if info["isdir"] == 1 else ""
             filename = f"{info['server_filename']}{is_dir}"
-            share_link = self.network.create_share(info['fs_id'], self.expiry, self.password)
+            share_link = self.network.create_share(info['fs_id'], EXP_MAP[self.expiry], self.password)
             self.insert_logs(f'目录：{filename}' if is_dir else f'文件：{filename}', is_alt=True)
             self.insert_logs(f'分享成功：{share_link}?pwd={self.password}，名称：{filename}' if isinstance(share_link, str) else f'分享失败：错误代码（{share_link}），文件名：{filename}')
             self.change_status('update')
@@ -342,169 +304,5 @@ class BaiduPanFilesTransfers:
         self.root.mainloop()
 
 
-class CustomDialog(ttk.Toplevel):
-    """弹出对话框，用于设置分享链接参数"""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.style.theme_use(COLOR_THEME)
-        self.place_window_center()
-        self.title(LABEL_MAP['settings_title'])
-        self.iconbitmap(temp_file.name)
-        self.resizable(width=False, height=False)
-        self.transient(parent)
-        self.grab_set()
-        self.result = None
-        self._create_widgets()
-        self.wait_window(self)
-
-    # noinspection PyArgumentList
-    def _create_widgets(self) -> None:
-        """创建控件元素"""
-        master = ttk.Frame(self)
-        master.pack(padx=10, pady=10, fill="both", expand=True)
-        # 有效期下拉选择框
-        self.var_expiry = ttk.StringVar(self, value=list(EXP_MAP.keys())[-1])
-        ttk.Label(master, text=LABEL_MAP['expiry_title']).grid(row=0, column=0, sticky='e')
-        ttk.Combobox(master, textvariable=self.var_expiry, values=list(EXP_MAP.keys()), state="readonly", bootstyle='primary').grid(row=0, column=1, sticky='ew', padx=5, pady=2)
-        # 提取码输入框
-        self.var_password = ttk.StringVar(self, value="1234")
-        ttk.Label(master, text=LABEL_MAP['password_title']).grid(row=1, column=0, sticky='e')
-        ttk.Entry(master, textvariable=self.var_password, bootstyle="info").grid(row=1, column=1, sticky='ew', padx=5, pady=2)
-        # 在两个 frame 之间插入分割线
-        ttk.Separator(self, orient='horizontal').pack(fill="x")
-        # 底部按钮
-        button_frame = ttk.Frame(self)
-        button_frame.pack(fill="x", padx=10, pady=10)
-        ttk.Button(button_frame, text=LABEL_MAP['ok'], command=self._validate, bootstyle='primary').pack(side='right', padx=5)
-        ttk.Button(button_frame, text=LABEL_MAP['cancel'], command=self.destroy, bootstyle='danger').pack(side='right', padx=5)
-
-    def _validate(self) -> bool:
-        """验证输入提取码有效性"""
-        if not re.match("^[a-zA-Z0-9]{4}$", self.var_password.get()):
-            Messagebox.show_warning(title=LABEL_MAP['validate_title'], message=LABEL_MAP['validate_msg'], master=self)
-            return False
-        self.result = (self.var_expiry.get(), self.var_password.get())
-        self.destroy()
-        return True
-
-
-class ToolTip(object):
-    """手动实现提示气泡"""
-
-    def __init__(self, widget, text: str = ''):
-        self.widget = widget
-        self.text = text
-        self.tips = None
-        self.tooltip_id = None
-        self.tooltip_color = '#ffffe0'
-        self.x = self.y = 0
-        self._binding()
-
-    def _binding(self) -> None:
-        """配置鼠标绑定事件"""
-        self.widget.bind("<Enter>", self._enter)
-        self.widget.bind("<Leave>", self._leave)
-        self.widget.bind("<ButtonPress>", self._leave)
-
-    def _enter(self, _: object = None) -> None:
-        """鼠标进入事件"""
-        self._schedule()
-
-    def _leave(self, _: object = None) -> None:
-        """鼠标离开事件"""
-        self._unschedule()
-        self._hide()
-
-    def _schedule(self) -> None:
-        """设置定时器"""
-        self._unschedule()
-        self.tooltip_id = self.widget.after(100, self._show)
-
-    def _unschedule(self) -> None:
-        """取消定时器"""
-        if self.tooltip_id:
-            self.widget.after_cancel(self.tooltip_id)
-            self.tooltip_id = None
-
-    def _show(self) -> None:
-        """显示气泡提示"""
-        x, y, _, _ = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() - 25
-        # 创建一个悬浮窗口
-        self.tips = tw = ttk.Toplevel(self.widget)
-        tw.wm_overrideredirect(True)
-        tw.wm_geometry(f"+{x}+{y}")
-        label = ttk.Label(tw, text=self.text, background=self.tooltip_color, relief='solid', borderwidth=1)
-        label.pack(ipadx=1)
-
-    def _hide(self) -> None:
-        """隐藏气泡提示"""
-        if self.tips:
-            self.tips.destroy()
-            self.tips = None
-
-
-class TextEditor:
-    """文本编辑框，加入提示文字、滚动条"""
-
-    def __init__(self, root):
-        self.root = root
-        self.default_font = ("", 10)
-        self.placeholder_color = 'grey'
-        self.text_color = 'black'
-
-    def create_text(self, row: int, label_text: str, placeholder: str = '') -> ttk.Text:
-        """建立标签、文本框和滚动条"""
-        self._create_label(row, label_text)
-        text = self._create_text_widget(row + 1)
-        self._config_scrollbar(text, row + 1)
-        self._manage_placeholder(text, placeholder)
-        return text
-
-    def _create_label(self, row: int, label_text: str) -> None:
-        """建立配套标签"""
-        ttk.Label(self.root, text=label_text).grid(row=row, column=0, sticky='w', padx=MW_PADDING, pady=MW_PADDING)
-
-    def _create_text_widget(self, row: int) -> ttk.Text:
-        """建立文本框"""
-        text = ttk.Text(self.root, undo=True, font=self.default_font, wrap='none', height=10)
-        text.grid(row=row, column=0, sticky='wens', padx=MW_PADDING, pady=(10, 10))
-        self.root.grid_rowconfigure(row, weight=1)
-        return text
-
-    def _config_scrollbar(self, text: ttk.Text, row: int) -> None:
-        """建立配置文本框滚动条"""
-        scrollbar = ttk.Scrollbar(self.root)
-        scrollbar.grid(row=row, column=1, sticky='ns')
-        scrollbar.config(command=text.yview)
-        text.config(yscrollcommand=scrollbar.set)
-
-    def _manage_placeholder(self, text: ttk.Text, placeholder: str) -> None:
-        """管理文本框提示文字占位符"""
-        if placeholder:
-            text.insert("1.0", placeholder)
-            text.config(fg=self.placeholder_color)
-            text.bind("<FocusIn>", lambda event, t=text, p=placeholder: self._on_focus_in(t, p))
-            text.bind("<FocusOut>", lambda event, t=text, p=placeholder: self._on_focus_out(t, p))
-
-    def _on_focus_in(self, text: ttk.Text, placeholder: str) -> None:
-        """文本框获得焦点时，清除提示文字"""
-        if text.get("1.0", "end-1c") == placeholder:
-            text.delete("1.0", "end")
-            text.config(fg=self.text_color)
-
-    def _on_focus_out(self, text: ttk.Text, placeholder: str) -> None:
-        """文本框失去焦点时，添加提示文字"""
-        if not text.get("1.0", "end-1c"):
-            text.insert("1.0", placeholder)
-            text.config(fg=self.placeholder_color)
-
-
 if __name__ == '__main__':
-    # 生成图标
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.ico') as temp_file:
-        temp_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
-    atexit.register(os.remove, temp_file.name)
     BaiduPanFilesTransfers().run()

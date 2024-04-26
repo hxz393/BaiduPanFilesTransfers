@@ -1,5 +1,5 @@
 ﻿"""
-此模块放置全局静态常量。
+此模块放置全局静态变量。
 
 :author: assassing
 :contact: https://github.com/hxz393
@@ -21,6 +21,10 @@ ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyO
 DELAY_SECONDS = 0.1
 # 百度网盘地址
 BASE_URL = 'https://pan.baidu.com'
+# 目录名禁用的非法字符
+INVALID_CHARS = r'<>|*?\:'
+# 分享下拉框选项
+EXP_MAP = {"1 天": 1, "7 天": 7, "30 天": 30, "永久": 0}
 # 默认请求头
 HEADERS = {
     'Host': 'pan.baidu.com',
@@ -56,10 +60,6 @@ ERROR_CODES = {
     105: '链接错误，链接格式不正确',
     404: '转存失败，秒传无效',
 }
-# 目录名禁用的非法字符
-INVALID_CHARS = r'<>|*?\:'
-# 分享下拉框选项
-EXP_MAP = {"1 天": 1, "7 天": 7, "30 天": 30, "永久": 0}
 # 标签、标题和提示信息等内容取值来源。主要是 UI 界面相关文字，不包含结果日志插入文字
 LABEL_MAP = {
     'cookie': '1.请输入百度网盘主页完整 Cookies，不带引号：',
@@ -93,4 +93,11 @@ http://pan.baidu.com/s/1_evfkiTrEZvOkC2hb-NiKw ju9a
     'cancel': '取消',
     'validate_title': '请重新输入',
     'validate_msg': '提取码必须是四位数字或字母的组合',
+    'undo': '撤销    Ctrl+z',
+    'redo': '重做    Ctrl+y',
+    'cut': '剪切    Ctrl+x',
+    'copy': '复制    Ctrl+c',
+    'paste': '粘贴    Ctrl+v',
+    'select_all': '全选    Ctrl+a',
+    'clear': '删除    Delete',
 }
