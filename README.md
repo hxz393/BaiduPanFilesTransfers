@@ -70,7 +70,7 @@
 6. 使用 `pyinstaller` 命令编译打包成可执行文件
 
    ```sh
-   pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hiddenimport=tkinter --clean -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
+   pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hidden-import=tkinter --clean -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
    ```
 
    如果过程没有异常，可执行文件 `BaiduPanFilesTransfers.exe` 会生成到 `dist` 目录下面。
