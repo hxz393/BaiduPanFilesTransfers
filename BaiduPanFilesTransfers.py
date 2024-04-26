@@ -180,7 +180,6 @@ class BaiduPanFilesTransfers:
         """更新 cookie，用于处理带提取码链接。每次请求都会生成新的 bdclnd，需要更新到 cookie 中"""
         cookies_dict = dict(map(lambda item: item.split('=', 1), filter(None, self.network.headers['Cookie'].split(';'))))
         cookies_dict['BDCLND'] = bdclnd
-        print(bdclnd)
         self.network.headers['Cookie'] = ';'.join([f'{key}={value}' for key, value in cookies_dict.items()])
 
     @staticmethod
@@ -212,12 +211,11 @@ class BaiduPanFilesTransfers:
         # 对于有提取码的链接先验证提取码，试图获取更新 bdclnd。如果返回的 bdclnd 是数字错误代码，直接中断
         if pass_code:
             bdclnd_or_err = self.network.verify_pass_code(link_url, pass_code)
-            # print(bdclnd_or_err)
             if isinstance(bdclnd_or_err, int):
                 return bdclnd_or_err
             self.update_cookie(bdclnd_or_err)
         # 请求网盘链接，获取转存必须的 3 个参数
-        return self.parse_response(self.network.request_link(link_url))
+        return self.parse_response(self.network.get_transfer_params(link_url))
 
     def process_link(self, url_code: str, folder_name: str) -> None:
         """验证和转存链接，输出最终结果"""
@@ -273,6 +271,7 @@ class BaiduPanFilesTransfers:
         self.check_condition(self.total_task_count == 0, '无有效链接。')
         self.check_condition(self.total_task_count > 1000, f'转存链接数一次不能超过 1000，请减少链接数。当前连接数：{self.total_task_count}')
         self.check_condition(not self.cookie.isascii() or self.cookie.find('BAIDUID') == -1, '百度网盘 cookie 输入不正确，请检查 cookie 后重试。')
+        self.check_condition(any(char in self.folder_name for char in INVALID_CHARS), '转存文件夹名有非法字符，不能包含 < > | * ? \ :，请改正目录名后重试。')
 
     def handle_bdstoken(self) -> None:
         """获取 bdstoken 相关逻辑"""
@@ -282,7 +281,8 @@ class BaiduPanFilesTransfers:
     def handle_create_dir(self) -> None:
         """新建目录。如果目录已存在则不新建，否则会建立一个带时间戳的目录"""
         if self.folder_name and self.folder_name not in [dir_json['server_filename'] for dir_json in self.network.get_dir_list()]:
-            self.check_condition(self.network.create_dir(self.folder_name) != 0, '转存文件夹名有非法字符，不能包含 < > | * ? / :，请改正目录名后重试。')
+            result = self.network.create_dir(self.folder_name)
+            self.check_condition(result != 0, f'创建目录失败，错误代码：{result}')
 
     def handle_list_dir(self) -> None:
         """获取目标目录下的文件和目录列表。如果返回的是数字，代表没有获取到文件列表"""
