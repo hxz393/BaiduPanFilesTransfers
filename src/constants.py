@@ -21,6 +21,20 @@ ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyO
 DELAY_SECONDS = 0.1
 # 百度网盘地址
 BASE_URL = 'https://pan.baidu.com'
+# 默认请求头
+HEADERS = {
+    'Host': 'pan.baidu.com',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'Sec-Fetch-Site': 'same-site',
+    'Sec-Fetch-Mode': 'navigate',
+    'Referer': 'https://pan.baidu.com',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+}
 # 错误代码对应错误信息字典
 ERROR_CODES = {
     -1: '链接失效，没获取到 shareid',
@@ -51,13 +65,13 @@ LABEL_MAP = {
     'links': '3.请粘贴百度网盘分享链接，每行一个：',
     'links_tip': """百度网盘分享链接示例：
 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg
-https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 1234
-https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w 1234
+https://pan.baidu.com/s/1jeDvKgas8-xUss7BUFpifQ uftv 
+https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsyf
 https://pan.baidu.com/s/1gFqh-WGW2LdNqKpHbwtZ9Q?pwd=1234
-https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 提取码：1234
+https://pan.baidu.com/s/1kO3Yp3Q-opIFuY7GRPtd2A 提取码：qm3h
 https://pan.baidu.com/share/init?surl=7M-O0-SskRPdoZ0emZrd5w&pwd=1234
-http://pan.baidu.com/s/1kO3Yp3Q-opIFuY7GRPtd2A qm3h
-文件名 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 1234""",
+http://pan.baidu.com/s/1_evfkiTrEZvOkC2hb-NiKw ju9a
+文件名 https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k""",
     'options': '4.选项设置',
     'logs': '5.运行日志：',
     'logs_tip': '显示运行结果或错误信息',

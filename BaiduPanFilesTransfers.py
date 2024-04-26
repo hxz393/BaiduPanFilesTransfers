@@ -14,19 +14,19 @@ import os
 import re
 import sys
 import tempfile
-import threading
 import time
 import traceback
 import webbrowser
 import zlib
-from typing import Any, Union, Tuple, Callable
+from typing import Union, Tuple, Callable
 
 import requests
 import ttkbootstrap as ttk
-from retrying import retry
 from ttkbootstrap.dialogs import Messagebox
 
 from src.constants import *
+from src.network import Network
+from src.utils import thread_it, write_config, read_config
 
 # 忽略证书验证警告
 requests.packages.urllib3.disable_warnings()
@@ -39,8 +39,7 @@ class BaiduPanFilesTransfers:
         """初始化 UI 元素"""
         self.setup_window()
         self.setup_ui()
-        self.init_session()
-        self.read_config()
+        self.init_config()
 
     def setup_window(self) -> None:
         """主窗口配置"""
@@ -99,7 +98,7 @@ class BaiduPanFilesTransfers:
 
     def create_button(self, text: str, command: Callable, column: int) -> ttk.Button:
         """创建功能按钮"""
-        button = ttk.Button(self.frame_bottom, text=text, width=10, padding="17 17 17 17", command=lambda: self.thread_it(command))
+        button = ttk.Button(self.frame_bottom, text=text, width=10, padding="17 17 17 17", command=lambda: thread_it(command))
         button.grid(row=0, column=column, padx=MW_PADDING)
         return button
 
@@ -123,43 +122,12 @@ class BaiduPanFilesTransfers:
         """显示右键菜单"""
         menu.tk_popup(e.x_root, e.y_root)
 
-    def init_session(self) -> None:
-        """初始化会话"""
-        self.s = requests.Session()
-        self.bdstoken = None
-        self.headers = {
-            'Host': 'pan.baidu.com',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'Sec-Fetch-Site': 'same-site',
-            'Sec-Fetch-Mode': 'navigate',
-            'Referer': 'https://pan.baidu.com',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7,en-GB;q=0.6,ru;q=0.5',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-        }
-
-    def read_config(self) -> None:
-        """读取配置文件，并填入输入框"""
-        if os.path.exists(CONFIG_PATH):
-            with open(CONFIG_PATH) as f:
-                config_list = f.read().splitlines()
-            self.entry_cookie.insert(0, config_list[0].strip() if config_list else '')
-            self.entry_folder_name.insert(0, config_list[1].strip() if len(config_list) > 1 else '')
-
-    @staticmethod
-    def write_config(config: str) -> None:
-        """写入配置文件"""
-        with open(CONFIG_PATH, 'w') as f:
-            f.write(config)
-
-    @staticmethod
-    def thread_it(func: Any, *args: Any) -> None:
-        """多线程防止主界面卡死"""
-        t = threading.Thread(target=func, args=args)
-        t.start()
+    def init_config(self) -> None:
+        """初始化配置"""
+        self.network = Network()
+        self.config = read_config()
+        self.entry_cookie.insert(0, self.config[0].strip() if self.config else '')
+        self.entry_folder_name.insert(0, self.config[1].strip() if len(self.config) > 1 else '')
 
     # noinspection PyArgumentList
     def change_status(self, status: str) -> None:
@@ -186,13 +154,14 @@ class BaiduPanFilesTransfers:
             self.label_status.config(text='发生错误：', bootstyle='danger')
         else:
             self.running = False
-            self.bottom_save.config(text='批量转存', state="normal", bootstyle='primary', command=lambda: self.thread_it(self.save, ))
+            self.bottom_save.config(text='批量转存', state="normal", bootstyle='primary', command=lambda: thread_it(self.save, ))
             self.bottom_share.config(state="normal")
 
     @staticmethod
     def normalize_link(url_code: str) -> str:
         """预处理链接至标准格式：链接+空格+提取码"""
-        normalized = url_code.replace("share/init?surl=", "s/1").replace("?pwd=", " ")
+        normalized = url_code.replace("share/init?surl=", "s/1")
+        normalized = re.sub(r'[?&]pwd=', ' ', normalized)
         normalized = re.sub(r'^.*?(https?://)', 'https://', normalized)
         return normalized
 
@@ -209,67 +178,10 @@ class BaiduPanFilesTransfers:
 
     def update_cookie(self, bdclnd: str) -> None:
         """更新 cookie，用于处理带提取码链接。每次请求都会生成新的 bdclnd，需要更新到 cookie 中"""
-        cookies_dict = dict(map(lambda item: item.split('=', 1), filter(None, self.headers['Cookie'].split(';'))))
+        cookies_dict = dict(map(lambda item: item.split('=', 1), filter(None, self.network.headers['Cookie'].split(';'))))
         cookies_dict['BDCLND'] = bdclnd
-        self.headers['Cookie'] = ';'.join([f'{key}={value}' for key, value in cookies_dict.items()])
-
-    @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def get_bdstoken(self) -> Union[str, int]:
-        """获取 bdstoken"""
-        url = f'{BASE_URL}/api/gettemplatevariable'
-        params = {'clienttype': '0', 'app_id': '38824127', 'web': '1', 'fields': '["bdstoken","token","uk","isdocuser","servertime"]'}
-        r = self.s.get(url=url, params=params, headers=self.headers, timeout=10, allow_redirects=False, verify=False)
-        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['result']['bdstoken']
-
-    @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def get_dir_list(self, folder_name: str = '/') -> Union[list, int]:
-        """获取用户网盘中目录列表"""
-        url = f'{BASE_URL}/api/list'
-        params = {'order': 'time', 'desc': '1', 'showempty': '0', 'web': '1', 'page': '1', 'num': '1000', 'dir': folder_name, 'bdstoken': self.bdstoken, }
-        r = self.s.get(url=url, params=params, headers=self.headers, timeout=15, allow_redirects=False, verify=False)
-        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['list']
-
-    @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def create_dir(self, folder_name: str) -> int:
-        """新建目录"""
-        url = f'{BASE_URL}/api/create'
-        params = {'a': 'commit', 'bdstoken': self.bdstoken}
-        data = {'path': folder_name, 'isdir': '1', 'block_list': '[]', }
-        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
-        return r.json()['errno']
-
-    @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def verify_pass_code(self, link_url: str, pass_code: str) -> Union[str, int]:
-        """验证提取码"""
-        url = f'{BASE_URL}/share/verify'
-        params = {'surl': link_url[25:48], 'bdstoken': self.bdstoken, 't': str(int(round(time.time() * 1000))), 'channel': 'chunlei', 'web': '1', 'clienttype': '0', }
-        data = {'pwd': pass_code, 'vcode': '', 'vcode_str': '', }
-        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=10, allow_redirects=False, verify=False)
-        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['randsk']
-
-    @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def request_link(self, url: str) -> str:
-        """请求网盘链接，获取响应"""
-        r = self.s.get(url=url, headers=self.headers, timeout=15, verify=False)
-        return r.content.decode("utf-8")
-
-    @retry(stop_max_attempt_number=5, wait_random_min=1000, wait_random_max=2000)
-    def transfer_file(self, verify_links_reason: list, folder_name: str) -> int:
-        """转存文件"""
-        url = f'{BASE_URL}/share/transfer'
-        params = {'shareid': verify_links_reason[0], 'from': verify_links_reason[1], 'bdstoken': self.bdstoken, 'channel': 'chunlei', 'web': '1', 'clienttype': '0', }
-        data = {'fsidlist': f'[{",".join(i for i in verify_links_reason[2])}]', 'path': f'/{folder_name}', }
-        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
-        return r.json()['errno']
-
-    @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def create_share(self, fs_id: int) -> Union[str, int]:
-        """生成分享链接"""
-        url = f'{BASE_URL}/share/set'
-        params = {'channel': 'chunlei', 'bdstoken': self.bdstoken, 'clienttype': '0', 'app_id': '250528', 'web': '1'}
-        data = {'period': EXP_MAP[self.expiry], 'pwd': self.password, 'eflag_disable': 'true', 'channel_list': '[]', 'schannel': '4', 'fid_list': f'[{fs_id}]'}
-        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
-        return r.json()['errno'] if r.json()['errno'] != 0 else r.json()['link']
+        print(bdclnd)
+        self.network.headers['Cookie'] = ';'.join([f'{key}={value}' for key, value in cookies_dict.items()])
 
     @staticmethod
     def parse_response(response: str) -> Union[list, str, int]:
@@ -299,12 +211,13 @@ class BaiduPanFilesTransfers:
         """验证链接有效性，验证通过返回转存所需参数列表"""
         # 对于有提取码的链接先验证提取码，试图获取更新 bdclnd。如果返回的 bdclnd 是数字错误代码，直接中断
         if pass_code:
-            bdclnd_or_err = self.verify_pass_code(link_url, pass_code)
+            bdclnd_or_err = self.network.verify_pass_code(link_url, pass_code)
+            # print(bdclnd_or_err)
             if isinstance(bdclnd_or_err, int):
                 return bdclnd_or_err
             self.update_cookie(bdclnd_or_err)
         # 请求网盘链接，获取转存必须的 3 个参数
-        return self.parse_response(self.request_link(link_url))
+        return self.parse_response(self.network.request_link(link_url))
 
     def process_link(self, url_code: str, folder_name: str) -> None:
         """验证和转存链接，输出最终结果"""
@@ -319,8 +232,8 @@ class BaiduPanFilesTransfers:
             # 如果开启安全转存模式，对每个转存链接建立目录
             if self.safe_mode:
                 folder_name = f'{folder_name}/{self.completed_task_count}'
-                self.create_dir(folder_name)
-            reason = self.transfer_file(reason, folder_name)
+                self.network.create_dir(folder_name)
+            reason = self.network.transfer_file(reason, folder_name)
         # 展示结果
         self.insert_logs(f'{ERROR_CODES[reason]}：{url_code}' if reason in ERROR_CODES else f'转存失败，错误代码（{reason}）：{url_code}')
 
@@ -335,13 +248,13 @@ class BaiduPanFilesTransfers:
         """获取变量，准备运行。转存和分享共用逻辑"""
         self.cookie = "".join(self.entry_cookie.get().split())
         self.folder_name = "".join(self.entry_folder_name.get().split())
-        self.headers['Cookie'] = self.cookie
-        self.s.trust_env = self.var_trust_env.get()
+        self.network.headers['Cookie'] = self.cookie
+        self.network.s.trust_env = self.var_trust_env.get()
         self.safe_mode = self.var_safe_mode.get()
         self.check_mode = self.var_check_mode.get()
         self.completed_task_count = 0
         self.change_status('init')
-        self.write_config(f'{self.cookie}\n{self.folder_name}')
+        write_config(f'{self.cookie}\n{self.folder_name}')
 
     def setup_save(self) -> None:
         """准备转存，初始化界面"""
@@ -363,17 +276,17 @@ class BaiduPanFilesTransfers:
 
     def handle_bdstoken(self) -> None:
         """获取 bdstoken 相关逻辑"""
-        self.bdstoken = self.get_bdstoken()
-        self.check_condition(isinstance(self.bdstoken, int), f'没获取到 bdstoken，错误代码：{self.bdstoken}')
+        self.network.bdstoken = self.network.get_bdstoken()
+        self.check_condition(isinstance(self.network.bdstoken, int), f'没获取到 bdstoken，错误代码：{self.network.bdstoken}')
 
     def handle_create_dir(self) -> None:
         """新建目录。如果目录已存在则不新建，否则会建立一个带时间戳的目录"""
-        if self.folder_name and self.folder_name not in [dir_json['server_filename'] for dir_json in self.get_dir_list()]:
-            self.check_condition(self.create_dir(self.folder_name) != 0, '转存目录名带非法字符，请改正目录名后重试。')
+        if self.folder_name and self.folder_name not in [dir_json['server_filename'] for dir_json in self.network.get_dir_list()]:
+            self.check_condition(self.network.create_dir(self.folder_name) != 0, '转存文件夹名有非法字符，不能包含 < > | * ? / :，请改正目录名后重试。')
 
     def handle_list_dir(self) -> None:
         """获取目标目录下的文件和目录列表。如果返回的是数字，代表没有获取到文件列表"""
-        self.dir_list_all = self.get_dir_list(folder_name=f'/{self.folder_name}')
+        self.dir_list_all = self.network.get_dir_list(folder_name=f'/{self.folder_name}')
         self.check_condition(isinstance(self.dir_list_all, int) or not self.dir_list_all, f'{self.folder_name} 中，没获取到任何要分享的文件或目录。')
 
     def handle_process_save(self) -> None:
@@ -387,7 +300,7 @@ class BaiduPanFilesTransfers:
         for info in self.dir_list_all:
             is_dir = "/" if info["isdir"] == 1 else ""
             filename = f"{info['server_filename']}{is_dir}"
-            share_link = self.create_share(info['fs_id'])
+            share_link = self.network.create_share(info['fs_id'], self.expiry, self.password)
             self.insert_logs(f'目录：{filename}' if is_dir else f'文件：{filename}', is_alt=True)
             self.insert_logs(f'分享成功：{share_link}?pwd={self.password}，名称：{filename}' if isinstance(share_link, str) else f'分享失败：错误代码（{share_link}），文件名：{filename}')
             self.change_status('update')
@@ -404,7 +317,7 @@ class BaiduPanFilesTransfers:
         except Exception as e:
             self.check_condition(True, f'运行批量转存出错，信息如下：\n{e}\n{traceback.format_exc()}')
         finally:
-            self.s.close()
+            self.network.s.close()
             self.change_status('stopped')
 
     def share(self) -> None:
@@ -421,7 +334,7 @@ class BaiduPanFilesTransfers:
         except Exception as e:
             self.check_condition(True, f'运行批量分享出错，信息如下：\n{e}\n{traceback.format_exc()}')
         finally:
-            self.s.close()
+            self.network.s.close()
             self.change_status('stopped')
 
     def run(self) -> None:
