@@ -26,70 +26,7 @@ import ttkbootstrap as ttk
 from retrying import retry
 from ttkbootstrap.dialogs import Messagebox
 
-# 全局常量
-BASE_URL = 'https://pan.baidu.com'
-ERROR_CODES = {
-    -1: '链接失效，没获取到 shareid',
-    -2: '链接失效，没获取到 user_id',
-    -3: '链接失效，没获取到 fs_id',
-    -4: '转存失败，无效登录。请退出账号在其他地方的登录',
-    -6: '转存失败，请用浏览器无痕模式获取 Cookie',
-    -7: '转存失败，转存文件夹名有非法字符，不能包含 < > | * ? / :，请改正目录名后重试',
-    -8: '转存失败，目录中已有同名文件或文件夹存在',
-    -9: '链接错误，提取码错误',
-    -10: '转存失败，容量不足',
-    -62: '链接错误尝试次数过多，请手动转存或稍后再试',
-    '百度网盘-链接不存在': '链接失效，文件已经被删除或取消分享',
-    '百度网盘 请输入提取码': '链接错误，缺少提取码',
-    0: '转存成功',
-    4: '转存失败，目录中已有同名文件存在',
-    12: '转存失败，转存文件数超过限制',
-    20: '转存失败，容量不足',
-    105: '链接错误，链接格式不正确',
-    404: '转存失败，秒传无效',
-}
-EXP_MAP = {"1 天": 1, "7 天": 7, "30 天": 30, "永久": 0}
-LABEL_MAP = {
-    'cookie': '1.请输入百度网盘主页完整 Cookies，不带引号：',
-    'folder_name': '2.请输入转存目标或分享来源目录名（留空为根目录）：',
-    'links': '3.请粘贴百度网盘分享链接，每行一个：',
-    'links_tip': """百度网盘分享链接示例：
-https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg
-https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 1234
-https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w 1234
-https://pan.baidu.com/s/1gFqh-WGW2LdNqKpHbwtZ9Q?pwd=1234
-https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 提取码：1234
-https://pan.baidu.com/share/init?surl=7M-O0-SskRPdoZ0emZrd5w&pwd=1234
-http://pan.baidu.com/s/1kO3Yp3Q-opIFuY7GRPtd2A qm3h
-文件名 https://pan.baidu.com/s/1tU58ChMSPmx4e3-kDx1mLg 1234""",
-    'options': '4.选项设置',
-    'logs': '5.运行日志：',
-    'logs_tip': '显示运行结果或错误信息',
-    'save': '批量转存',
-    'share': '批量分享',
-    'trust': '系统代理',
-    'trust_tip': '应用系统代理访问百度网盘',
-    'safe': '安全转存',
-    'safe_tip': '每个链接资源保存在单独文件夹中',
-    'check': '检测模式',
-    'check_tip': '检查链接是否有效但不转存',
-    'help': '使用帮助',
-    'settings_title': '设置分享选项',
-    'expiry_title': '设置分享期限：',
-    'password_title': '自定义提取码：',
-    'ok': '确认',
-    'cancel': '取消',
-    'validate_title': '请重新输入',
-    'validate_msg': '提取码必须是四位数字或字母的组合',
-}
-# noinspection LongLine
-ICON_BASE64 = 'eJyFUw1MU1cUvjgyfa+vr++1WGw3FTKDtHVLQDPCtojLFlpKKY4pLE0EDAaEMuKyOBWmI8ZMZ5T6Ax2xpgKKCs5kGtT9KA5B/GFxAUpBES1TZ0Z0kWQZLMZ9O6+um1tIdl6+d+79vvPdd25eDmNR9EgSo3ccWx3NmJ4xlkggipinvBJLotn/RdQrsU16i9aXY5Z9HsonzNr9Jy06354F8r7cxJh6A2OImspoZq3PJ2rrckxab7dJ9k6YtJ9DgSWmHmZlLXsnTXJdz3xpr2vu3AMznvXOY7unWwyeNeX5bQ/ffesIEmQPFsZ5Ufn+t2htCqB2+xWkLzpAfA3Mes+jtxftr9y5s5uL9Byv2bLc/rrvl+vBMRS7WmCe9Rn83qu4cjGEuppOdJ0fQfeFEApyjuDYwV4MDYyNj49PrAQwbbZurXG2Zt3VLR+fppoRWOZUw/FmLYKB+7Cn7QFpSH15G3qv3cGDsV/xzZkBVBQfRklBY3+21RNnEN0uo1Qx2XLoMur3noNBLEd+bj2u9YRgiluHWLUbBk05mvydGA09wGtJ1cSVQa8ufawXi1fr1Ct9sZoifNFyCTu2nYROKET6ks0YvnEfmemfhvfz5rhxsXMIYz+P441Xq6AV8sOQVSuOSULueUnIQ13tKTT4z0JWv4cXZhXgxJeX8X3PTXz4gR8HG9sxGPwRP917CLt1E0TVsgh+UPPOCwKfjZLi3ejqCuBFowsC70RyUimOH+/E8PBddHT0ku7Bjet3YU1fDxWfFYbAZ/XxvP0QAcnJJQgEbiMjYz2UvYKYmHeQkJAPo3E5Fi9eQ2fdQ0qKm7SMMDguo43j7CU8b3ssSVnw+8/g6NF2zJy5lHTbv1BYSP+g9ybi410R7gmd8ZEo2l6i9ZDCpaa60d9/C2Vlu6BW2//2ajQONDR8hcbGr2mdGeFDKlXmAsY+maZSWSto/5sg2LFq1Q4MDIRQVLSd+l8KUcyE01mFwcFROBwb/vJaJ+nblYylhSdKp3Oqid9FmJAkB0pLPejrG0Fb2yU0N59FMDiKrVubIctOxfs7x9n2UR/yszOg1dpE0tbSGbep9ycpKWXYuNGPmppW5OVtpl6y/yD9Dumb/uv9J9KilTtRTRWh/ekdbaOUOzjOWk05KdJzJELTGfvuOcaqp5zqqUOpVTyK90+HRLty'
-MW_PADDING = (10, 0)
-MAIN_TITLE = 'BaiduPanFilesTransfers'
-MAIN_VERSION = '2.6.1'
-CONFIG_PATH = 'config.ini'
-DELAY_SECONDS = 0.1
-COLOR_THEME = 'yeti'
+from src.constants import *
 
 # 忽略证书验证警告
 requests.packages.urllib3.disable_warnings()
