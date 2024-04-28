@@ -94,18 +94,15 @@ def normalize_link(url_code: str) -> str:
     return normalized
 
 
-def parse_url_and_code(url_code: str) -> Optional[Tuple[str, str]]:
+def parse_url_and_code(url_code: str) -> Tuple[str, str]:
     """
     以空格分割出 URL 和提取码。
 
     :param url_code: 输入的标准链接格式
     :return: 链接和提取码
     """
-    # 虽然不大可能分割失败，但还是处理一下
+    # 不会分割失败
     parts = url_code.split(' ')
-    if len(parts) < 2:
-        return None
-
     url, passwd = parts[0].strip(), parts[1].strip()
     # 暴力切片，如果输入链接不是以提取码结尾，会得到错误提取码
     return url[:47], passwd[-4:]

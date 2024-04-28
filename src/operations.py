@@ -170,49 +170,63 @@ class Operations:
 
         self.root.text_logs.insert('end', f'{message}\n')
 
-
     def verify_link(self, link_url: str, pass_code: str) -> Union[List[str], int]:
         """验证链接有效性，验证通过返回转存所需参数列表"""
-        # 对于有提取码的链接先验证提取码，试图获取更新 bdclnd。如果返回的 bdclnd 是数字错误代码，直接中断
+        # 对于有提取码的链接先验证提取码，试图获取更新 bdclnd
         if pass_code:
-            bdclnd_or_err = self.network.verify_pass_code(link_url, pass_code)
-            if isinstance(bdclnd_or_err, int):
-                return bdclnd_or_err
-            self.network.headers['Cookie'] = update_cookie(bdclnd_or_err, self.network.headers['Cookie'])
-        # 请求网盘链接，获取转存必须的 3 个参数
+            bdclnd = self.network.verify_pass_code(link_url, pass_code)
+            # 如果返回的 bdclnd 是数字错误代码，直接返回
+            if isinstance(bdclnd, int):
+                return bdclnd
+
+            # 更新 bdclnd 进 cookie
+            self.network.headers['Cookie'] = update_cookie(bdclnd, self.network.headers['Cookie'])
+
+        # 直接访问没有提取码的链接，或更新 bdclnd 后再次访问，获取转存必须的 3 个参数
         response = self.network.get_transfer_params(link_url)
-        return parse_response(response)
+        # 这里不考虑网络异常了，假设请求一定会返回页面内容，对其进行解析
+        result = parse_response(response)
+        return result
 
     def process_link(self, url_code: str, folder_name: str) -> None:
         """验证和转存链接，输出最终结果"""
         # 分割提取码
         url_code_tuple = parse_url_and_code(url_code)
-        if not url_code_tuple:
-            self.insert_logs(f'链接无效，没分割出链接和提取码：{url_code}')
-            return
-
-        # 验证链接是否有效
-        link_url, pass_code = url_code_tuple
-        reason = self.verify_link(link_url, pass_code)
-
+        # 验证链接是否有效，返回的数字为错误代码，字典为正确参数
+        result = self.verify_link(*url_code_tuple)
         # 如果开启检查模式，插入检查结果，然后结束
         if self.check_mode:
-            self.insert_logs(f'链接有效：{url_code}') if isinstance(reason, list) else self.insert_logs(f'链接无效：{url_code} 原因：{ERROR_CODES.get(reason, reason)}')
-            return
+            self.check_only(result, url_code)
+        else:
+            r = self.save_file(result, folder_name)
+            self.report_result(r, url_code)
 
-        # 返回结果为列表时，执行转存文件，输出转存链接结果；否则跳过转存，输出检查链接结果
-        if isinstance(reason, list):
+    def check_only(self, result: Union[List[str], int], url_code: str) -> None:
+        """开启检查模式时，只管判断返回值类型，并输出结果到日志"""
+        if isinstance(result, list):
+            self.insert_logs(f'链接有效：{url_code}')
+        else:
+            self.insert_logs(f'链接无效：{url_code} 原因：{ERROR_CODES.get(result, result)}')
+        return
+
+    def save_file(self, result: Union[List[str], int], folder_name: str) -> int:
+        """转存文件"""
+        # 返回结果为列表时，执行转存文件，返回转存结果；否则跳过转存，返回原始 result 参数
+        if isinstance(result, list):
             # 如果开启安全转存模式，对每个转存链接建立目录
             if self.safe_mode:
-                folder_name = f'{folder_name}/{self.completed_task_count}'
+                folder_name = f'{folder_name}/{self.completed_task_count + 1}'
                 self.network.create_dir(folder_name)
-            reason = self.network.transfer_file(reason, folder_name)
+            result = self.network.transfer_file(result, folder_name)
 
-        # 展示结果
-        if reason in ERROR_CODES:
-            self.insert_logs(f'{ERROR_CODES[reason]}：{url_code}')
+        return result
+
+    def report_result(self, result: int, url_code: str) -> None:
+        """插入转存结果到日志框"""
+        if result in ERROR_CODES:
+            self.insert_logs(f'{ERROR_CODES[result]}：{url_code}')
         else:
-            self.insert_logs(f'转存失败，错误代码（{reason}）：{url_code}')
+            self.insert_logs(f'转存失败，错误代码（{result}）：{url_code}')
 
     def pause_detection(self, url_code: str) -> None:
         """加入暂停检测逻辑，并插入等待时间"""
