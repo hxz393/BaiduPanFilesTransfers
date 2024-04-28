@@ -8,6 +8,7 @@
 # 程序基本信息
 MAIN_TITLE = 'BaiduPanFilesTransfers'
 MAIN_VERSION = '2.7.0'
+HOME_PAGE = 'https://github.com/hxz393/BaiduPanFilesTransfers'
 # 配置文件路径
 CONFIG_PATH = 'config.ini'
 # 颜色主题，可选值参见：https://ttkbootstrap.readthedocs.io/en/latest/themes/
