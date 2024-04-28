@@ -18,7 +18,7 @@ from src.constants import CONFIG_PATH, ICON_BASE64
 
 # 预编译正则表达式
 SHARE_ID_REGEX = re.compile(r'"shareid":(\d+?),"')
-USER_ID_REGEX = re.compile(r'"share_uk":"(\d+?),"')
+USER_ID_REGEX = re.compile(r'"share_uk":"(\d+?)","')
 FS_ID_REGEX = re.compile(r'"fs_id":(\d+?),"')
 
 
@@ -126,7 +126,7 @@ def parse_response(response: str) -> Union[List[str], int]:
     # 分享文件列表
     fs_id_list = FS_ID_REGEX.findall(response)
 
-    if not Any(shareid_list, user_id_list, fs_id_list):
+    if not all([shareid_list, user_id_list, fs_id_list]):
         return -1
     else:
         share_id = shareid_list[0]
