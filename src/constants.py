@@ -24,6 +24,8 @@ TOOLTIP_PADDING = 25
 TOOLTIP_DELAY = 100
 # 每次转存延时时间，单位为秒
 DELAY_SECONDS = 0.1
+# 转存数量限制
+SAVE_LIMIT = 1000
 # 百度网盘地址
 BASE_URL = 'https://pan.baidu.com'
 # 目录名禁用的非法字符

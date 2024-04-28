@@ -12,7 +12,7 @@ import re
 import tempfile
 import threading
 import zlib
-from typing import Any, Union, Tuple, Callable, List, Optional
+from typing import Any, Union, Tuple, Callable, List, Optional, Dict
 
 from src.constants import CONFIG_PATH, ICON_BASE64
 
@@ -117,7 +117,7 @@ def parse_response(response: str) -> Union[List[str], int]:
     shareid_list 和 user_id_list 只有一个值，fs_id_list 需要完整返回
 
     :param response: 响应内容
-    :return: 没有获取到足够参数时，返回错误代码-1；否则返回三个参数的列表
+    :return: 没有获取到足够参数时，返回错误代码 -1；否则返回三个参数的列表
     """
     # 分享 id
     shareid_list = SHARE_ID_REGEX.findall(response)
@@ -133,3 +133,61 @@ def parse_response(response: str) -> Union[List[str], int]:
         user_id = user_id_list[0]
         reason = [share_id, user_id, fs_id_list]
         return reason
+
+
+def format_filename_and_msg(info: Dict[str, Any]) -> str:
+    """
+    格式化文件名和生成日志消息
+
+    :param info: 来自目录请求的响应 Json
+    :return: 返回日志消息
+    """
+    # 是否文件夹的标记
+    if info["isdir"] == 1:
+        is_dir = "/"
+    else:
+        is_dir = ""
+
+    # 对文件夹加入 "/" 标记来区别
+    filename = f"{info['server_filename']}{is_dir}"
+
+    # 在返回的日志信息中，也区别一下文件和文件夹
+    if is_dir:
+        msg = f'目录：{filename}'
+    else:
+        msg = f'文件：{filename}'
+
+    return msg
+
+
+def update_cookie(bdclnd: str,
+                  cookie: str) -> str:
+    """
+    更新 cookie 字符串，以包含新的 BDCLND 值。
+
+    :param bdclnd: 新的 BDCLND 值
+    :param cookie: 当前的 cookie 字符串
+    :return: 返回新 cookie 字符串
+    """
+
+    # 初始化空字典来存储 cookie 中的键值对
+    cookies_dict = {}
+
+    # 按照分号拆分 cookie 字符串
+    cookie_parts = cookie.split(';')
+
+    # 遍历并进一步拆分字符串，得到键和值
+    for part in cookie_parts:
+        key, value = part.split('=', 1)
+        cookies_dict[key.strip()] = value.strip()
+
+    # 更新或添加 BDCLND 的值
+    cookies_dict['BDCLND'] = bdclnd
+
+    # 重新构建 cookie 字符串
+    updated_cookie_parts = []
+    for key, value in cookies_dict.items():
+        updated_cookie_parts.append(f"{key}={value}")
+
+    updated_cookie = '; '.join(updated_cookie_parts)
+    return updated_cookie

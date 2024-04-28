@@ -62,13 +62,13 @@ class Network:
             return r.json()['result']['bdstoken']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def get_dir_list(self, folder_name: str = '/') -> Union[List[Any], int]:
+    def get_dir_list(self, folder_name: str) -> Union[List[Any], int]:
         """
         获取指定目录下的文件或目录列表。
         用于创建目录前，检查目录是否已存在；
         用于批量分享时，生成任务列表。
 
-        :param folder_name: 指定要获取列表的目录名，不指定则为根目录
+        :param folder_name: 指定要获取列表的目录名
         :return: 获取成功时返回文件列表，获取失败时返回错误代码
         """
         url = f'{BASE_URL}/api/list'
