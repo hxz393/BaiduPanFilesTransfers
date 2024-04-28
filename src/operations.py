@@ -42,7 +42,7 @@ class Operations:
             self.handle_create_dir()
             self.handle_process_save()
         except Exception as e:
-            self.check_condition(True, f'运行批量转存出错，信息如下：\n{e}\n{traceback.format_exc()}')
+            self.check_condition(True, message=f'运行批量转存出错，信息如下：\n{e}\n{traceback.format_exc()}')
         finally:
             self.network.s.close()
             self.change_status('stopped')
@@ -60,7 +60,7 @@ class Operations:
                 self.setup_share()
                 self.handle_process_share()
         except Exception as e:
-            self.check_condition(True, f'运行批量分享出错，信息如下：\n{e}\n{traceback.format_exc()}')
+            self.check_condition(True, message=f'运行批量分享出错，信息如下：\n{e}\n{traceback.format_exc()}')
         finally:
             self.network.s.close()
             self.change_status('stopped')
@@ -217,6 +217,8 @@ class Operations:
             if self.safe_mode:
                 folder_name = f'{folder_name}/{self.completed_task_count + 1}'
                 self.network.create_dir(folder_name)
+
+            # 终于轮到发送转存请求
             result = self.network.transfer_file(result, folder_name)
 
         return result
@@ -242,51 +244,37 @@ class Operations:
     def handle_bdstoken(self) -> None:
         """获取 bdstoken 相关逻辑"""
         self.network.bdstoken = self.network.get_bdstoken()
-        self.check_condition(
-            isinstance(self.network.bdstoken, int),
-            message=f'没获取到 bdstoken，错误代码：{self.network.bdstoken}'
-        )
+        self.check_condition(isinstance(self.network.bdstoken, int),
+                             message=f'没获取到 bdstoken，错误代码：{self.network.bdstoken}')
 
     def handle_input(self, task_count_check: bool = True) -> None:
         """输入检查，如链接数限制和 cookie 格式"""
         # 转存时才检查输入链接数量
         if task_count_check:
-            self.check_condition(
-                self.total_task_count == 0,
-                message='无有效链接。'
-            )
-            self.check_condition(
-                self.total_task_count > SAVE_LIMIT,
-                message=f'转存链接数一次不能超过 {SAVE_LIMIT}，请减少链接数。当前连接数：{self.total_task_count}'
-            )
+            self.check_condition(self.total_task_count == 0,
+                                 message='无有效链接。')
+            self.check_condition(self.total_task_count > SAVE_LIMIT,
+                                 message=f'转存链接数一次不能超过 {SAVE_LIMIT}，请减少链接数。当前连接数：{self.total_task_count}')
 
         # cookie 带非 ascii 字符，或不包含 BAIDUID 时，铁定不对
-        self.check_condition(
-            not self.cookie.isascii() or self.cookie.find('BAIDUID') == -1,
-            message='百度网盘 cookie 输入不正确，请修正 cookie 后重试。'
-        )
+        self.check_condition(not self.cookie.isascii() or self.cookie.find('BAIDUID') == -1,
+                             message='百度网盘 cookie 输入不正确，请修正 cookie 后重试。')
         # 非法字符由官方规定的。符号 / 可以使用，作为子目录的分隔符
-        self.check_condition(
-            any(char in self.folder_name for char in INVALID_CHARS),
-            message=r'转存目录名有非法字符，不能包含 < > | * ? \ :，请改正目录名后重试。'
-        )
+        self.check_condition(any(char in self.folder_name for char in INVALID_CHARS),
+                             message=r'转存目录名有非法字符，不能包含 < > | * ? \ :，请改正目录名后重试。')
 
     def handle_list_dir(self, folder_name: str) -> None:
         """获取目标目录下的文件和目录列表。如果返回的是数字，代表没有获取到文件列表"""
         self.dir_list_all = self.network.get_dir_list(folder_name=folder_name)
-        self.check_condition(
-            isinstance(self.dir_list_all, int) or not self.dir_list_all,
-            message=f'{folder_name} 中，没获取到任何要分享的文件或目录。'
-        )
+        self.check_condition(isinstance(self.dir_list_all, int) or not self.dir_list_all,
+                             message=f'{folder_name} 中，没获取到任何要分享的文件或目录。')
 
     def handle_create_dir(self) -> None:
         """新建目录。如果目录已存在则不新建（转存目录带子目录时无法判断），否则会建立一个带时间戳的空目录"""
         if self.folder_name and self.folder_name not in [dir_json['server_filename'] for dir_json in self.dir_list_all]:
             r = self.network.create_dir(self.folder_name)
-            self.check_condition(
-                r != 0,
-                message=f'创建目录失败，错误代码：{r}'
-            )
+            self.check_condition(r != 0,
+                                 message=f'创建目录失败，错误代码：{r}')
 
     def handle_process_save(self) -> None:
         """执行批量转存"""
