@@ -132,12 +132,12 @@ def parse_response(response: str) -> Union[List[str], int]:
         return reason
 
 
-def format_filename_and_msg(info: Dict[str, Any]) -> str:
+def format_filename_and_msg(info: Dict[str, Any]) -> Tuple[str, str]:
     """
     格式化文件名和生成日志消息
 
     :param info: 来自目录请求的响应 Json
-    :return: 返回日志消息
+    :return: 返回日志消息和格式化文件名
     """
     # 是否文件夹的标记
     if info["isdir"] == 1:
@@ -154,7 +154,7 @@ def format_filename_and_msg(info: Dict[str, Any]) -> str:
     else:
         msg = f'文件：{filename}'
 
-    return msg
+    return msg, filename
 
 
 def update_cookie(bdclnd: str,

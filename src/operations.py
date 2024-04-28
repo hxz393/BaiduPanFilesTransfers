@@ -167,8 +167,8 @@ class Operations:
         """
         if insert_input:
             self.root.text_links.insert('end', f'{message}\n')
-
-        self.root.text_logs.insert('end', f'{message}\n')
+        else:
+            self.root.text_logs.insert('end', f'{message}\n')
 
     def verify_link(self, link_url: str, pass_code: str) -> Union[List[str], int]:
         """验证链接有效性，验证通过返回转存所需参数列表"""
@@ -292,19 +292,17 @@ class Operations:
     def handle_process_share(self) -> None:
         """执行批量分享"""
         for info in self.dir_list_all:
-            msg = format_filename_and_msg(info)
+            msg, filename = format_filename_and_msg(info)
             self.insert_logs(msg, insert_input=True)  # 日志记录待分享的文件或目录
 
             # 执行分享操作并记录结果
-            self.process_share(info)
+            self.process_share(info, filename)
 
             # 更新状态
             self.change_status('update')
 
-    def process_share(self, info: Dict[str, Any]) -> None:
+    def process_share(self, info: Dict[str, Any], filename: str) -> None:
         """处理分享操作并记录日志"""
-        filename = info['server_filename']
-
         # 发送创建分享请求
         r = self.network.create_share(info['fs_id'], EXP_MAP[self.expiry], self.password)
         if isinstance(r, str):
