@@ -101,7 +101,7 @@ def parse_url_and_code(url_code: str) -> Tuple[str, str]:
     :return: 链接和提取码
     """
     # 不会分割失败
-    url, code = map(str.strip, url_code.split(' '))
+    url, code = map(str.strip, url_code.split(' ', 1))
     # 暴力切片，如果输入链接不是以提取码结尾，会得到错误提取码
     return url[:47], code[-4:]
 
@@ -121,23 +121,6 @@ def parse_response(response: str) -> Union[List[str], int]:
         return -1
 
     return [shareid_list[0], user_id_list[0], fs_id_list]
-
-
-def format_filename_and_msg(info: Dict[str, Any]) -> Tuple[str, str]:
-    """
-    格式化文件名和生成日志消息
-
-    :param info: 来自目录请求的响应 Json
-    :return: 返回日志消息和格式化文件名
-    """
-    # 是否文件夹的标记
-    is_dir = "/" if info["isdir"] == 1 else ""
-    # 对文件夹加入 "/" 标记来区别
-    filename = f"{info['server_filename']}{is_dir}"
-    # 在返回的日志信息中，也区别一下文件和文件夹
-    msg = f'目录：{filename}' if is_dir else f'文件：{filename}'
-
-    return msg, filename
 
 
 def update_cookie(bdclnd: str, cookie: str) -> str:
