@@ -22,8 +22,7 @@ USER_ID_REGEX = re.compile(r'"share_uk":"(\d+?)","')
 FS_ID_REGEX = re.compile(r'"fs_id":(\d+?),"')
 
 
-def thread_it(func: Callable,
-              *args: Tuple[Any, ...]) -> None:
+def thread_it(func: Callable, *args: Tuple[Any, ...]) -> None:
     """
     多线程防止转存时主界面卡死。
 
@@ -102,10 +101,9 @@ def parse_url_and_code(url_code: str) -> Tuple[str, str]:
     :return: 链接和提取码
     """
     # 不会分割失败
-    parts = url_code.split(' ')
-    url, passwd = parts[0].strip(), parts[1].strip()
+    url, code = map(str.strip, url_code.split(' '))
     # 暴力切片，如果输入链接不是以提取码结尾，会得到错误提取码
-    return url[:47], passwd[-4:]
+    return url[:47], code[-4:]
 
 
 def parse_response(response: str) -> Union[List[str], int]:
@@ -116,20 +114,13 @@ def parse_response(response: str) -> Union[List[str], int]:
     :param response: 响应内容
     :return: 没有获取到足够参数时，返回错误代码 -1；否则返回三个参数的列表
     """
-    # 分享 id
     shareid_list = SHARE_ID_REGEX.findall(response)
-    # 分享者 id
     user_id_list = USER_ID_REGEX.findall(response)
-    # 分享文件列表
     fs_id_list = FS_ID_REGEX.findall(response)
-
     if not all([shareid_list, user_id_list, fs_id_list]):
         return -1
-    else:
-        share_id = shareid_list[0]
-        user_id = user_id_list[0]
-        reason = [share_id, user_id, fs_id_list]
-        return reason
+
+    return [shareid_list[0], user_id_list[0], fs_id_list]
 
 
 def format_filename_and_msg(info: Dict[str, Any]) -> Tuple[str, str]:
@@ -140,25 +131,16 @@ def format_filename_and_msg(info: Dict[str, Any]) -> Tuple[str, str]:
     :return: 返回日志消息和格式化文件名
     """
     # 是否文件夹的标记
-    if info["isdir"] == 1:
-        is_dir = "/"
-    else:
-        is_dir = ""
-
+    is_dir = "/" if info["isdir"] == 1 else ""
     # 对文件夹加入 "/" 标记来区别
     filename = f"{info['server_filename']}{is_dir}"
-
     # 在返回的日志信息中，也区别一下文件和文件夹
-    if is_dir:
-        msg = f'目录：{filename}'
-    else:
-        msg = f'文件：{filename}'
+    msg = f'目录：{filename}' if is_dir else f'文件：{filename}'
 
     return msg, filename
 
 
-def update_cookie(bdclnd: str,
-                  cookie: str) -> str:
+def update_cookie(bdclnd: str, cookie: str) -> str:
     """
     更新 cookie 字符串，以包含新的 BDCLND 值。
 
@@ -166,25 +148,11 @@ def update_cookie(bdclnd: str,
     :param cookie: 当前的 cookie 字符串
     :return: 返回新 cookie 字符串
     """
-
-    # 初始化空字典来存储 cookie 中的键值对
-    cookies_dict = {}
-
-    # 按照分号拆分 cookie 字符串
-    cookie_parts = cookie.split(';')
-
-    # 遍历并进一步拆分字符串，得到键和值
-    for part in cookie_parts:
-        key, value = part.split('=', 1)
-        cookies_dict[key.strip()] = value.strip()
-
-    # 更新或添加 BDCLND 的值
+    # 拆分 cookie 字符串到字典。先用 ; 分割成列表，再用 = 分割出键和值
+    cookies_dict = dict(map(lambda item: item.split('=', 1), filter(None, cookie.split(';'))))
+    # 在 cookie 字典中，更新或添加 BDCLND 的值
     cookies_dict['BDCLND'] = bdclnd
+    # 从更新后的字典重新构建 cookie 字符串
+    updated_cookie = ';'.join([f'{key}={value}' for key, value in cookies_dict.items()])
 
-    # 重新构建 cookie 字符串
-    updated_cookie_parts = []
-    for key, value in cookies_dict.items():
-        updated_cookie_parts.append(f"{key}={value}")
-
-    updated_cookie = '; '.join(updated_cookie_parts)
     return updated_cookie

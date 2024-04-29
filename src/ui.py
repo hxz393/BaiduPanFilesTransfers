@@ -254,36 +254,26 @@ class ToolTip:
         self.widget = widget
         self.text = text
         self.tips = None
-        self.tooltip_id = None
-        self.x = self.y = 0
+        self.id = None
         # 绑定光标移入、移出和点击事件
         self._binding()
 
     def _binding(self) -> None:
         """配置鼠标绑定事件"""
-        self.widget.bind("<Enter>", self._enter)
-        self.widget.bind("<Leave>", self._leave)
-        self.widget.bind("<ButtonPress>", self._leave)
+        self.widget.bind("<Enter>", lambda _: self._after(True))
+        self.widget.bind("<Leave>", lambda _: self._after(False))
+        self.widget.bind("<ButtonPress>", lambda _: self._after(False))
 
-    def _enter(self, _: object = None) -> None:
-        """鼠标进入事件"""
-        self._schedule()
+    def _after(self, enter: bool) -> None:
+        """活用 enter 来判断是否要展示提示气泡"""
+        if self.id:
+            self.widget.after_cancel(self.id)
+            self.id = None
 
-    def _leave(self, _: object = None) -> None:
-        """鼠标离开事件"""
-        self._unschedule()
-        self._hide()
-
-    def _schedule(self) -> None:
-        """设置定时器"""
-        self._unschedule()
-        self.tooltip_id = self.widget.after(TOOLTIP_DELAY, self._show)
-
-    def _unschedule(self) -> None:
-        """取消定时器"""
-        if self.tooltip_id:
-            self.widget.after_cancel(self.tooltip_id)
-            self.tooltip_id = None
+        if enter:
+            self.id = self.widget.after(TOOLTIP_DELAY, self._show)
+        else:
+            self._hide()
 
     def _show(self) -> None:
         """显示气泡提示"""
@@ -293,8 +283,7 @@ class ToolTip:
         self.tips = tw = ttk.Toplevel(self.widget)
         tw.wm_overrideredirect(True)
         tw.wm_geometry(f"+{x}+{y}")
-        label = ttk.Label(tw, text=self.text, background=COLOR_MAP['tooltip'], relief='solid', borderwidth=1)
-        label.pack(ipadx=1)
+        ttk.Label(tw, text=self.text, background=COLOR_MAP['tooltip'], relief='solid', borderwidth=1).pack(ipadx=1)
 
     def _hide(self) -> None:
         """隐藏气泡提示"""

@@ -47,19 +47,11 @@ class Network:
             'fields': '["bdstoken","token","uk","isdocuser","servertime"]'
         }
 
-        r = self.s.get(
-            url=url,
-            params=params,
-            headers=self.headers,
-            timeout=10,
-            allow_redirects=False,
-            verify=False
-        )
-
+        r = self.s.get(url=url, params=params, headers=self.headers, timeout=10, allow_redirects=False, verify=False)
         if r.json()['errno'] != 0:
             return r.json()['errno']
-        else:
-            return r.json()['result']['bdstoken']
+
+        return r.json()['result']['bdstoken']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
     def get_dir_list(self, folder_name: str) -> Union[List[Any], int]:
@@ -83,19 +75,11 @@ class Network:
             'bdstoken': self.bdstoken
         }
 
-        r = self.s.get(
-            url=url,
-            params=params,
-            headers=self.headers,
-            timeout=15,
-            allow_redirects=False,
-            verify=False
-        )
-
+        r = self.s.get(url=url, params=params, headers=self.headers, timeout=15, allow_redirects=False, verify=False)
         if r.json()['errno'] != 0:
             return r.json()['errno']
-        else:
-            return r.json()['list']
+
+        return r.json()['list']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
     def create_dir(self, folder_name: str) -> int:
@@ -113,28 +97,16 @@ class Network:
         }
         data = {
             'path': folder_name,
-            # 建立目录时固定为 1
             'isdir': '1',
-            # 没发现用途，总是为空
             'block_list': '[]',
         }
 
-        r = self.s.post(
-            url=url,
-            params=params,
-            headers=self.headers,
-            data=data,
-            timeout=15,
-            allow_redirects=False,
-            verify=False
-        )
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
 
         return r.json()['errno']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def verify_pass_code(self,
-                         link_url: str,
-                         pass_code: str) -> Union[str, int]:
+    def verify_pass_code(self, link_url: str, pass_code: str) -> Union[str, int]:
         """
         验证提取码是否正确。
         如果正确，则会返回转存所必须的 randsk 参数。
@@ -162,44 +134,28 @@ class Network:
             'vcode_str': ''
         }
 
-        r = self.s.post(
-            url=url,
-            params=params,
-            headers=self.headers,
-            data=data,
-            timeout=10,
-            allow_redirects=False,
-            verify=False
-        )
-
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=10, allow_redirects=False, verify=False)
         if r.json()['errno'] != 0:
             return r.json()['errno']
-        else:
-            return r.json()['randsk']
+
+        return r.json()['randsk']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
     def get_transfer_params(self, url: str) -> str:
         """
         更新 bdclnd 到 cookie 后，再次请求网盘链接，获取响应内容。
+        请求需要允许跳转。
         请求不再需要提取码。
 
         :param url: 网盘地址
         :return: 返回原始请求内容，丢给 parse_response 函数取处理
         """
-        r = self.s.get(
-            url=url,
-            headers=self.headers,
-            timeout=15,
-            verify=False
-        )
+        r = self.s.get(url=url, headers=self.headers, timeout=15, verify=False)
 
         return r.content.decode("utf-8")
 
     @retry(stop_max_attempt_number=5, wait_random_min=1000, wait_random_max=2000)
-    def transfer_file(self,
-                      params_list: List[str],
-                      folder_name: str
-                      ) -> int:
+    def transfer_file(self, params_list: List[str], folder_name: str) -> int:
         """
         转存百度网盘文件。
 
@@ -225,23 +181,12 @@ class Network:
             'path': f'/{folder_name}'
         }
 
-        r = self.s.post(
-            url=url,
-            params=params,
-            headers=self.headers,
-            data=data,
-            timeout=15,
-            allow_redirects=False,
-            verify=False
-        )
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
 
         return r.json()['errno']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def create_share(self,
-                     fs_id: int,
-                     expiry: str,
-                     password: str) -> Union[str, int]:
+    def create_share(self, fs_id: int, expiry: str, password: str) -> Union[str, int]:
         """
         生成百度网盘分享链接。
 
@@ -267,17 +212,8 @@ class Network:
             'fid_list': f'[{fs_id}]'
         }
 
-        r = self.s.post(
-            url=url,
-            params=params,
-            headers=self.headers,
-            data=data,
-            timeout=15,
-            allow_redirects=False,
-            verify=False
-        )
-
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
         if r.json()['errno'] != 0:
             return r.json()['errno']
-        else:
-            return r.json()['link']
+
+        return r.json()['link']
