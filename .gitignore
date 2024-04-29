@@ -8,3 +8,4 @@ dist
 /config.ini
 /test.py
 /BaiduPanFilesTransfers
+.pytest_cache
