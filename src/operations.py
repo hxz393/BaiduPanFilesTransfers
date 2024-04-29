@@ -267,11 +267,11 @@ class Operations:
         else:
             self.save_file(result, url_code, self.folder_name)
 
-    def verify_link(self, link_url: str, pass_code: str) -> Union[List[str], int]:
+    def verify_link(self, url: str, password: str) -> Union[List[str], int]:
         """验证链接有效性，验证通过返回转存所需参数列表"""
         # 对于有提取码的链接先验证提取码，试图获取更新 bdclnd
-        if pass_code:
-            bdclnd = self.network.verify_pass_code(link_url, pass_code)
+        if password:
+            bdclnd = self.network.verify_pass_code(url, password)
             # 如果 bdclnd 是错误代码，直接返回
             if isinstance(bdclnd, int):
                 return bdclnd
@@ -280,7 +280,7 @@ class Operations:
             self.network.headers['Cookie'] = update_cookie(bdclnd, self.network.headers['Cookie'])
 
         # 直接访问没有提取码的链接，或更新 bdclnd 后再次访问，获取转存必须的 3 个参数
-        response = self.network.get_transfer_params(link_url)
+        response = self.network.get_transfer_params(url)
         # 这里不考虑网络异常了，假设请求一定会返回页面内容，对其进行解析
         return parse_response(response)
 

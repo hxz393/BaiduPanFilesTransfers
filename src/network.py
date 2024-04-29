@@ -106,19 +106,19 @@ class Network:
         return r.json()['errno']
 
     @retry(stop_max_attempt_number=3, wait_random_min=1000, wait_random_max=2000)
-    def verify_pass_code(self, link_url: str, pass_code: str) -> Union[str, int]:
+    def verify_pass_code(self, url: str, password: str) -> Union[str, int]:
         """
         验证提取码是否正确。
         如果正确，则会返回转存所必须的 randsk 参数。
 
-        :param link_url: 网盘地址
-        :param pass_code: 提取码
+        :param url: 网盘地址
+        :param password: 提取码
         :return: 成功时返回 randsk 字符串，失败时返回错误代码
         """
         url = f'{BASE_URL}/share/verify'
         params = {
             # 可放心用暴力切片
-            'surl': link_url[25:48],
+            'surl': url[25:48],
             'bdstoken': self.bdstoken,
             # 当前时间的毫秒级时间戳
             't': str(int(round(time.time() * 1000))),
@@ -128,7 +128,7 @@ class Network:
             'clienttype': '0'
         }
         data = {
-            'pwd': pass_code,
+            'pwd': password,
             # 并没有发现下面两个参数的用途
             'vcode': '',
             'vcode_str': ''
