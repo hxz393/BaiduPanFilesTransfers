@@ -12,7 +12,7 @@ import re
 import tempfile
 import threading
 import zlib
-from typing import Any, Union, Tuple, Callable, List, Optional, Dict
+from typing import Any, Union, Tuple, Callable, List, Optional
 
 from src.constants import CONFIG_PATH, ICON_BASE64
 

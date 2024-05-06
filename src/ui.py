@@ -92,8 +92,9 @@ class MainWindow(ttk.Window):
     def _init_config(self) -> None:
         """初始化配置"""
         config = read_config()
-        self.entry_cookie.insert(0, config[0].strip() if config else '')
-        self.entry_folder_name.insert(0, config[1].strip() if len(config) > 1 else '')
+        if config:
+            self.entry_cookie.insert(0, config[0].strip() if config else '')
+            self.entry_folder_name.insert(0, config[1].strip() if len(config) > 1 else '')
 
     def _save_button_click(self) -> None:
         """当按钮被点击时，调用逻辑处理对象的批量转存方法"""
@@ -118,10 +119,7 @@ class TextEditor:
     def __init__(self, root):
         self.root = root
 
-    def create_text(self,
-                    row: int,
-                    label_text: str,
-                    placeholder: str = '') -> ttk.Text:
+    def create_text(self, row: int, label_text: str, placeholder: str = '') -> ttk.Text:
         """
         建立文本框，建立与文本框绑定的标签和滚动条。
 

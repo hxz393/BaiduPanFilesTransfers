@@ -179,7 +179,7 @@ class Operations:
         is_dir = "/" if info["isdir"] == 1 else ""
         filename = f"{info['server_filename']}{is_dir}"
         msg = f'目录：{filename}' if is_dir else f'文件：{filename}'
-        self.insert_logs(msg, insert_input=True)
+        self.insert_logs(msg, alt=True)
 
         # 发送创建分享请求
         r = self.network.create_share(info['fs_id'], EXP_MAP[self.expiry], self.password)
@@ -234,14 +234,14 @@ class Operations:
             self.insert_logs(message)
             sys.exit()
 
-    def insert_logs(self, message: str, insert_input: bool = False) -> None:
+    def insert_logs(self, message: str, alt: bool = False) -> None:
         """
         在文本框末尾插入内容
 
         :param message: 插入到日志框的内容
-        :param insert_input: 如果为 True，插入到链接输入框，用于批量分享时记录文件名
+        :param alt: 如果为 True，插入到链接输入框，用于批量分享时记录文件名
         """
-        if insert_input:
+        if alt:
             self.root.text_links.insert('end', f'{message}\n')
         else:
             self.root.text_logs.insert('end', f'{message}\n')

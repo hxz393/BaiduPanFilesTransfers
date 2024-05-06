@@ -109,7 +109,7 @@ class Network:
     def verify_pass_code(self, link_url: str, pass_code: str) -> Union[str, int]:
         """
         验证提取码是否正确。
-        如果正确，则会返回转存所必须的 randsk 参数。
+        如果正确，则会返回转存所必须的 randsk，也就是 bdclnd 参数。
 
         :param link_url: 网盘地址
         :param pass_code: 提取码
@@ -175,8 +175,8 @@ class Network:
             'clienttype': '0'
         }
         data = {
-            # 针对一个分享链接带有多个分享文件的情况，转换一下列表格式（暂没测试链接，不确定是否可以直传 f'[{params_list[2]}]'）
-            'fsidlist': f'[{",".join(i for i in params_list[2])}]',
+            # 针对一个分享链接带有多个分享文件的情况，转换一下列表格式
+            'fsidlist': f"[{','.join(params_list[2])}]",
             # 目标目录为空，则直接等于根目录 '/'
             'path': f'/{folder_name}'
         }
