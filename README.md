@@ -1,8 +1,6 @@
 # 程序介绍
 
-百度网盘批量转存程序，基于 `Python 3.8` + `Tkinter` 构建，主要用于批量转存网络上分享的资源到自己的百度网盘。此外还带有批量分享和批量检测链接有效性的功能。
-
-介绍页面请访问：[小众软件](https://meta.appinn.net/t/topic/16995/39)
+百度网盘批量转存程序，基于 `Python 3.10` + `Tkinter` 构建，主要用于批量转存网络上分享的资源到自己的百度网盘。此外还带有批量分享和批量检测链接有效性的功能。
 
 程序主界面：
 
@@ -15,7 +13,7 @@
 下载方式：
 
 - 方式一：到 [release](https://github.com/hxz393/BaiduPanFilesTransfers/releases) 页面下载最新版的 `exe` 文件，文件名类似 `BPFTv2.x.exe`，下完可直接打开使用。
-- 方式二：到 [百度网盘](https://pan.baidu.com/s/1RK7uBqaqgqJHLJbadXI48g?pwd=6666) 下载，下完后请解压缩再使用。
+- 方式二：到 [百度网盘](https://pan.baidu.com/s/1RK7uBqaqgqJHLJbadXI48g?pwd=6666) 下载对应压缩包 `BaiduPanFilesTransfers.zip`，下完后请解压缩再使用。
 
 ## 手动编译
 
@@ -23,51 +21,56 @@
 
 编译步骤如下：
 
-1. 在安装有 `Git` 的主机上克隆本项目
+1. 在安装有 `Git` 的主机上克隆本项目：
 
    ```sh
    git clone https://github.com/hxz393/BaiduPanFilesTransfers.git
    ```
 
-   或者在 [项目主页](https://github.com/hxz393/BaiduPanFilesTransfers) 点击绿色`<> Code` 按钮选择 `Download ZIP` 选项，[下载](https://github.com/hxz393/BaiduPanFilesTransfers/archive/refs/heads/master.zip) 源码压缩包。下载完毕后用压缩软件或命令工具解压缩。
+   或者在 [项目主页](https://github.com/hxz393/BaiduPanFilesTransfers) 点击蓝色`<> Code` 按钮选择 `Download ZIP` 选项，[下载](https://github.com/hxz393/BaiduPanFilesTransfers/archive/refs/heads/master.zip) 源码压缩包，下载完毕后解压缩压缩包。
 
-2. 在命令行中切换到本项目路径
+2. 在命令行中切换到本项目路径。
 
    例如，在 Windows 中，打开 `CMD` 命令提示符或 `PowerShell`，输入：
 
    ```sh
-   cd B:\2.脚本\BaiduPanFilesTransfers
+   cd B:\2.脚本\BaiduPanFilesTransfers-master
    ```
 
    在 Linux/macOS 中，路径的分隔符会不同：
 
    ```sh
-   cd /root/BaiduPanFilesTransfers
+   cd /root/BaiduPanFilesTransfers-master
    ```
 
    如果使用 `PyCharm` 作为 IDE，可以直接在自带的控制台中输入后面的打包命令。
 
-3. 使用 venv 创建并启用环境
+3. 使用 `venv` 创建并启用虚拟环境：
 
    ```sh
-   python -m venv BaiduPanFilesTransfers && source BaiduPanFilesTransfers/bin/activate
+   python -m venv venv
+   venv\Scripts\activate
    ```
 
-4. 安装项目依赖
+   在 Linux/macOS 下启动虚拟环境命令稍有不同：
+
+   ````
+   python -m venv venv && source venv/bin/activate
+   ````
+
+4. 安装项目依赖，指定使用国内科大的镜像源：
 
    ```sh
-   pip install -r requirements.txt
+   pip install -r requirements.txt --index https://mirrors.ustc.edu.cn/pypi/web/simple/
    ```
 
-5. 安装 Tkinter
-
-   Windows 的 Python 安装包一般会默认安装 Tkinter。macOS 用户则需要手动安装，对应 Homebrew 命令为：
+   Windows 的 Python 安装包一般会默认安装 `Tkinter`。macOS 用户则需要手动安装，对应 Homebrew 命令为：
 
    ```sh
    brew install python-tk # 也可以指定 Python 版本，如 brew install python-tk@3.12
    ```
 
-6. 使用 `pyinstaller` 命令编译打包成可执行文件
+5. 使用 `pyinstaller` 命令编译打包成可执行文件：
 
    ```sh
    pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hidden-import=tkinter --clean -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
@@ -75,7 +78,15 @@
 
    如果过程没有异常，可执行文件 `BaiduPanFilesTransfers.exe` 会生成到 `dist` 目录下面。
 
-7. （可选）使用 `deactivate` 命令退出当前环境
+6. （可选）使用 `deactivate` 命令退出当前环境：
+
+   ```
+   venv\Scripts\deactivate.bat
+   ```
+
+## 代码贡献
+
+请提交 pull request 到 dev 分支，待验证通过再合并到 master 分支。
 
 ## 开源许可
 
@@ -85,7 +96,7 @@
 
 # 程序使用
 
-程序使用分四步走。
+获取 Cookies 为必须步骤，大多数运行错误都是 Cookies 不正确造成，请仔细阅读获取方法。
 
 ## 获取 Cookies
 
@@ -104,13 +115,15 @@
 
 输入文件保存位置后，如果目录不存在，会自动新建目录。如果目录已存在，则直接转存在指定目录下。
 
-保存位置（目录名）不能包含大多数英文特殊符号，包括：`>`、`|`、`*`、`?`、`:`、`/` 等，否则程序会检测到并中断运行。
+支持指定二级目录，例如，要保存到 `test` 目录内的 `2024-01-02` 目录中，填入 `test/2024-01-02` 即可。
+
+保存位置（目录名）不能包含大多数英文特殊符号，包括：`>`、`|`、`*`、`?`、`:`、`\` 等，否则程序会检测到并中断运行。
 
 如果保存路径加文件名长度超过 `255` 个字符，用百度网盘客户端下载文件时会失败，所以应尽量使用短目录名。
 
 ## 输入网盘链接
 
-程序已尽可能地适配常见的百度网盘链接格式。如果出现提示 「不支持的链接」或「没获取到 shareid」，请检查输入链接是否符合下面的格式之一：
+程序已尽可能适应常见的百度网盘链接格式。如出现提示「不支持的链接」或「链接错误」，请检查输入链接是否符合下面的格式之一：
 
 ```sh
 https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 6img
@@ -138,7 +151,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ![百度网盘批量转存程序分享设置界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
 
-设置好分享期限和四位分享码（不支持随机）后，点击确定开始执行批量分享，请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名。日志输入框内，会显示生成的分享链接和结果：
+设置好分享期限和提取码（不支持随机）后，点击确定开始执行批量分享，请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名；日志输入框内，会显示生成的分享链接和结果：
 
 ![百度网盘批量转存程序批量分享结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
 
@@ -152,7 +165,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 没有适合命名，功能暂叫做「安全转存」，用来处理遇到重名文件时转存失败。
 
-勾选以后，每个链接将单独保存在数字为命名的子目录中。例如转存目录输入`test`，则第一个链接保存在 `test\1` 中，第二个链接保存在 `test\2` 中，以此类推。
+勾选以后，每个链接将单独保存在数字为命名的子目录中。例如转存目录输入`test`，则第一个链接保存在 `test/1` 中，第二个链接保存在 `test/2` 中，以此类推。
 
 ## 使用检测模式（选项）
 
@@ -244,6 +257,13 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
+
+## 版本 2.7.0（2024.05.06）
+
+更新内容：
+
+1. 更新 UI 提示信息和报错信息；
+2. 拆分重构代码，对新手友好。
 
 ## 版本 2.6.0（2024.04.09）
 

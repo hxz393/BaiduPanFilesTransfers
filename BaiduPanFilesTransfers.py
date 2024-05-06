@@ -1,5 +1,5 @@
 """
-打包命令：pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hidden-import=tkinter -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
+打包命令：pyinstaller -F -w -i BaiduPanFilesTransfers.ico --hidden-import=tkinter --clean -n BaiduPanFilesTransfers BaiduPanFilesTransfers.py
 
 :title: BaiduPanFilesTransfers
 :site: https://github.com/hxz393/BaiduPanFilesTransfers
