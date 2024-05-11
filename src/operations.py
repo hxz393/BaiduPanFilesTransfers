@@ -296,6 +296,8 @@ class Operations:
         if isinstance(result, list):
             # 如果开启安全转存模式，对每个转存链接建立目录
             if self.safe_mode:
+                self.check_condition(not folder_name,
+                                     message='必须输入转存目录。')
                 folder_name = f'{folder_name}/{self.completed_task_count + 1}'
                 self.handle_create_dir(folder_name)
 
