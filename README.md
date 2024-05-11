@@ -4,7 +4,7 @@
 
 程序主界面：
 
-![百度网盘批量转存程序主界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/v2.6.0.jpg)
+![百度网盘批量转存程序主界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/v2.8.0.jpg)
 
 ## 下载及运行
 
@@ -12,8 +12,10 @@
 
 下载方式：
 
-- 方式一：到 [release](https://github.com/hxz393/BaiduPanFilesTransfers/releases) 页面下载最新版的 `exe` 文件，文件名类似 `BPFTv2.x.exe`，下完可直接打开使用。
+- 方式一：到 [release](https://github.com/hxz393/BaiduPanFilesTransfers/releases) 页面下载最新版的 `exe` 文件，文件名为 `BaiduPanFilesTransfers.exe`，下完可直接打开使用。
 - 方式二：到 [百度网盘](https://pan.baidu.com/s/1RK7uBqaqgqJHLJbadXI48g?pwd=6666) 下载对应压缩包 `BaiduPanFilesTransfers.zip`，下完后请解压缩再使用。
+
+如果之前有运行过旧版本，直接用新版本文件覆盖掉旧文件即可使用。
 
 ## 手动编译
 
@@ -86,7 +88,7 @@
 
 ## 代码贡献
 
-请提交 pull request 到 dev 分支，待验证通过再合并到 master 分支。
+请提交 pull request 到 dev 分支，待我验证测试通过再合并到主分支。
 
 ## 开源许可
 
@@ -133,6 +135,7 @@ https://pan.baidu.com/s/1nvBwS25lENYceUu3OMH4tg 提取:6img
 https://pan.baidu.com/s/1EFCrmlh0rhnWy8pi9uhkyA
 https://pan.baidu.com/share/init?surl=W7U9g47xiDez_5ItgNIs0w
 https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
+目录名 https://pan.baidu.com/s/1eOrU0S9VLoe4GgAy2gZlmw z6r4
 ```
 
 ## 执行批量转存
@@ -155,19 +158,25 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ![百度网盘批量转存程序批量分享结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
 
+百度网盘硬性限制，**单帐号每日最多只能创建 300 个分享链接**，之后会报错，非程序方面限制。
+
 ## 使用系统代理（选项）
 
 程序默认会绕过网络系统代理，但不能绕过网络全局代理。
 
 如果处于特殊网络环境下，需要配置网络系统代理模式，才能正常访问百度网盘，勾选上「系统代理」框后，再执行转存。
 
-## 使用安全转存（选项）
+## 使用指定目录（选项）
 
-没有适合命名，功能暂叫做「安全转存」，用来处理遇到重名文件时转存失败。
+用于指定转存文件到多个不同的目录。效果如下：
 
-勾选以后，每个链接将单独保存在数字为命名的子目录中。例如转存目录输入`test`，则第一个链接保存在 `test/1` 中，第二个链接保存在 `test/2` 中，以此类推。
+![百度网盘批量转存指定目录功能](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-7.jpg)
 
-注意，此模式要求必须输入转存目录。
+勾选以后，将支持类似于 `自设目录 https://pan.baidu.com/s/1eOrU0S9VLoe4GgAy2gZlmw z6r4` 的链接，`自设目录` 会创建到「转存目录」（步骤 2 中输入的目录）中，文件转存到 `自设目录` 里面。
+
+如果输入的是普通链接，也就是不带目录名，以 `http` 开头的链接，则每个链接将单独保存在数字为命名的子目录中。例如「转存目录」中输入的 `test`，则第一个链接保存在 `test/1` 中，第二个链接保存在 `test/2` 中，以此类推。
+
+注意，此模式要求**必须输入转存目录**。连接中的指定目录名**不能包含空格**，否则只会取到空格前一截作为目录名。
 
 ## 使用检测模式（选项）
 
@@ -197,7 +206,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 **原因**：秒传已不能使用。
 
-**解决**：在新版本中，相关代码已剔除。
+**解决**：在新版本中，相关代码已剔除，请升级到新版本。
 
 ## 转存失败，错误代码 XX
 
@@ -209,13 +218,13 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ## 只有第一个链接转存成功
 
-后面链接提示「链接错误尝试次数过多」。
+后面链接提示「链接访问次数过多」。
 
 **原因**：Cookie 不正确。
 
 **解决**：通过浏览器无痕模式打开百度网盘主页，重新登陆获取 Cookie 即可。
 
-## 链接错误尝试次数过多
+## 链接访问次数过多
 
 **原因**：通常见于带提取码的链接。如果短时间内对着一个链接反复访问 3 次以上，不管提取码是否正确，都会触发百度网盘防御机制。如果直接在网页端访问链接，会发现要输入验证码。
 
@@ -237,7 +246,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ## 百度群组文件转存
 
-不支持转存群组文件。建议手动操作转存，或使用专用工具。
+不支持转存群组文件。建议手动操作转存，或使用 [专用工具](https://www.52pojie.cn/thread-1882639-1-1.html)。
 
 ## 系统版本过低
 
@@ -245,7 +254,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 **原因**：操作系统太旧，无法支持 `Python 3.10` 。
 
-**解决**：升级操作系统；或使用 `2.4.0` 版本；或者参考「自行打包」方法。
+**解决**：升级操作系统；或使用 `2.4.0` 版本；或参考「自行打包」方法打包。
 
 ## 已有同名文件或文件夹存在
 
@@ -260,12 +269,11 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 # 更新日志
 为避免更新日志过长，只保留最近更新日志。
 
-## 版本 2.7.0（2024.05.06）
+## 版本 2.8.0（2024.05.11）
 
 更新内容：
 
-1. 更新 UI 提示信息和报错信息；
-2. 拆分重构代码，对新手友好。
+1. 修改安全转存功能为指定目录功能，一次性能将不同链接保存到不同目录中。
 
 ## 版本 2.6.0（2024.04.09）
 

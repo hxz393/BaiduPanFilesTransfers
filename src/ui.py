@@ -54,7 +54,7 @@ class MainWindow(ttk.Window):
         self.frame_options = ttk.LabelFrame(self, text=LABEL_MAP['options'], padding="10 10 0 9")
         self.frame_options.grid(row=init_row + 6, sticky='w', padx=MW_PADDING)
         self.var_trust_env = self._create_checkbutton(LABEL_MAP['trust'], LABEL_MAP['trust_tip'], 0)
-        self.var_safe_mode = self._create_checkbutton(LABEL_MAP['safe'], LABEL_MAP['safe_tip'], 1)
+        self.var_custom_mode = self._create_checkbutton(LABEL_MAP['custom'], LABEL_MAP['custom_tip'], 1)
         self.var_check_mode = self._create_checkbutton(LABEL_MAP['check'], LABEL_MAP['check_tip'], 2)
         # 创建按钮容器和两个功能按钮
         self.frame_bottom = ttk.Frame(self)

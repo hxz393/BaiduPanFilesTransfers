@@ -85,7 +85,7 @@ class Operations:
         self.cookie = "".join(self.root.entry_cookie.get().split())
         self.folder_name = "".join(self.root.entry_folder_name.get().split())
         self.network.s.trust_env = self.root.var_trust_env.get()
-        self.safe_mode = self.root.var_safe_mode.get()
+        self.custom_mode = self.root.var_custom_mode.get()
         self.check_mode = self.root.var_check_mode.get()
 
         # 更新 cookie、初始化任务总数、更改状态、写入配置文件
@@ -100,7 +100,7 @@ class Operations:
         raw_links = self.root.text_links.get(1.0, ttk.END).splitlines()
         normalized_links = [normalize_link(f'{link} ') for link in raw_links if link]
         self.link_list = list(dict.fromkeys(normalized_links))
-
+        self.link_list_org = list(dict.fromkeys(link for link in raw_links if link))
         # 更新任务总数和状态
         self.total_task_count = len(self.link_list)
         self.change_status('running')
@@ -109,7 +109,6 @@ class Operations:
         """准备参数，更新状态"""
         # 从设置对话框获取参数变量
         self.expiry, self.password = self.dialog_result.result
-
         # 更新任务总数和状态
         self.total_task_count = len(self.dir_list_all)
         self.change_status('sharing')
@@ -164,7 +163,7 @@ class Operations:
     def process_save(self, url_code: str) -> None:
         """执行转存操作并记录结果"""
         # 跳过非网盘链接
-        if not url_code.startswith('https://pan.baidu.com/'):
+        if 'https://pan.baidu.com/' not in url_code:
             self.insert_logs(f'不支持的链接：{url_code}')
         else:
             # 执行转存过程，通过简单的循环判断是否要暂停
@@ -187,6 +186,7 @@ class Operations:
             result = f'分享成功：{r}?pwd={self.password}，名称：{filename}'
         else:
             result = f'分享失败：错误代码（{r}），名称：{filename}'
+
         # 记录日志，更改状态
         self.insert_logs(result)
         self.change_status('update')
@@ -291,16 +291,27 @@ class Operations:
         else:
             self.insert_logs(f'链接无效：{url_code} 原因：{ERROR_CODES.get(result, f"错误代码（{result}）")}')
 
+    def creat_user_dir(self, folder_name: str) -> str:
+        """建立用户指定目录，返回完整路径"""
+        self.check_condition(not folder_name, message='必须输入转存目录')
+        # 对原始输入进行分割
+        link_org_sep = self.link_list_org[self.completed_task_count].split()
+        # 建立自定义目录实际上有两个条件，除了原始输入用空格能分为两个元素以上外，还要求第一个元素不是网盘链接
+        if len(link_org_sep) > 1:
+            custom_folder = link_org_sep[0]
+            folder_name = f'{folder_name}/{custom_folder}' if 'https://pan.baidu.com/' not in custom_folder else f'{folder_name}/{self.completed_task_count + 1}'
+            # 此处用替换处理目标目录名非法字符，不报错了
+            folder_name = folder_name.translate(str.maketrans({char: '_' for char in INVALID_CHARS}))
+            self.handle_create_dir(folder_name)
+
+        return folder_name
+
     def save_file(self, result: Union[List[str], int], url_code: str, folder_name: str) -> None:
         """转存文件。返回结果为列表时，执行转存文件，否则跳过转存"""
         if isinstance(result, list):
             # 如果开启安全转存模式，对每个转存链接建立目录
-            if self.safe_mode:
-                self.check_condition(not folder_name,
-                                     message='必须输入转存目录。')
-                folder_name = f'{folder_name}/{self.completed_task_count + 1}'
-                self.handle_create_dir(folder_name)
-
+            if self.custom_mode:
+                folder_name = self.creat_user_dir(folder_name)
             # 终于轮到发送转存请求
             result = self.network.transfer_file(result, folder_name)
 

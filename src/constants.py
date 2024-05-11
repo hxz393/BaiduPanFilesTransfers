@@ -7,7 +7,7 @@
 """
 # 程序基本信息
 MAIN_TITLE = 'BaiduPanFilesTransfers'
-MAIN_VERSION = '2.7.0'
+MAIN_VERSION = '2.8.0'
 HOME_PAGE = 'https://github.com/hxz393/BaiduPanFilesTransfers'
 # noinspection LongLine
 # 图标使用 zlib 压缩后，再用 base64 编码的值
@@ -84,7 +84,7 @@ https://pan.baidu.com/s/1gFqh-WGW2LdNqKpHbwtZ9Q?pwd=1234
 https://pan.baidu.com/s/1kO3Yp3Q-opIFuY7GRPtd2A 提取码：qm3h
 https://pan.baidu.com/share/init?surl=7M-O0-SskRPdoZ0emZrd5w&pwd=1234
 http://pan.baidu.com/s/1_evfkiTrEZvOkC2hb-NiKw ju9a
-文件名 https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k""",
+目录名 https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k""",
     'options': '4.选项设置',
     'logs': '5.运行日志：',
     'logs_tip': '显示运行结果或错误信息',
@@ -92,8 +92,8 @@ http://pan.baidu.com/s/1_evfkiTrEZvOkC2hb-NiKw ju9a
     'share': '批量分享',
     'trust': '系统代理',
     'trust_tip': '应用系统代理访问百度网盘',
-    'safe': '安全转存',
-    'safe_tip': '每个链接资源保存在单独文件夹中',
+    'custom': '指定目录',
+    'custom_tip': '每个链接资源保存在单独文件夹中',
     'check': '检测模式',
     'check_tip': '检查链接是否有效但不转存',
     'help': '使用帮助',
