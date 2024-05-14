@@ -249,7 +249,7 @@ class Operations:
         """循环检测暂停逻辑，每个转存任务开始时都会检测"""
         # 只要 self.running 状态没变，会一直等待。而状态变化由用户点击按钮控制
         while not self.running:
-            time.sleep(DELAY_SECONDS * 10)
+            time.sleep(DELAY_SECONDS)
 
         # 执行验证链接和转存文件
         self.verify_and_save(url_code)
