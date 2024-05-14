@@ -241,10 +241,9 @@ class Operations:
         :param message: 插入到日志框的内容
         :param alt: 如果为 True，插入到链接输入框，用于批量分享时记录文件名
         """
-        if alt:
-            self.root.text_links.insert('end', f'{message}\n')
-        else:
-            self.root.text_logs.insert('end', f'{message}\n')
+        text_box = self.root.text_links if alt else self.root.text_logs
+        text_box.insert('end', f'{message}\n')
+        text_box.see(ttk.END)
 
     def pause_detection(self, url_code: str) -> None:
         """循环检测暂停逻辑，每个转存任务开始时都会检测"""
