@@ -8,7 +8,9 @@
 import atexit
 import base64
 import os
+import random
 import re
+import string
 import tempfile
 import threading
 import zlib
@@ -139,3 +141,17 @@ def update_cookie(bdclnd: str, cookie: str) -> str:
     updated_cookie = ';'.join([f'{key}={value}' for key, value in cookies_dict.items()])
 
     return updated_cookie
+
+
+def generate_code() -> str:
+    """
+    生成一个四位的随机提取码，包含大小写字母和数字。
+
+    :return: 随机提取码
+    """
+    # 包含大小写字母和数字
+    characters = string.ascii_letters + string.digits
+    # 随机选择四个字符
+    code = ''.join(random.choice(characters) for _ in range(4))
+
+    return code

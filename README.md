@@ -154,7 +154,7 @@ https://pan.baidu.com/e/1X5j-baPwZHmcXioKQPxb_w rsss
 
 ![百度网盘批量转存程序分享设置界面截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-4.jpg)
 
-设置好分享期限和提取码（不支持随机）后，点击确定开始执行批量分享，请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名；日志输入框内，会显示生成的分享链接和结果：
+设置好分享期限和提取码（支持随机）后，点击确定开始执行批量分享，请等待运行完成。此时原先链接输入框内，会插入即将分享的文件名；日志输入框内，会显示生成的分享链接和结果：
 
 ![百度网盘批量转存程序批量分享结果截图](https://raw.githubusercontent.com/hxz393/BaiduPanFilesTransfers/master/Capture/u-5.jpg)
 

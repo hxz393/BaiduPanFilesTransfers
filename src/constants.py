@@ -7,7 +7,7 @@
 """
 # 程序基本信息
 MAIN_TITLE = 'BaiduPanFilesTransfers'
-MAIN_VERSION = '2.8.0'
+MAIN_VERSION = '2.8.1'
 HOME_PAGE = 'https://github.com/hxz393/BaiduPanFilesTransfers'
 # noinspection LongLine
 # 图标使用 zlib 压缩后，再用 base64 编码的值
@@ -100,6 +100,7 @@ http://pan.baidu.com/s/1_evfkiTrEZvOkC2hb-NiKw ju9a
     'settings_title': '设置分享选项',
     'expiry_title': '设置分享期限：',
     'password_title': '自定义提取码：',
+    'password_random': '随机生成',
     'default_password': '1234',
     'ok': '确认',
     'cancel': '取消',

@@ -16,7 +16,7 @@ import ttkbootstrap as ttk
 from src.constants import EXP_MAP, DELAY_SECONDS, INVALID_CHARS, ERROR_CODES, SAVE_LIMIT, COLOR_MAP
 from src.network import Network
 from src.ui import CustomDialog
-from src.utils import thread_it, write_config, parse_response, normalize_link, parse_url_and_code, update_cookie
+from src.utils import thread_it, write_config, parse_response, normalize_link, parse_url_and_code, update_cookie, generate_code
 
 
 class Operations:
@@ -108,7 +108,7 @@ class Operations:
     def setup_share(self) -> None:
         """准备参数，更新状态"""
         # 从设置对话框获取参数变量
-        self.expiry, self.password = self.dialog_result.result
+        self.expiry, self.password, self.random_password = self.dialog_result.result
         # 更新任务总数和状态
         self.total_task_count = len(self.dir_list_all)
         self.change_status('sharing')
@@ -180,10 +180,13 @@ class Operations:
         msg = f'目录：{filename}' if is_dir else f'文件：{filename}'
         self.insert_logs(msg, alt=True)
 
+        # 处理提取码
+        password = self.password if not self.random_password else generate_code()
+
         # 发送创建分享请求
-        r = self.network.create_share(info['fs_id'], EXP_MAP[self.expiry], self.password)
+        r = self.network.create_share(info['fs_id'], EXP_MAP[self.expiry], password)
         if isinstance(r, str):
-            result = f'分享成功：{r}?pwd={self.password}，名称：{filename}'
+            result = f'分享成功：{r}?pwd={password}，名称：{filename}'
         else:
             result = f'分享失败：错误代码（{r}），名称：{filename}'
 

@@ -216,7 +216,11 @@ class CustomDialog(ttk.Toplevel):
         # 提取码输入框
         self.var_password = ttk.StringVar(self, value=LABEL_MAP['default_password'])
         ttk.Label(master, text=LABEL_MAP['password_title']).grid(row=1, column=0, sticky='e')
-        ttk.Entry(master, textvariable=self.var_password, bootstyle="info").grid(row=1, column=1, sticky='ew', padx=5, pady=2)
+        self.password_entry = ttk.Entry(master, textvariable=self.var_password, bootstyle="info")
+        self.password_entry.grid(row=1, column=1, sticky='ew', padx=5, pady=2)
+        # 随机提取码选项
+        self.var_random_pass = ttk.BooleanVar()
+        ttk.Checkbutton(master, text=LABEL_MAP['password_random'], variable=self.var_random_pass, command=self.toggle_password_entry).grid(row=1, column=1, sticky='e', padx=10, pady=2)
         # 在两个 frame 之间插入分割线
         ttk.Separator(self, orient='horizontal').pack(fill="x")
         # 底部按钮
@@ -225,17 +229,27 @@ class CustomDialog(ttk.Toplevel):
         ttk.Button(button_frame, text=LABEL_MAP['ok'], command=self.validate, bootstyle='primary').pack(side='right', padx=5)
         ttk.Button(button_frame, text=LABEL_MAP['cancel'], command=self.destroy, bootstyle='danger').pack(side='right', padx=5)
 
+    def toggle_password_entry(self):
+        """选择随机提取码时，禁用提取码输入框"""
+        if self.var_random_pass.get():
+            self.password_entry.config(state='disabled')
+        else:
+            self.password_entry.config(state='normal')
+
     def validate(self) -> bool:
         """验证输入提取码有效性"""
+        # 获取用户输入
         expiry = self.var_expiry.get()
         password = self.var_password.get()
+        random_password = self.var_random_pass.get()
+
         # 用正则检查用户输入，为 False 时窗口继续停留
-        if not re.match("^[a-zA-Z0-9]{4}$", password):
+        if not re.match("^[a-zA-Z0-9]{4}$", password) and not random_password:
             Messagebox.show_warning(title=LABEL_MAP['validate_title'], message=LABEL_MAP['validate_msg'], master=self)
             return False
 
         # 结果被 share 函数直接获取
-        self.result = (expiry, password)
+        self.result = (expiry, password, random_password)
         self.destroy()
         return True
 
