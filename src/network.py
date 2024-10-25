@@ -181,7 +181,7 @@ class Network:
             'path': f'/{folder_name}'
         }
 
-        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=15, allow_redirects=False, verify=False)
+        r = self.s.post(url=url, params=params, headers=self.headers, data=data, timeout=30, allow_redirects=False, verify=False)
 
         return r.json()['errno']
 

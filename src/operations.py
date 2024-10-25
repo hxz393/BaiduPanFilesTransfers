@@ -186,9 +186,9 @@ class Operations:
         # 发送创建分享请求
         r = self.network.create_share(info['fs_id'], EXP_MAP[self.expiry], password)
         if isinstance(r, str):
-            result = f'分享成功：{r}?pwd={password}，名称：{filename}'
+            result = f'分享成功：{r}?pwd={password} {msg}'
         else:
-            result = f'分享失败：错误代码（{r}），名称：{filename}'
+            result = f'分享失败：错误代码（{r}） {msg}'
 
         # 记录日志，更改状态
         self.insert_logs(result)
@@ -289,7 +289,7 @@ class Operations:
     def check_only(self, result: Union[List[str], int], url_code: str) -> None:
         """开启检查模式时，只管判断返回值类型，并输出结果到日志"""
         if isinstance(result, list):
-            self.insert_logs(f'链接有效：{url_code}')
+            self.insert_logs(f'链接有效：{url_code} {"目录" if result[4] == ["1"] else "文件"}：{result[3]}')
         else:
             self.insert_logs(f'链接无效：{url_code} 原因：{ERROR_CODES.get(result, f"错误代码（{result}）")}')
 
@@ -310,7 +310,9 @@ class Operations:
 
     def save_file(self, result: Union[List[str], int], url_code: str, folder_name: str) -> None:
         """转存文件。返回结果为列表时，执行转存文件，否则跳过转存"""
+        file_info = ""
         if isinstance(result, list):
+            file_info = f'{"目录" if result[4] == ["1"] else "文件"}：{result[3]}'
             # 如果开启安全转存模式，对每个转存链接建立目录
             if self.custom_mode:
                 folder_name = self.creat_user_dir(folder_name)
@@ -318,4 +320,4 @@ class Operations:
             result = self.network.transfer_file(result, folder_name)
 
         # 最后插入转存结果到日志框
-        self.insert_logs(f'{ERROR_CODES.get(result, f"转存失败，错误代码（{result}）")}：{url_code}')
+        self.insert_logs(f'{ERROR_CODES.get(result, f"转存失败，错误代码（{result}）")}：{url_code} {file_info}')

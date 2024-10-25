@@ -57,7 +57,7 @@ ERROR_CODES = {
     -1: '链接错误，链接失效或缺少提取码',
     -4: '转存失败，无效登录。请退出账号在其他地方的登录',
     -6: '转存失败，请用浏览器无痕模式获取 Cookie 后再试',
-    -7: r'转存失败，转存文件夹名有非法字符，不能包含 < > | * ? \ :，请改正目录名后重试',
+    -7: '转存失败，转存文件夹名有非法字符，不能包含 < > | * ? \\ :，请改正目录名后重试',
     -8: '转存失败，目录中已有同名文件或文件夹存在',
     -9: '链接错误，提取码错误',
     -10: '转存失败，容量不足',
@@ -84,6 +84,7 @@ https://pan.baidu.com/s/1gFqh-WGW2LdNqKpHbwtZ9Q?pwd=1234
 https://pan.baidu.com/s/1kO3Yp3Q-opIFuY7GRPtd2A 提取码：qm3h
 https://pan.baidu.com/share/init?surl=7M-O0-SskRPdoZ0emZrd5w&pwd=1234
 http://pan.baidu.com/s/1_evfkiTrEZvOkC2hb-NiKw ju9a
+链接: https://pan.baidu.com/s/1vlSFT4aruIb3LtxZrtjOZg?pwd=6xmb 提取码: 6xmb
 目录名 https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k""",
     'options': '4.选项设置',
     'logs': '5.运行日志：',

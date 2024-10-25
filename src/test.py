@@ -34,6 +34,8 @@ from src.utils import *
     ("文件名 https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k ", "https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k "),
     # 测试删除链接开头多余文字，没有空格
     ("文件名https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k ", "https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA fm9k "),
+    # 测试默认生成的分享链接
+    ("https://pan.baidu.com/s/1vlSFT4aruIb3LtxZrtjOZg?pwd=6xmb 提取码: 6xmb", "https://pan.baidu.com/s/1vlSFT4aruIb3LtxZrtjOZg 6xmb 6xmb"),
     # 测试保留有效链接之后的无用文字
     ("https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA?pwd=abcd efgh ", "https://pan.baidu.com/s/182A8FJ02gCq1MWYyrm_emA abcd efgh "),
     # 综合测试
@@ -67,13 +69,14 @@ def test_parse_url_and_code(url_code, expected):
 
 @pytest.mark.parametrize("response, expected", [
     # 测试包含所有必需参数的情况
-    ('"shareid":12345,"share_uk":"67890","fs_id":111,"code":---091,"fs_id":222,"', ["12345", "67890", ["111", "222"]]),
+    ('"shareid":12345,"share_uk":"67890","fs_id":111,"code":---091,"fs_id":222,"isdir":1,"server_filename":"目录","isdir":0,"server_filename":"文件","', ['12345', '67890', ['111', '222'], ['目录', '文件'], ['1', '0']]),
+
     # 测试缺少一个参数的情况
     ('"shareid":12345,"fs_id":111,"fs_id":222,"', -1),
     # 测试没有任何参数的情况
     ('"some_other_data":100,"another_field":200,"', -1),
     # 测试包含额外字符的情况
-    ('some random data "shareid":12345,"share_uk":"67890","fs_id":111,""more random data "code":---091,"fs_id":222," end of response', ["12345", "67890", ["111", "222"]]),
+    ('some random data "shareid":12345,"share_uk":"67890","fs_id":111,""more random data "code":---091,"fs_id":222,"isdir":1,"server_filename":"海岸"," end of response', ["12345", "67890", ["111", "222"], ['海岸'], ['1']]),
     # 测试空字符串的情况
     ('', -1)
 ])

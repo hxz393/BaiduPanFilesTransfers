@@ -22,6 +22,8 @@ from src.constants import CONFIG_PATH, ICON_BASE64
 SHARE_ID_REGEX = re.compile(r'"shareid":(\d+?),"')
 USER_ID_REGEX = re.compile(r'"share_uk":"(\d+?)","')
 FS_ID_REGEX = re.compile(r'"fs_id":(\d+?),"')
+SERVER_FILENAME_REGEX = re.compile(r'"server_filename":"(.+?)","')
+ISDIR_REGEX = re.compile(r'"isdir":(\d+?),"')
 
 
 def thread_it(func: Callable, *args: Tuple[Any, ...]) -> None:
@@ -119,10 +121,12 @@ def parse_response(response: str) -> Union[List[str], int]:
     shareid_list = SHARE_ID_REGEX.findall(response)
     user_id_list = USER_ID_REGEX.findall(response)
     fs_id_list = FS_ID_REGEX.findall(response)
-    if not all([shareid_list, user_id_list, fs_id_list]):
+    server_filename_list = SERVER_FILENAME_REGEX.findall(response)
+    isdir_list = ISDIR_REGEX.findall(response)
+    if not all([shareid_list, user_id_list, fs_id_list, server_filename_list, isdir_list]):
         return -1
 
-    return [shareid_list[0], user_id_list[0], fs_id_list]
+    return [shareid_list[0], user_id_list[0], fs_id_list, list(dict.fromkeys(server_filename_list)), isdir_list]
 
 
 def update_cookie(bdclnd: str, cookie: str) -> str:

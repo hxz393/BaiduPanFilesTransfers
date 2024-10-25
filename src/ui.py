@@ -59,8 +59,8 @@ class MainWindow(ttk.Window):
         # 创建按钮容器和两个功能按钮
         self.frame_bottom = ttk.Frame(self)
         self.frame_bottom.grid(row=init_row + 6, sticky='e', padx=MW_PADDING)
-        self.bottom_save = self._create_button(LABEL_MAP['save'], self._save_button_click, 1)
         self.bottom_share = self._create_button(LABEL_MAP['share'], self._share_button_click, 0)
+        self.bottom_save = self._create_button(LABEL_MAP['save'], self._save_button_click, 1)
         # 状态标签
         # noinspection PyArgumentList
         self.label_status = ttk.Label(self, text=LABEL_MAP['help'], font=('', 10, 'underline'), bootstyle='primary', cursor='heart')
@@ -140,7 +140,7 @@ class TextEditor:
 
     def _create_text_widget(self, row: int) -> ttk.Text:
         """建立文本框"""
-        text = ttk.Text(self.root, undo=True, font=("", 10), wrap='none', height=10)
+        text = ttk.Text(self.root, undo=True, font=("", 10), wrap='none', height=8)
         text.grid(row=row, column=0, sticky='wens', padx=MW_PADDING, pady=(10, 10))
         text.bind("<Button-3>", RightClickMenu(text).show_menu)
         self.root.grid_rowconfigure(row, weight=1)
