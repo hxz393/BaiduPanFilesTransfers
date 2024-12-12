@@ -9,6 +9,7 @@
 import sys
 import time
 import traceback
+import uuid
 from typing import Union, List, Dict, Any
 
 import ttkbootstrap as ttk
@@ -16,7 +17,8 @@ import ttkbootstrap as ttk
 from src.constants import EXP_MAP, DELAY_SECONDS, INVALID_CHARS, ERROR_CODES, SAVE_LIMIT, COLOR_MAP
 from src.network import Network
 from src.ui import CustomDialog
-from src.utils import thread_it, write_config, parse_response, normalize_link, parse_url_and_code, update_cookie, generate_code
+from src.utils import thread_it, write_config, parse_response, normalize_link, parse_url_and_code, update_cookie, \
+    generate_code
 
 
 class Operations:
@@ -99,10 +101,11 @@ class Operations:
         # 从文本链接控件获取全部链接，清洗并标准化链接。注意链接后拼接一个空格，是为了后面能统一处理带与不带提取码的链接
         raw_links = self.root.text_links.get(1.0, ttk.END).splitlines()
         normalized_links = [normalize_link(f'{link} ') for link in raw_links if link]
-        self.link_list = list(dict.fromkeys(normalized_links))
+        # self.link_list = list(dict.fromkeys(normalized_links))
         self.link_list_org = list(dict.fromkeys(link for link in raw_links if link))
         # 更新任务总数和状态
-        self.total_task_count = len(self.link_list)
+        # self.total_task_count = len(self.link_list)
+        self.total_task_count = len(self.link_list_org)
         self.change_status('running')
 
     def setup_share(self) -> None:
@@ -152,22 +155,27 @@ class Operations:
 
     def handle_process_save(self) -> None:
         """执行批量转存"""
-        for url_code in self.link_list:
-            self.process_save(url_code)
+        for url_code in self.link_list_org:
+            sub_folder = None
+            link_org_sep = url_code.split()
+            # 建立自定义目录实际上有两个条件，除了原始输入用空格能分为两个元素以上外，还要求第一个元素不是网盘链接
+            if len(link_org_sep) > 1 and 'pan.baidu.com' not in link_org_sep[0]:
+                sub_folder = link_org_sep[0]
+            self.process_save(normalize_link(f'{url_code} '), sub_folder)
 
     def handle_process_share(self) -> None:
         """执行批量分享"""
         for info in self.dir_list_all:
             self.process_share(info)
 
-    def process_save(self, url_code: str) -> None:
+    def process_save(self, url_code: str, sub_folder: str) -> None:
         """执行转存操作并记录结果"""
         # 跳过非网盘链接
         if 'https://pan.baidu.com/' not in url_code:
             self.insert_logs(f'不支持的链接：{url_code}')
         else:
             # 执行转存过程，通过简单的循环判断是否要暂停
-            self.pause_detection(url_code)
+            self.pause_detection(url_code, sub_folder)
 
         # 处理完毕一个链接，更新状态栏任务计数
         self.change_status('update')
@@ -205,13 +213,16 @@ class Operations:
         elif status == 'running':
             self.running = True
             self.root.bottom_share.config(state="disabled")
-            self.root.bottom_save.config(text='点击暂停', bootstyle='danger', command=lambda: self.change_status('paused'))
+            self.root.bottom_save.config(text='点击暂停', bootstyle='danger',
+                                         command=lambda: self.change_status('paused'))
         elif status == 'paused':
             self.running = False
-            self.root.bottom_save.config(text='点击继续', bootstyle='success', command=lambda: self.change_status('running'))
+            self.root.bottom_save.config(text='点击继续', bootstyle='success',
+                                         command=lambda: self.change_status('running'))
         elif status == 'update':
             self.completed_task_count += 1
-            self.root.label_status.config(text=f'总进度：{self.completed_task_count}/{self.total_task_count}', bootstyle='success')
+            self.root.label_status.config(text=f'总进度：{self.completed_task_count}/{self.total_task_count}',
+                                          bootstyle='success')
         elif status == 'sharing':
             self.root.text_links.delete(1.0, ttk.END)
             self.root.bottom_share.config(state="disabled")
@@ -220,7 +231,8 @@ class Operations:
             self.root.label_status.config(text='发生错误：', bootstyle='danger')
         else:
             self.running = False
-            self.root.bottom_save.config(text='批量转存', state="normal", bootstyle='primary', command=lambda: thread_it(self.save, ))
+            self.root.bottom_save.config(text='批量转存', state="normal", bootstyle='primary',
+                                         command=lambda: thread_it(self.save, ))
             self.root.bottom_share.config(state="normal")
 
     def check_condition(self, condition: bool, message: str) -> None:
@@ -248,18 +260,18 @@ class Operations:
         text_box.insert('end', f'{message}\n')
         text_box.see(ttk.END)
 
-    def pause_detection(self, url_code: str) -> None:
+    def pause_detection(self, url_code: str, sub_folder: str) -> None:
         """循环检测暂停逻辑，每个转存任务开始时都会检测"""
         # 只要 self.running 状态没变，会一直等待。而状态变化由用户点击按钮控制
         while not self.running:
             time.sleep(DELAY_SECONDS)
 
         # 执行验证链接和转存文件
-        self.verify_and_save(url_code)
+        self.verify_and_save(url_code, sub_folder)
         # 转存完毕等待一小段时间。如果要转存超过 1000 个链接，可以增加 DELAY_SECONDS 到 3 以上。
         time.sleep(DELAY_SECONDS)
 
-    def verify_and_save(self, url_code: str) -> None:
+    def verify_and_save(self, url_code: str, sub_folder: str) -> None:
         """验证链接和转存文件"""
         # 验证链接是否有效，返回的数字为错误代码，反之返回参数列表
         result = self.verify_link(*parse_url_and_code(url_code))
@@ -267,7 +279,7 @@ class Operations:
         if self.check_mode:
             self.check_only(result, url_code)
         else:
-            self.save_file(result, url_code, self.folder_name)
+            self.save_file(result, url_code, f'{self.folder_name}/{sub_folder}' if sub_folder else self.folder_name)
 
     def verify_link(self, url: str, password: str) -> Union[List[str], int]:
         """验证链接有效性，验证通过返回转存所需参数列表"""
@@ -312,10 +324,19 @@ class Operations:
         """转存文件。返回结果为列表时，执行转存文件，否则跳过转存"""
         file_info = ""
         if isinstance(result, list):
-            file_info = f'{"目录" if result[4] == ["1"] else "文件"}：{result[3]}'
             # 如果开启安全转存模式，对每个转存链接建立目录
             if self.custom_mode:
-                folder_name = self.creat_user_dir(folder_name)
+                self.check_condition(not folder_name, message='必须输入转存目录')
+                folder_name = f'{folder_name}/{uuid.uuid4()}'
+
+                # folder_name = self.creat_user_dir(folder_name)
+            # 此处用替换处理目标目录名非法字符，不报错了
+            folder_name = folder_name.translate(str.maketrans({char: '_' for char in INVALID_CHARS}))
+            self.handle_create_dir(folder_name)
+            file_info = f'{"目录" if result[4] == ["1"] else "文件"}：{result[3]}'
+            if folder_name:
+                file_info = f'位置：{folder_name} {file_info}'
+
             # 终于轮到发送转存请求
             result = self.network.transfer_file(result, folder_name)
 
