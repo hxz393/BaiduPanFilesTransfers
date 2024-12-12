@@ -98,8 +98,7 @@ class Operations:
         """准备链接，更新状态"""
         # 从文本链接控件获取全部链接，清洗并标准化链接。注意链接后拼接一个空格，是为了后面能统一处理带与不带提取码的链接
         raw_links = self.root.text_links.get(1.0, ttk.END).splitlines()
-        normalized_links = [normalize_link(f'{link} ') for link in raw_links if link]
-        self.link_list = list(dict.fromkeys(normalized_links))
+        self.link_list = [normalize_link(f'{link} ') for link in raw_links if link]
         self.link_list_org = list(dict.fromkeys(link for link in raw_links if link))
         # 更新任务总数和状态
         self.total_task_count = len(self.link_list)
@@ -294,7 +293,7 @@ class Operations:
             self.insert_logs(f'链接无效：{url_code} 原因：{ERROR_CODES.get(result, f"错误代码（{result}）")}')
 
     def creat_user_dir(self, folder_name: str) -> str:
-        """建立用户指定目录，返回完整路径"""
+        """建立用户指定目录，返回完整路径。目录名从原始输入取，函数为 custom_mode 专用"""
         self.check_condition(not folder_name, message='必须输入转存目录')
         # 对原始输入进行分割
         link_org_sep = self.link_list_org[self.completed_task_count].split()
@@ -316,8 +315,14 @@ class Operations:
             # 如果开启安全转存模式，对每个转存链接建立目录
             if self.custom_mode:
                 folder_name = self.creat_user_dir(folder_name)
-            # 终于轮到发送转存请求
-            result = self.network.transfer_file(result, folder_name)
+                result = self.network.transfer_file(result, folder_name)
+                file_info = f'{file_info} 转存到：{folder_name}'
+            # 改在这里检查链接重复，在日志中查找。链接有出现过不转存，直接赋值结果为错误代码 4
+            elif url_code in self.root.text_logs.get('1.0', 'end'):
+                result = 4
+            # 正常转存
+            else:
+                result = self.network.transfer_file(result, folder_name)
 
         # 最后插入转存结果到日志框
         self.insert_logs(f'{ERROR_CODES.get(result, f"转存失败，错误代码（{result}）")}：{url_code} {file_info}')

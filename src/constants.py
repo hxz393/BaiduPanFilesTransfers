@@ -7,7 +7,7 @@
 """
 # 程序基本信息
 MAIN_TITLE = 'BaiduPanFilesTransfers'
-MAIN_VERSION = '2.8.1'
+MAIN_VERSION = '2.8.2'
 HOME_PAGE = 'https://github.com/hxz393/BaiduPanFilesTransfers'
 # noinspection LongLine
 # 图标使用 zlib 压缩后，再用 base64 编码的值
