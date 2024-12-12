@@ -99,7 +99,7 @@ class Operations:
         # 从文本链接控件获取全部链接，清洗并标准化链接。注意链接后拼接一个空格，是为了后面能统一处理带与不带提取码的链接
         raw_links = self.root.text_links.get(1.0, ttk.END).splitlines()
         self.link_list = [normalize_link(f'{link} ') for link in raw_links if link]
-        self.link_list_org = list(dict.fromkeys(link for link in raw_links if link))
+        self.link_list_org = [link for link in raw_links if link]
         # 更新任务总数和状态
         self.total_task_count = len(self.link_list)
         self.change_status('running')
