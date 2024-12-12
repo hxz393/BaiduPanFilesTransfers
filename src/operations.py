@@ -297,13 +297,12 @@ class Operations:
         self.check_condition(not folder_name, message='必须输入转存目录')
         # 对原始输入进行分割
         link_org_sep = self.link_list_org[self.completed_task_count].split()
-        # 建立自定义目录实际上有两个条件，除了原始输入用空格能分为两个元素以上外，还要求第一个元素不是网盘链接
-        if len(link_org_sep) > 1:
-            custom_folder = link_org_sep[0]
-            folder_name = f'{folder_name}/{custom_folder}' if 'https://pan.baidu.com/' not in custom_folder else f'{folder_name}/{self.completed_task_count + 1}'
-            # 此处用替换处理目标目录名非法字符，不报错了
-            folder_name = folder_name.translate(str.maketrans({char: '_' for char in INVALID_CHARS}))
-            self.handle_create_dir(folder_name)
+        # 建立自定义目录，如果没有指定则用行数代替
+        custom_folder = link_org_sep[0]
+        folder_name = f'{folder_name}/{custom_folder}' if 'pan.baidu.com' not in custom_folder else f'{folder_name}/{self.completed_task_count + 1}'
+        # 此处用替换处理目标目录名非法字符，不报错了
+        folder_name = folder_name.translate(str.maketrans({char: '_' for char in INVALID_CHARS}))
+        self.handle_create_dir(folder_name)
 
         return folder_name
 
