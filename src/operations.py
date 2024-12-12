@@ -311,17 +311,12 @@ class Operations:
         file_info = ""
         if isinstance(result, list):
             file_info = f'{"目录" if result[4] == ["1"] else "文件"}：{result[3]}'
-            # 如果开启安全转存模式，对每个转存链接建立目录
+            # 如果开启安全转存模式，对每个转存链接建立目录，更新提示信息
             if self.custom_mode:
                 folder_name = self.creat_user_dir(folder_name)
-                result = self.network.transfer_file(result, folder_name)
                 file_info = f'{file_info} 转存到：{folder_name}'
-            # 改在这里检查链接重复，在日志中查找。链接有出现过不转存，直接赋值结果为错误代码 4
-            elif url_code in self.root.text_logs.get('1.0', 'end'):
-                result = 4
-            # 正常转存
-            else:
-                result = self.network.transfer_file(result, folder_name)
+            # 执行转存
+            result = self.network.transfer_file(result, folder_name)
 
         # 最后插入转存结果到日志框
         self.insert_logs(f'{ERROR_CODES.get(result, f"转存失败，错误代码（{result}）")}：{url_code} {file_info}')
