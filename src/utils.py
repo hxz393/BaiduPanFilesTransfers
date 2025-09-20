@@ -68,8 +68,10 @@ def create_icon() -> str:
 
     :return: 返回图标文件路径
     """
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.ico') as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
         temp_file.write(zlib.decompress(base64.b64decode(ICON_BASE64)))
+        temp_file.flush()
+        ico_path = temp_file.name
 
     ico_path = temp_file.name
     # 显式声明程序退出时，删除临时图标文件，避免在个别系统平台自动删除失败

@@ -7,6 +7,7 @@
 """
 
 import re
+from tkinter import PhotoImage
 import webbrowser
 from typing import Callable
 
@@ -36,7 +37,7 @@ class MainWindow(ttk.Window):
     def _setup_window(self) -> None:
         """主窗口配置"""
         self.style.theme_use(COLOR_THEME)
-        self.iconbitmap(self.icon_path)
+        self.iconphoto(True, PhotoImage(file=self.icon_path))
         self.title(f"{MAIN_TITLE} {MAIN_VERSION}")
         self.grid_columnconfigure(0, weight=1)
         self.place_window_center()
